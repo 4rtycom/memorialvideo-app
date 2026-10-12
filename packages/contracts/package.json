@@ -1,0 +1,28 @@
+{
+  "name": "@memorialvideo/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@memorialvideo/config": "workspace:*",
+    "@types/node": "24.3.0",
+    "eslint": "9.39.1",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}

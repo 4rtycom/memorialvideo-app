@@ -1,0 +1,49 @@
+{
+  "name": "memorialvideo-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "node -e \"require('node:fs').rmSync('.next',{recursive:true,force:true}); require('node:fs').rmSync('.data',{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "@memorialvideo/config": "workspace:*",
+    "@memorialvideo/contracts": "workspace:*",
+    "@memorialvideo/domain": "workspace:*",
+    "@memorialvideo/i18n": "workspace:*",
+    "@memorialvideo/video": "workspace:*",
+    "@remotion/bundler": "4.0.518",
+    "@remotion/player": "4.0.518",
+    "@remotion/renderer": "4.0.518",
+    "@supabase/ssr": "0.7.0",
+    "@supabase/supabase-js": "2.57.4",
+    "next": "16.3.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "remotion": "4.0.518",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.1",
+    "@tailwindcss/postcss": "4.1.13",
+    "@types/node": "24.3.0",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.1",
+    "tailwindcss": "4.1.13",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.46.4",
+    "vitest": "4.1.11"
+  },
+  "packageManager": "pnpm@10.15.1",
+  "engines": {
+    "node": ">=22.18.0",
+    "pnpm": ">=10.15.0"
+  }
+}

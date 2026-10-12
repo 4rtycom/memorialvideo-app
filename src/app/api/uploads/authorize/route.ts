@@ -1,0 +1,98 @@
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { isHeicFilename } from '@/server/ingest';
+import {
+  createUploadSession,
+  isAllowedUploadContentType,
+  MAX_UPLOAD_BYTES,
+  TUS_CHUNK_HINT,
+} from '@/server/media-storage';
+import { allowRequest } from '@/server/rate-limit';
+import { loadActiveTribute } from '@/server/session';
+import { addMemory } from '@/server/store';
+
+export const runtime = 'nodejs';
+
+const bodySchema = z.object({
+  title: z.string().trim().min(1).max(160),
+  filename: z.string().trim().min(1).max(180),
+  contentType: z.string().trim().min(3).max(120),
+  byteSize: z.number().int().positive().max(MAX_UPLOAD_BYTES),
+  year: z.string().max(16).optional(),
+});
+
+/**
+ * Authorize a local TUS upload (file bytes on disk).
+ * Honest blocker: Supabase Storage TUS is unavailable without Docker/hosted credentials.
+ */
+export async function POST(request: Request) {
+  if (!allowRequest('creator-upload-auth', 40)) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
+  }
+  const active = await loadActiveTribute();
+  if (!active) {
+    return NextResponse.json({ error: 'no_active_tribute' }, { status: 404 });
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
+  }
+  const parsed = bodySchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
+  }
+  if (!isAllowedUploadContentType(parsed.data.contentType, parsed.data.filename)) {
+    return NextResponse.json({ error: 'unsupported_type' }, { status: 415 });
+  }
+
+  const memory = await addMemory(active.publicId, {
+    title: parsed.data.title,
+    year: parsed.data.year,
+    filename: parsed.data.filename,
+    contentType: parsed.data.contentType,
+    byteSize: parsed.data.byteSize,
+    awaitBytes: !isHeicFilename(parsed.data.filename),
+    imagePath: '/fixtures/memory-a.png',
+  });
+  if (!memory) {
+    return NextResponse.json({ error: 'create_failed' }, { status: 500 });
+  }
+
+  if (memory.failureCode === 'heic') {
+    return NextResponse.json(
+      {
+        assetId: memory.id,
+        mode: 'rejected_heic',
+        memory,
+        note: 'HEIC is not auto-converted; convert on device and re-upload JPG/PNG.',
+      },
+      { status: 201 },
+    );
+  }
+
+  const session = await createUploadSession({
+    tributePublicId: active.publicId,
+    assetId: memory.id,
+    contentType: parsed.data.contentType,
+    byteSize: parsed.data.byteSize,
+  });
+
+  return NextResponse.json(
+    {
+      assetId: memory.id,
+      mode: 'local_tus',
+      uploadUrl: `/api/uploads/tus/${session.uploadId}`,
+      tusResumable: '1.0.0',
+      chunkHintBytes: TUS_CHUNK_HINT,
+      byteSize: parsed.data.byteSize,
+      memory,
+      supabaseTus: false,
+      blocker:
+        'Supabase Storage resumable TUS requires Docker/local Supabase or hosted credentials (not configured here).',
+    },
+    { status: 201 },
+  );
+}

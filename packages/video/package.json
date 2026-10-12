@@ -1,0 +1,83 @@
+{
+  "name": "@memorialvideo/video",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./composition": {
+      "types": "./src/MemorialComposition.tsx",
+      "default": "./src/MemorialComposition.tsx"
+    },
+    "./theme": {
+      "types": "./src/theme.ts",
+      "default": "./src/theme.ts"
+    }
+  },
+  "scripts": {
+    "dev": "remotion studio",
+    "lint": "eslint src scripts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:render": "vitest run src/qc.test.ts src/timeline-adapter.test.ts",
+    "fixtures": "tsx scripts/generate-fixtures.ts",
+    "render:golden": "tsx scripts/render-local.ts --kind=golden",
+    "render:full": "tsx scripts/render-local.ts --kind=full",
+    "render:snapshot": "tsx scripts/render-snapshot.ts",
+    "qc:file": "tsx scripts/complete-job.ts",
+    "worker:once": "tsx scripts/run-queued-job.ts",
+    "worker:smoke": "tsx scripts/run-queued-job.ts --smoke",
+    "worker:themes": "tsx scripts/run-queued-job.ts --themes",
+    "worker:golden-themes": "tsx scripts/run-queued-job.ts --golden-themes",
+    "worker:enqueue": "tsx scripts/enqueue-local-job.ts",
+    "worker:derived-still": "tsx scripts/run-derived-still.ts",
+    "worker:asset-analysis": "tsx scripts/run-asset-analysis.ts",
+    "worker:ocr": "tsx scripts/run-content-extraction.ts --type=ocr",
+    "worker:transcription": "tsx scripts/run-content-extraction.ts --type=transcription",
+    "worker:people-intelligence": "tsx scripts/run-people-intelligence.ts",
+    "worker:enhancement": "tsx scripts/run-media-enhancement.ts",
+    "smoke:ocr": "tsx scripts/run-content-extraction.ts --type=ocr --in=../../packages/test-utils/fixtures/content-extraction/ocr-card.jpg",
+    "smoke:transcription": "tsx scripts/run-content-extraction.ts --type=transcription --in=../../packages/test-utils/fixtures/content-extraction/spoken.wav --expect=sunday,family,sailing,together",
+    "smoke:transcription:tone": "tsx scripts/run-content-extraction.ts --type=transcription --in=../../packages/test-utils/fixtures/content-extraction/tone.wav",
+    "smoke:transcription:mp3": "tsx scripts/run-content-extraction.ts --type=transcription --in=../../packages/test-utils/fixtures/content-extraction/spoken.mp3 --mime=audio/mpeg --expect=sunday,family,sailing,together",
+    "smoke:people": "tsx scripts/run-people-intelligence.ts --in=../../packages/test-utils/fixtures/people-intelligence/person-a-1.jpg",
+    "smoke:people-video": "tsx scripts/run-people-intelligence.ts --in=../../packages/test-utils/fixtures/people-intelligence/person-a-clip.mp4",
+    "smoke:enhancement": "tsx scripts/run-media-enhancement.ts --in=../../packages/test-utils/fixtures/media-enhancement/faded.jpg",
+    "fixtures:extraction": "tsx scripts/generate-extraction-fixtures.ts",
+    "fixtures:people": "tsx scripts/generate-people-fixtures.ts",
+    "fixtures:enhancement": "tsx scripts/generate-enhancement-fixtures.ts",
+    "fixtures:audio": "tsx scripts/generate-audio-fixtures.ts",
+    "fixtures:golden-frames": "tsx scripts/write-golden-frame-proxies.ts",
+    "fixtures:golden-stills:remotion": "tsx scripts/extract-golden-stills.ts",
+    "test:golden-frames": "vitest run src/golden-frame.test.ts",
+    "poster:extract": "tsx scripts/extract-poster.ts",
+    "qc": "tsx scripts/qc.ts",
+    "build": "tsc --noEmit",
+    "bundle": "remotion bundle",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "@memorialvideo/contracts": "workspace:*",
+    "@memorialvideo/domain": "workspace:*",
+    "@memorialvideo/media": "workspace:*",
+    "@remotion/bundler": "4.0.518",
+    "@remotion/media-parser": "4.0.518",
+    "@remotion/renderer": "4.0.518",
+    "@xenova/transformers": "2.17.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "remotion": "4.0.518",
+    "tesseract.js": "5.1.1",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@memorialvideo/config": "workspace:*",
+    "@remotion/cli": "4.0.518",
+    "@types/node": "24.3.0",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.1",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}
