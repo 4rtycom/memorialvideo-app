@@ -1,15 +1,25 @@
 import { AccountPanel } from '@/components/AccountPanel';
 import { AppShell } from '@/components/AppShell';
-import { Eyebrow, Hero, Lede } from '@/components/ui';
+import { Button, Eyebrow, Hero, Lede } from '@/components/ui';
+import { AuthRequiredError, readAccountSession, withRequestOwner } from '@/server/account-session';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute, readActiveTributeId } from '@/server/session';
 import { listTributeSummaries } from '@/server/store';
 
 export default async function AccountPage() {
+  const signedIn = Boolean(await readAccountSession());
   const tribute = await loadActiveTribute();
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
   const activeId = await readActiveTributeId();
-  const tributes = (await listTributeSummaries()).map((t) => ({
+  let tributes: Awaited<ReturnType<typeof listTributeSummaries>> = [];
+  try {
+    tributes = await withRequestOwner(() => listTributeSummaries());
+  } catch (error) {
+    if (!(error instanceof AuthRequiredError)) {
+      throw error;
+    }
+  }
+  const rows = tributes.map((t) => ({
     ...t,
     isActive: t.publicId === activeId,
   }));
@@ -26,7 +36,18 @@ export default async function AccountPage() {
       <Eyebrow>ACCOUNT</Eyebrow>
       <Hero>Your tributes</Hero>
       <Lede>Open a tribute workspace or permanently delete a local draft. Nothing is public by default.</Lede>
-      <AccountPanel initialTributes={tributes} />
+      <div className="mb-6">
+        {signedIn ? (
+          <form action="/api/auth/sign-out" method="post">
+            <Button type="submit" variant="secondary">
+              Sign out
+            </Button>
+          </form>
+        ) : (
+          <Button href="/sign-in">Sign in</Button>
+        )}
+      </div>
+      <AccountPanel initialTributes={rows} />
     </AppShell>
   );
 }

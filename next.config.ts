@@ -2,6 +2,9 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Next.js dev blocks requests that carry an Origin it does not recognize.
+  // Chrome sends Origin for some same-host script loads on 127.0.0.1.
+  allowedDevOrigins: ['127.0.0.1', 'localhost'],
   images: {
     unoptimized: true,
   },

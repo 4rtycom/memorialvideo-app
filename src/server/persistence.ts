@@ -11,12 +11,26 @@ export type PersistenceResolution = {
   /** XB-012 remains open when hosted DB/KV durability is missing. */
   xb012Persistence: boolean;
   reason:
+    | 'postgres'
     | 'database_preferred_unwired'
     | 'vercel_kv'
     | 'local_file'
     | 'local_file_not_writable'
     | 'no_durable_backend';
 };
+
+export type SqlQuery = (sql: string, params: unknown[]) => Promise<Record<string, unknown>[]>;
+
+let sqlQueryOverride: SqlQuery | null = null;
+
+/** Tests inject an in-process PostgreSQL driver. Production uses DATABASE_URL. */
+export function setSqlQueryForTests(query: SqlQuery | null): void {
+  sqlQueryOverride = query;
+}
+
+export function getSqlQueryOverride(): SqlQuery | null {
+  return sqlQueryOverride;
+}
 
 export class PersistenceUnavailableError extends Error {
   readonly code = 'persistence_unavailable' as const;
@@ -45,6 +59,10 @@ let localWritableProbe: Promise<boolean> | null = null;
 export function resetPersistenceCacheForTests(): void {
   cachedResolution = null;
   localWritableProbe = null;
+}
+
+export function isPostgresUrlConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
+  return Boolean(env.DATABASE_URL?.trim()) || sqlQueryOverride !== null;
 }
 
 function readKvConfig(env: NodeJS.ProcessEnv = process.env): KvConfig | null {
@@ -98,6 +116,16 @@ export async function resolvePersistence(
   const parsed = creatorEnv(env);
   const databaseConfigured = isDatabasePersistenceConfigured(parsed);
   const kv = readKvConfig(env);
+
+  if (isPostgresUrlConfigured(env)) {
+    cachedResolution = {
+      kind: 'database',
+      writable: true,
+      xb012Persistence: false,
+      reason: 'postgres',
+    };
+    return cachedResolution;
+  }
 
   if (kv) {
     cachedResolution = {
