@@ -16,6 +16,7 @@ Spec slices from the masterplan. Ticket IDs in `memorialvideo/docs/AUTONOMOUS_BU
 - Build: scrypt password accounts (email stored only as SHA-256), HMAC session cookie, owner id on tributes, merge-on-write so one account cannot replace another’s tribute, PostgreSQL document when `DATABASE_URL` is set.
 - Tests: `corepack pnpm exec vitest run src/server/account-access.test.ts src/server/sql-store.test.ts src/server/persistence.test.ts src/server/store.test.ts src/server/locale-pack.test.ts` — 20 passed.
 - Browser: Chrome on `http://127.0.0.1:3000`. Create account `ida.browser@example.com`, create “Ida Browser”, reload workspace, home still shows the name, sign out, second account does not see that tribute.
+- Media bytes: `GET /api/media/...` returns the file to the owning session and 404 to another account (`src/server/media-auth.test.ts`).
 - Not done: hosted Supabase project is not connected in this environment. Magic link stays unused until `NEXT_PUBLIC_SUPABASE_URL` and anon key exist.
 
 ## Slice 02 — Upload photo, video, song into the library
