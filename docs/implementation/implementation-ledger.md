@@ -62,7 +62,45 @@ Spec slices from the masterplan. Ticket IDs in `memorialvideo/docs/AUTONOMOUS_BU
 - Tests: `corepack pnpm exec vitest run src/server/personal-songs.test.ts src/server/timeline.test.ts` — 5 passed. The later song is about 18 dB quieter in the rendered MP4 (`mean_volume` windows). Same start frame is rejected.
 - Browser: “Film Two” uploaded `opening-hymn.wav` and `later-waltz.wav` with rights confirmed, placed both from Guided Audio, reload showed “2 songs on the timeline”, and the next preview reached `READY · verified` (v7).
 
-## Slices 08–12
+## Slice 08 — Local pack, entitlement, export
 
-- Status: TODO
-- Blocked external items remain XB-002 licensed masters, XB-005 live Stripe, XB-009 voice, hosted database credentials, production deploy (auto-deploy stays off).
+- Status: VERIFIED locally. Live Stripe remains XB-005 and is not called paid COMPLETE.
+- Build: Memorial Pack entitlement still comes from `local_fake` in this environment. A final render and MP4 download stay behind that entitlement. Stripe webhook fulfillment is implemented and tested with a mock secret; duplicate delivery does not grant twice.
+- Tests: `corepack pnpm exec vitest run src/server/stripe-checkout.test.ts` — included in the 8 passed with story and shares. Duplicate webhook returns `duplicate: true`. `local_fake` fulfill does not claim a Stripe source.
+- Browser: “Film Two” showed “Memorial Pack is active · private playback · ceremony download” after Activate Memorial Pack (local). Enqueue final and advance worker, then download returned 200 (270026 bytes). ffprobe: H.264 1920×1080 and AAC. Screenshot `/opt/cursor/artifacts/slice08-local-pack.png`.
+- Known: no live Stripe keys. Client cannot start a paid Checkout Session here (`stripe_not_configured`).
+
+## Slice 09 — Private share, then revoke
+
+- Status: VERIFIED
+- Build: private watch links store a token hash only. Create stays disabled until the pack entitlement is active. Revoke makes the same token fail.
+- Tests: `src/server/shares-local.test.ts` — create requires pack and a timeline, the stored JSON does not contain the token, and redeem after revoke returns `revoked`.
+- Browser: a fresh page opened the Film Two watch link and showed the private screening. After Revoke, a new page showed “This private viewing link was revoked.” Screenshot `/opt/cursor/artifacts/slice09-revoked.png`. The token was not written into this ledger.
+
+## Slice 10 — Chapters and local restoration, without invented biography
+
+- Status: VERIFIED for the safe local path. Voice cloning stays blocked (XB-009) and was not implemented. Generative story writing and generative enhancement are not marked complete.
+- Build: chapters are grouped only from ready memories and the years the family supplied. `ensureStoryChapters` leaves an existing chapter list alone, so a renamed title survives a later page load. Local enhancement requires consent and its note says it is not COMPLETE.
+- Tests: `src/server/story-enhance.test.ts` — derived chapters keep only supplied memory ids; renaming the first chapter to “Family supplied chapter” survives `ensureStoryChapters`; enhancement without consent is denied.
+- Browser: on `/life-story` for Film Two, the first chapter was renamed to “Family supplied chapter”, “Chapter titles saved.” appeared, and reload kept that title. Screenshot `/opt/cursor/artifacts/slice10-chapter.png`.
+
+## Slice 11 — Professional workspaces and white-label
+
+- Status: NOT STARTED. The masterplan marks this post-beta or separately gated (M11). This app has no organization, delegated-user, or white-label model. A tenant system was not added in this pass.
+- Not a missing credential. Do not treat this as blocking slices that already have a local path.
+
+## Slice 12 — Launch languages, support, operations
+
+- Status: PARTIAL. Release gate is not green.
+- Build: auth, navigation, Memorial Pack, share, and music catalog strings exist for en, nl, de, fr, es, pt, it, pl. `locale-pack` test rejects a missing or raw key. Account deletion removes the local tribute.
+- Tests: `src/server/locale-pack.test.ts` covers every `CREATOR_UI_KEYS` entry in all eight languages (run earlier in the suite; key coverage is the assertion in that file).
+- Browser: Language select `nl` on `/share` showed “Herdenkingspakket” and Dutch navigation. Screenshot `/opt/cursor/artifacts/slice12-nl-share.png`. A separate account deleted “Delete Me” and the account page showed “Tribute deleted from local storage.” and “No tributes yet.”
+- Not met: memories, life story, the film editor, guest upload, and personal-song placement are still hardcoded English. Checkout in each language needs live Stripe (XB-005). Native copy review remains open. Production alerting and a hosted backup restore are not configured. Auto-deploy stays off.
+
+## Still external
+
+- XB-002 licensed masters
+- XB-005 live Stripe
+- XB-009 voice (do not implement)
+- XB-012 hosted Supabase / database credentials
+- Production deploy stays unauthorized; Vercel auto-deploy stays off

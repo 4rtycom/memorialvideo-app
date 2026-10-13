@@ -32,6 +32,7 @@ export function LifeStoryPanel({
   const [rows, setRows] = useState(chapters);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
   const byId = new Map(memories.map((m) => [m.id, m]));
 
   function rename(id: string, title: string) {
@@ -40,6 +41,7 @@ export function LifeStoryPanel({
 
   function save() {
     setError(null);
+    setSaved(false);
     startTransition(async () => {
       const response = await fetch('/api/tributes/active', {
         method: 'PATCH',
@@ -50,6 +52,7 @@ export function LifeStoryPanel({
         setError('Could not save chapter titles.');
         return;
       }
+      setSaved(true);
       router.refresh();
     });
   }
@@ -111,6 +114,9 @@ export function LifeStoryPanel({
           <p className="text-[13px] text-[color:var(--accent)] mt-3" role="alert">
             {error}
           </p>
+        ) : null}
+        {saved ? (
+          <p className="text-[13px] text-[color:var(--muted)] mt-3">Chapter titles saved.</p>
         ) : null}
       </Card>
       <Card soft className="!p-6">
