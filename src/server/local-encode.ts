@@ -736,8 +736,13 @@ export async function resolveCatalogPreviewAbsolute(trackId: string): Promise<st
 export async function resolveMusicSrcAbsolute(
   src: string,
   trackIdHint?: string | null,
+  tributePublicId?: string,
 ): Promise<string | null> {
   if (!src) return null;
+
+  if (src.startsWith('/api/media/')) {
+    return resolveTimelineAssetPath(src, tributePublicId);
+  }
 
   if (src.startsWith('/api/music/preview')) {
     try {
@@ -814,14 +819,17 @@ export async function resolveTimelineMusicAbsolutePath(
  * Resolve every unmuted AudioMix music clip (chapter slots, Guided Audio beds).
  * Falls back to a single full-timeline legacy/catalog clip when mix clips are absent.
  */
-export async function resolveTimelineMusicClips(timeline: TimelineContract): Promise<ResolvedMusicClip[]> {
+export async function resolveTimelineMusicClips(
+  timeline: TimelineContract,
+  tributePublicId?: string,
+): Promise<ResolvedMusicClip[]> {
   const clips: ResolvedMusicClip[] = [];
   const mixTracks = timeline.audio?.tracks ?? [];
   for (const track of mixTracks) {
     if (track.kind !== 'music' || track.muted) continue;
     for (const clip of track.clips ?? []) {
       if (!clip.src) continue;
-      const absolute = await resolveMusicSrcAbsolute(clip.src, timeline.music?.trackId);
+      const absolute = await resolveMusicSrcAbsolute(clip.src, timeline.music?.trackId, tributePublicId);
       if (!absolute) continue;
       clips.push({
         id: clip.id,
@@ -1081,7 +1089,7 @@ export async function encodeWithFfmpeg(input: {
   const width = input.timeline.width;
   const height = input.timeline.height;
   const filmStyle = resolveFilmStyleManifest(input.timeline.themeKey);
-  const musicClips = await resolveTimelineMusicClips(input.timeline);
+  const musicClips = await resolveTimelineMusicClips(input.timeline, input.tributePublicId);
   const dialogueClips = await resolveTimelineDialogueClips(input.timeline, input.tributePublicId);
   const fontfile = await resolveDrawtextFontAbsolute();
   const args: string[] = ['-y'];

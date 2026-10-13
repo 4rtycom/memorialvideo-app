@@ -57,9 +57,10 @@ Spec slices from the masterplan. Ticket IDs in `memorialvideo/docs/AUTONOMOUS_BU
 
 ## Slice 06 — Two songs, trim, fade, mix
 
-- Status: TODO
-- Existing: Guided Audio can propose one development-catalog bed with ducking. Personal song upload and rights confirmation work. Encode tests cover fade and mix math on synthetic fixtures.
-- Missing: placing two personal songs in different sections, then trimming and fading them in the editor. Licensed catalogue masters remain XB-002.
+- Status: VERIFIED
+- Build: two rights-confirmed personal songs become AudioMix clips in different sections, with trim (`durationFrames`), fade, and gain. A spoken video scene adds a speech clip and a ducking region. Songs are not photo scenes. The encoder reads `/api/media` originals. Licensed masters remain XB-002.
+- Tests: `corepack pnpm exec vitest run src/server/personal-songs.test.ts src/server/timeline.test.ts` — 5 passed. The later song is about 18 dB quieter in the rendered MP4 (`mean_volume` windows). Same start frame is rejected.
+- Browser: “Film Two” uploaded `opening-hymn.wav` and `later-waltz.wav` with rights confirmed, placed both from Guided Audio, reload showed “2 songs on the timeline”, and the next preview reached `READY · verified` (v7).
 
 ## Slices 08–12
 
