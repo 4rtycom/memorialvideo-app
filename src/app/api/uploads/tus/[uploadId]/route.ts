@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { appendUploadChunk, readUploadSession } from '@/server/media-storage';
+import { callerCanAccessTribute } from '@/server/upload-access';
 
 export const runtime = 'nodejs';
 
@@ -20,7 +21,7 @@ export async function OPTIONS() {
 export async function HEAD(_request: Request, { params }: Params) {
   const { uploadId } = await params;
   const session = await readUploadSession(uploadId);
-  if (!session) {
+  if (!session || !(await callerCanAccessTribute(session.tributePublicId))) {
     return new NextResponse(null, { status: 404, headers: { 'Tus-Resumable': '1.0.0' } });
   }
   return new NextResponse(null, {
@@ -46,6 +47,10 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: 'offset_required' }, { status: 400 });
   }
   const buffer = Buffer.from(await request.arrayBuffer());
+  const session = await readUploadSession(uploadId);
+  if (!session || !(await callerCanAccessTribute(session.tributePublicId))) {
+    return NextResponse.json({ error: 'not_found' }, { status: 404, headers: { 'Tus-Resumable': '1.0.0' } });
+  }
   const result = await appendUploadChunk(uploadId, offset, buffer);
   if (!result.ok) {
     return NextResponse.json(

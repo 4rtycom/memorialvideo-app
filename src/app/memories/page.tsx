@@ -24,6 +24,7 @@ export default async function MemoriesPage() {
       label: view.label,
       uiStatus: view.uiStatus,
       imagePath: m.imagePath,
+      contentType: m.contentType,
       createdAt: m.createdAt,
       source: m.source ?? 'owner',
       reviewState: m.reviewState ?? 'accepted',

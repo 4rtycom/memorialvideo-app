@@ -56,6 +56,10 @@ export const memoryAssetSchema = z.object({
   ingestStatus: assetStatusSchema,
   failureCode: z.enum(['heic', 'rejected', 'failed', 'generic']).nullable().optional(),
   imagePath: z.string().max(240),
+  /** SHA-256 of stored original bytes. Absent until a private upload finishes. */
+  checksumSha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+  /** Personal song uploads require an explicit rights confirmation. */
+  rightsConfirmed: z.boolean().optional(),
   /** Declared upload MIME — used to place short videos as TimelineContract video scenes. */
   contentType: z.string().max(120).optional(),
   /** Probed duration for video/mp4 (ms). Never invents length when absent. */
@@ -1123,12 +1127,14 @@ export async function upsertPeopleProfile(
 }
 
 export type AddMemoryInput = {
+  id?: string;
   title: string;
   year?: string;
   imagePath?: string;
   filename?: string;
   contentType?: string;
   byteSize?: number;
+  rightsConfirmed?: boolean;
   /** When true, start as READY (fixture/local sample after job complete). Default starts UPLOADING. */
   alreadyReady?: boolean;
   /** Start as PENDING_UPLOAD awaiting TUS bytes. */
@@ -1163,13 +1169,17 @@ export async function addMemory(publicId: string, input: AddMemoryInput): Promis
   }
 
   const memory = memoryAssetSchema.parse({
-    id: `mem_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`,
+    id:
+      input.id && /^mem_[a-f0-9]{16}$/.test(input.id)
+        ? input.id
+        : `mem_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`,
     title: input.title.trim(),
     year: input.year?.trim() ?? '',
     ingestStatus,
     failureCode,
     imagePath: input.imagePath?.trim() || '/fixtures/memory-a.png',
     contentType: input.contentType?.trim().slice(0, 120) || undefined,
+    rightsConfirmed: input.rightsConfirmed === true ? true : undefined,
     originalFilenameHint: filename ? filename.replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 80) : undefined,
     source,
     contributorName: input.contributorName?.trim().slice(0, 40) || undefined,
@@ -1248,7 +1258,7 @@ export async function advanceIngestJobs(publicId: string): Promise<{
 export async function attachMemoryBytes(
   publicId: string,
   memoryId: string,
-  input: { imagePath: string; contentType?: string; durationMs?: number },
+  input: { imagePath: string; contentType?: string; durationMs?: number; checksumSha256?: string },
 ): Promise<MemoryAsset | null> {
   const store = await readStore();
   const existing = store.tributes[publicId];
@@ -1268,6 +1278,7 @@ export async function attachMemoryBytes(
       ...memory,
       imagePath: input.imagePath,
       contentType: input.contentType?.trim().slice(0, 120) || memory.contentType,
+      checksumSha256: input.checksumSha256 ?? memory.checksumSha256,
       durationMs:
         typeof input.durationMs === 'number' && Number.isFinite(input.durationMs)
           ? Math.max(0, Math.round(input.durationMs))
@@ -1276,6 +1287,42 @@ export async function attachMemoryBytes(
         memory.ingestStatus === 'PENDING_UPLOAD' || memory.ingestStatus === 'UPLOADING'
           ? 'UPLOADED'
           : memory.ingestStatus,
+      updatedAt: now,
+    });
+    return updated;
+  });
+  if (!updated) {
+    return null;
+  }
+  const next = migrateTribute(
+    tributeSchema.parse({
+      ...existing,
+      memories,
+      updatedAt: now,
+    }) as unknown as Record<string, unknown>,
+  );
+  store.tributes[publicId] = next;
+  await writeStore(store);
+  return updated;
+}
+
+export async function markMemoryRejected(publicId: string, memoryId: string): Promise<MemoryAsset | null> {
+  const store = await readStore();
+  const existing = store.tributes[publicId];
+  if (!existing) {
+    return null;
+  }
+  const now = new Date().toISOString();
+  let updated: MemoryAsset | null = null;
+  const memories = existing.memories.map((memory) => {
+    if (memory.id !== memoryId) {
+      return memory;
+    }
+    updated = memoryAssetSchema.parse({
+      ...memory,
+      ingestStatus: 'REJECTED',
+      failureCode: 'rejected',
+      imagePath: '',
       updatedAt: now,
     });
     return updated;

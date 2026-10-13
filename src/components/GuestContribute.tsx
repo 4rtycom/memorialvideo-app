@@ -24,6 +24,7 @@ export function GuestContribute() {
   );
   const [error, setError] = useState<string | null>(null);
   const [retryable, setRetryable] = useState(false);
+  const [rights, setRights] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
@@ -92,6 +93,11 @@ export function GuestContribute() {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    const audio = file.type.startsWith('audio/') || /\.(mp3|wav|m4a)$/i.test(file.name);
+    if (audio && !rights) {
+      setError('Confirm you have the rights to this personal song before uploading it.');
+      return;
+    }
     setError(null);
     setProgress(null);
     setPhase('uploading');
@@ -108,6 +114,7 @@ export function GuestContribute() {
             year: String(new Date().getFullYear()),
             contributorName: name.trim() || undefined,
             contributorNote: note.trim() || undefined,
+            musicRightsConfirmed: audio ? true : undefined,
           }),
         });
         if (!response.ok) {
@@ -246,12 +253,16 @@ export function GuestContribute() {
 
       <div className="card mb-4 !p-6">
         <div className="text-[35px] text-[color:var(--accent)] mb-2">＋</div>
-        <div className="font-medium text-[20px] mb-1">Choose photos & videos</div>
-        <p className="text-[13px] text-[color:var(--muted)] m-0">JPG, PNG, MP4 · private upload</p>
+        <div className="font-medium text-[20px] mb-1">Choose photos, videos, or a song</div>
+        <p className="text-[13px] text-[color:var(--muted)] m-0">JPG, PNG, MP4, MP3, WAV · private upload</p>
+        <label className="flex items-start gap-2 text-[12px] text-[color:var(--muted)] text-left mt-3">
+          <input type="checkbox" checked={rights} onChange={(event) => setRights(event.target.checked)} />
+          <span>If this file is a personal song, I have the rights to share it privately.</span>
+        </label>
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,video/mp4"
+          accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,audio/mpeg,audio/wav,audio/mp4,.mp3,.wav,.m4a,.mov"
           className="sr-only"
           onChange={onFileChange}
         />

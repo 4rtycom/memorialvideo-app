@@ -25,6 +25,7 @@ export function AddMemoryControl({ nextIndex }: { nextIndex: number }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [rights, setRights] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
 
   function addSample() {
@@ -62,6 +63,11 @@ export function AddMemoryControl({ nextIndex }: { nextIndex: number }) {
     if (!file) {
       return;
     }
+    const audio = file.type.startsWith('audio/') || /\.(mp3|wav|m4a)$/i.test(file.name);
+    if (audio && !rights) {
+      setError('Confirm you have the rights to this personal song before uploading it.');
+      return;
+    }
     setError(null);
     setInfo(null);
     setProgress(null);
@@ -73,6 +79,7 @@ export function AddMemoryControl({ nextIndex }: { nextIndex: number }) {
           contentType: file.type || 'application/octet-stream',
           byteSize: file.size,
           year: String(new Date().getFullYear()),
+          musicRightsConfirmed: audio ? true : undefined,
         });
         if (auth.mode === 'rejected_heic') {
           setInfo('HEIC files need conversion on your device — we cannot prepare them automatically.');
@@ -98,11 +105,7 @@ export function AddMemoryControl({ nextIndex }: { nextIndex: number }) {
           assetId: auth.assetId,
         });
         setProgress(null);
-        setInfo(
-          auth.blocker
-            ? 'Bytes saved locally (resumable TUS). Supabase Storage TUS needs Docker/credentials.'
-            : 'Upload complete. Preparing memory…',
-        );
+        setInfo('Upload complete. Preparing memory…');
         router.refresh();
       } catch {
         setProgress(null);
@@ -116,7 +119,7 @@ export function AddMemoryControl({ nextIndex }: { nextIndex: number }) {
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg,image/png,image/heic,image/heif,video/mp4,.heic,.heif"
+        accept="image/jpeg,image/png,image/webp,image/heic,video/mp4,video/quicktime,audio/mpeg,audio/wav,audio/mp4,.mp3,.wav,.m4a,.mov"
         className="sr-only"
         onChange={onFileChange}
       />
@@ -133,6 +136,14 @@ export function AddMemoryControl({ nextIndex }: { nextIndex: number }) {
           {pending ? 'Working…' : 'Add a sample  ↗'}
         </Button>
       </div>
+      <label className="flex items-start gap-2 text-[12px] text-[color:var(--muted)] max-w-sm text-left">
+        <input
+          type="checkbox"
+          checked={rights}
+          onChange={(event) => setRights(event.target.checked)}
+        />
+        <span>I have the rights to include a personal song in this private memorial.</span>
+      </label>
       {progress ? (
         <p className="text-[12px] text-[color:var(--muted)] m-0" role="status">
           {progress}

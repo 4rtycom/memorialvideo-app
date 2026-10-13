@@ -22,6 +22,7 @@ export type CreatorLibraryCard = {
   uiStatus: AssetUiStatus;
   label: string;
   imagePath: string;
+  contentType?: string;
   createdAt: string;
   source: 'owner' | 'contributor';
   reviewState: 'pending' | 'accepted' | 'declined';

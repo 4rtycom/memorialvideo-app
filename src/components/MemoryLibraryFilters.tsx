@@ -115,7 +115,15 @@ export function MemoryLibraryFilters({ cards }: { cards: CreatorLibraryCard[] })
           {visible.map((m) => (
             <article key={m.id} className="memory-card">
               <div className="relative h-[136px]">
-                <Image src={m.imagePath} alt="" fill className="object-cover rounded-[10px]" sizes="150px" />
+                {m.contentType?.startsWith('audio/') ? (
+                  <div className="flex h-full items-center justify-center rounded-[10px] bg-[color:var(--paper)] text-[13px] text-[color:var(--muted)]">
+                    Personal song
+                  </div>
+                ) : m.contentType?.startsWith('video/') ? (
+                  <video src={m.imagePath} className="h-full w-full rounded-[10px] object-cover" muted />
+                ) : (
+                  <Image src={m.imagePath} alt="" fill className="object-cover rounded-[10px]" sizes="150px" />
+                )}
               </div>
               <div className="py-2 pr-2 flex flex-col">
                 <div className="text-[12px] font-medium text-[color:var(--accent)]">{m.year || '—'}</div>
