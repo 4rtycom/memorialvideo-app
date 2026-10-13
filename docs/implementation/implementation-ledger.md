@@ -43,7 +43,25 @@ Spec slices from the masterplan. Ticket IDs in `memorialvideo/docs/AUTONOMOUS_BU
 - Browser: account `film2.encode@example.com` uploaded three PNGs, arranged the first film, enqueued a preview, and advanced the worker to `preview · READY · verified`. ffprobe on the output: H.264 1920×1080, AAC, duration 20.5s, 330858 bytes.
 - Known: Remotion is opt-in (`CREATOR_USE_REMOTION=1`). This verified file is the default ffmpeg slideshow. Hosted render queue is not connected.
 
-## Slices 05–12
+## Slice 05 — Choose a style and preview the first draft
+
+- Status: VERIFIED
+- Build: existing style picker writes `themeKey` and applies it to the saved TimelineContract. The cinema page plays that contract.
+- Browser: reopened “Film Two”, chose Joyful, reload kept Joyful selected and Timeless unselected, `/film` showed “YOUR FILM IS READY” for that tribute. No page errors.
+
+## Slice 07 — Edit words, undo, render again
+
+- Status: VERIFIED
+- Browser: on `/film/edit`, saved the caption “A quiet garden”, reloaded and the caption was still there, lengthened the moment, undid that length change, reloaded with the caption intact, then enqueued another preview. Worker reached `preview · READY · verified · poster · current · v6`.
+- Known: the simple editor changes caption, duration, and transition. Scene reorder lives outside this pass.
+
+## Slice 06 — Two songs, trim, fade, mix
+
+- Status: TODO
+- Existing: Guided Audio can propose one development-catalog bed with ducking. Personal song upload and rights confirmation work. Encode tests cover fade and mix math on synthetic fixtures.
+- Missing: placing two personal songs in different sections, then trimming and fading them in the editor. Licensed catalogue masters remain XB-002.
+
+## Slices 08–12
 
 - Status: TODO
 - Blocked external items remain XB-002 licensed masters, XB-005 live Stripe, XB-009 voice, hosted database credentials, production deploy (auto-deploy stays off).
