@@ -27,7 +27,15 @@ Spec slices from the masterplan. Ticket IDs in `memorialvideo/docs/AUTONOMOUS_BU
 - Browser: Chrome on `http://127.0.0.1:3000`. Account `nora2.upload@example.com` created “Nora Two”, uploaded `family-song.wav` (rights checked) and `garden.png`, reload kept both on `/memories`. Owner `GET /api/media/mv_dbc9071389c34a6a/mem_d0aa9dfbdb3db83e` returned 200 (70 PNG bytes). Second account `owen2.upload@example.com` received 404.
 - Known gap: hosted Supabase Storage is not connected (XB-012). Bytes live under `.data/media` and are served only by the owner-checked route. The 30-photo/5-video/2-song bulk fixture was not replayed as one browser session. HEIC is rejected, not converted.
 
-## Slices 03–12
+## Slice 03 — Guest invite, submit, owner approve
+
+- Status: VERIFIED
+- Build: existing hashed invite, guest session, and review routes now carry a real private upload. A guest without an account stores JPEG bytes, cannot read another memorial’s media (403), and a revoked or expired token cannot be redeemed. The owner accepts the memory; another account cannot.
+- Tests: `corepack pnpm exec vitest run src/server/guest-upload.test.ts` — 2 passed.
+- Browser: Chrome owner `lea3.guest@example.com` created “Lea Three” and an invitation. A second browser uploaded `visit.png` as Sam and saw “Your memory has been received.” Guest fetch of the private media URL returned 403. Owner clicked “Add to film” and saw Accepted. After Revoke, a fresh browser showed “This invitation was revoked.”
+- Known: invitation links use `NEXT_PUBLIC_APP_URL`, which defaults to port 3002. The local dev server in this environment is port 3000, so the browser check rewrote the host. Email delivery of invites is not configured.
+
+## Slices 04–12
 
 - Status: TODO
 - Blocked external items remain XB-002 licensed masters, XB-005 live Stripe, XB-009 voice, hosted database credentials, production deploy (auto-deploy stays off).
