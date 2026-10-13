@@ -8,7 +8,7 @@ import { creatorEnv } from '@/server/env';
 
 export const runtime = 'nodejs';
 
-const VIDEO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../../../video');
+const VIDEO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../../packages/video');
 
 /**
  * Serves the synthetic development preview WAV for catalog tracks.

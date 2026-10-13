@@ -18,7 +18,7 @@ import {
 } from '@memorialvideo/contracts';
 
 const CREATOR_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const VIDEO_ROOT = path.resolve(CREATOR_ROOT, '../video');
+const VIDEO_ROOT = path.resolve(CREATOR_ROOT, 'packages/video');
 const VIDEO_PUBLIC = path.join(VIDEO_ROOT, 'public');
 const VIDEO_ENTRY = path.join(VIDEO_ROOT, 'src', 'index.ts');
 const SYNTHETIC_CATALOG_WAV = path.join(VIDEO_PUBLIC, 'fixtures', 'multitrack', 'music-synthetic.wav');

@@ -35,7 +35,15 @@ Spec slices from the masterplan. Ticket IDs in `memorialvideo/docs/AUTONOMOUS_BU
 - Browser: Chrome owner `lea3.guest@example.com` created “Lea Three” and an invitation. A second browser uploaded `visit.png` as Sam and saw “Your memory has been received.” Guest fetch of the private media URL returned 403. Owner clicked “Add to film” and saw Accepted. After Revoke, a fresh browser showed “This invitation was revoked.”
 - Known: invitation links use `NEXT_PUBLIC_APP_URL`, which defaults to port 3002. The local dev server in this environment is port 3000, so the browser check rewrote the host. Email delivery of invites is not configured.
 
-## Slices 04–12
+## Slice 04 — One playable film from persisted photos
+
+- Status: VERIFIED
+- Build: local encoder fixture root is `packages/video` (this app is not beside a `video` package). Preview jobs encode the saved TimelineContract with ffmpeg by default.
+- Tests: `corepack pnpm exec vitest run src/server/local-encode.test.ts` — 19 passed, including a 1080p H.264/AAC QC file.
+- Browser: account `film2.encode@example.com` uploaded three PNGs, arranged the first film, enqueued a preview, and advanced the worker to `preview · READY · verified`. ffprobe on the output: H.264 1920×1080, AAC, duration 20.5s, 330858 bytes.
+- Known: Remotion is opt-in (`CREATOR_USE_REMOTION=1`). This verified file is the default ffmpeg slideshow. Hosted render queue is not connected.
+
+## Slices 05–12
 
 - Status: TODO
 - Blocked external items remain XB-002 licensed masters, XB-005 live Stripe, XB-009 voice, hosted database credentials, production deploy (auto-deploy stays off).
