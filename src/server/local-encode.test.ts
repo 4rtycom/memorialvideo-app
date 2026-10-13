@@ -1148,7 +1148,7 @@ describe('creator local READY encode + download gate', () => {
     );
     expect(made.status).toBe(0);
 
-    const speechWav = path.join(creatorRoot, '../video/public/fixtures/multitrack/speech.wav');
+    const speechWav = path.join(creatorRoot, 'packages/video/public/fixtures/multitrack/speech.wav');
     const stillPng = path.join(creatorRoot, 'public/fixtures/memory-a.png');
     const timeline = parseTimelineContract({
       schemaVersion: 1,
@@ -1346,7 +1346,7 @@ describe('creator local READY encode + download gate', () => {
     const { fileURLToPath } = await import('node:url');
     const videoPublic = path.resolve(
       path.dirname(fileURLToPath(import.meta.url)),
-      '../../../video/public',
+      '../../packages/video/public',
     );
     const musicWav = path.join(videoPublic, 'fixtures/multitrack/music-synthetic.wav');
     const narrationWav = path.join(videoPublic, 'fixtures/multitrack/narration.wav');

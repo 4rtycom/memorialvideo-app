@@ -91,6 +91,9 @@ export function buildTimelineFromTribute(tribute: TimelineTributeInput): Timelin
   ];
 
   for (const [index, memory] of ready.entries()) {
+    if ((memory.contentType ?? '').startsWith('audio/')) {
+      continue;
+    }
     const caption = memory.title.slice(0, 180);
     const transitionIn = index === 0 ? 'dissolve' : 'fade';
     if (

@@ -3,7 +3,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState, useTransition } from 'react';
+import type { LaunchLanguage } from '@memorialvideo/contracts';
 import { Button, ErrorState } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
 import { classifyInviteRedeemFailure, inviteRedeemMessage } from '@/lib/async-ui';
 import {
   completeLocalUpload,
@@ -24,13 +26,24 @@ export function GuestContribute() {
   );
   const [error, setError] = useState<string | null>(null);
   const [retryable, setRetryable] = useState(false);
+  const [rights, setRights] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
+  const [locale, setLocale] = useState<LaunchLanguage>('en');
   const [name, setName] = useState('');
   const [note, setNote] = useState('');
   const [pending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
   const tokenRef = useRef('');
   const started = useRef(false);
+
+  useEffect(() => {
+    void fetch('/api/locale')
+      .then((response) => response.json())
+      .then((body: { locale?: LaunchLanguage }) => {
+        if (body.locale) setLocale(body.locale);
+      })
+      .catch(() => undefined);
+  }, []);
 
   function redeem() {
     const token = tokenRef.current;
@@ -92,6 +105,11 @@ export function GuestContribute() {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    const audio = file.type.startsWith('audio/') || /\.(mp3|wav|m4a)$/i.test(file.name);
+    if (audio && !rights) {
+      setError('Confirm you have the rights to this personal song before uploading it.');
+      return;
+    }
     setError(null);
     setProgress(null);
     setPhase('uploading');
@@ -108,6 +126,7 @@ export function GuestContribute() {
             year: String(new Date().getFullYear()),
             contributorName: name.trim() || undefined,
             contributorNote: note.trim() || undefined,
+            musicRightsConfirmed: audio ? true : undefined,
           }),
         });
         if (!response.ok) {
@@ -137,7 +156,7 @@ export function GuestContribute() {
         setPhase('thanks');
       } catch {
         setPhase('ready');
-        setError('Upload did not finish. Please try again.');
+        setError(creatorT(locale, 'creator.guest.uploadFailed'));
       }
     });
   }
@@ -146,7 +165,7 @@ export function GuestContribute() {
     return (
       <main className="px-6 pt-16 text-center">
         <p className="eyebrow">OPENING INVITATION</p>
-        <h1 className="serif text-[40px] leading-[1.05] m-0">One moment…</h1>
+        <h1 className="serif text-[40px] leading-[1.05] m-0">{creatorT(locale, 'creator.guest.oneMoment')}</h1>
       </main>
     );
   }
@@ -155,17 +174,17 @@ export function GuestContribute() {
     return (
       <main className="px-6 pt-16 text-center">
         <p className="eyebrow">INVITATION</p>
-        <h1 className="serif text-[40px] leading-[1.05] m-0 mb-4">Unable to open</h1>
+        <h1 className="serif text-[40px] leading-[1.05] m-0 mb-4">{creatorT(locale, 'creator.guest.unable')}</h1>
         <div className="max-w-md mx-auto mb-8 text-left">
           <ErrorState
             title={error ?? inviteRedeemMessage(undefined)}
-            body="Your contribution was not started."
+            body={creatorT(locale, 'creator.guest.notStarted')}
             action={
               retryable ? (
-                <Button onClick={redeem}>Try again</Button>
+                <Button onClick={redeem}>{creatorT(locale, 'creator.guest.tryAgain')}</Button>
               ) : (
                 <Button href="/" variant="secondary">
-                  Back
+                  {creatorT(locale, 'creator.guest.back')}
                 </Button>
               )
             }
@@ -173,7 +192,7 @@ export function GuestContribute() {
         </div>
         {retryable ? (
           <Link href="/" className="btn btn-secondary btn-block">
-            Back
+            {creatorT(locale, 'creator.guest.back')}
           </Link>
         ) : null}
       </main>
@@ -184,18 +203,14 @@ export function GuestContribute() {
     return (
       <main className="px-6 pt-16 text-center">
         <p className="eyebrow">THANK YOU</p>
-        <h1 className="serif text-[46px] leading-[1.05] m-0 mb-5">Your memory has been received.</h1>
-        <p className="text-[color:var(--muted)] mb-10">
-          The family will review it privately before anything is added to the film.
-        </p>
+        <h1 className="serif text-[46px] leading-[1.05] m-0 mb-5">{creatorT(locale, 'creator.guest.received')}</h1>
+        <p className="text-[color:var(--muted)] mb-10">{creatorT(locale, 'creator.guest.review')}</p>
         <div className="card soft !p-6 mb-8 text-left">
-          <div className="serif text-[28px] mb-2">Gently held.</div>
-          <p className="text-[color:var(--muted)] m-0">
-            Nothing is published. Nothing is shared without the owner’s approval.
-          </p>
+          <div className="serif text-[28px] mb-2">{creatorT(locale, 'creator.guest.held')}</div>
+          <p className="text-[color:var(--muted)] m-0">{creatorT(locale, 'creator.guest.privateNote')}</p>
         </div>
         <button type="button" className="btn btn-secondary btn-block" onClick={() => setPhase('ready')}>
-          Add another
+          {creatorT(locale, 'creator.guest.addAnother')}
         </button>
       </main>
     );
@@ -206,7 +221,9 @@ export function GuestContribute() {
       <div className="relative h-[220px] rounded-[10px] overflow-hidden mb-6">
         <Image src="/fixtures/guest-portrait.png" alt="" fill className="object-cover" sizes="342px" priority />
         <div className="absolute inset-x-0 bottom-0 bg-[color:var(--primary)] text-white px-5 py-4">
-          <div className="serif text-[34px] leading-none">{guest?.displayName ?? 'A loved one'}</div>
+          <div className="serif text-[34px] leading-none">
+            {guest?.displayName ?? creatorT(locale, 'creator.guest.lovedOne')}
+          </div>
           {guest?.years ? (
             <div className="text-[13px] text-[color:var(--cinema-soft)] mt-1">{guest.years}</div>
           ) : null}
@@ -214,21 +231,21 @@ export function GuestContribute() {
       </div>
       <p className="eyebrow">A LOVING INVITATION</p>
       <h1 className="serif text-[42px] leading-[1.03] m-0 mb-4">
-        Share a memory
+        {creatorT(locale, 'creator.guest.shareMemory')}
         {guest?.displayName ? (
           <>
             <br />
-            of {guest.displayName.split(' ')[0]}.
+            {creatorT(locale, 'creator.guest.ofName').replace('{name}', guest.displayName.split(' ')[0] ?? '')}
           </>
         ) : (
           '.'
         )}
       </h1>
       <p className="text-[15px] text-[color:var(--muted)] mb-6">
-        No account needed. Your upload stays private until the family reviews it.
+        {creatorT(locale, 'creator.guest.noAccount')}
       </p>
 
-      <label className="block font-medium mb-2">Your first name (optional)</label>
+      <label className="block font-medium mb-2">{creatorT(locale, 'creator.guest.firstName')}</label>
       <input
         className="field mb-4"
         value={name}
@@ -236,7 +253,7 @@ export function GuestContribute() {
         maxLength={40}
         autoComplete="given-name"
       />
-      <label className="block font-medium mb-2">A short note (optional)</label>
+      <label className="block font-medium mb-2">{creatorT(locale, 'creator.guest.note')}</label>
       <textarea
         className="field textarea mb-6"
         value={note}
@@ -246,12 +263,16 @@ export function GuestContribute() {
 
       <div className="card mb-4 !p-6">
         <div className="text-[35px] text-[color:var(--accent)] mb-2">＋</div>
-        <div className="font-medium text-[20px] mb-1">Choose photos & videos</div>
-        <p className="text-[13px] text-[color:var(--muted)] m-0">JPG, PNG, MP4 · private upload</p>
+        <div className="font-medium text-[20px] mb-1">{creatorT(locale, 'creator.guest.choose')}</div>
+        <p className="text-[13px] text-[color:var(--muted)] m-0">JPG, PNG, MP4, MP3, WAV · private upload</p>
+        <label className="flex items-start gap-2 text-[12px] text-[color:var(--muted)] text-left mt-3">
+          <input type="checkbox" checked={rights} onChange={(event) => setRights(event.target.checked)} />
+          <span>{creatorT(locale, 'creator.guest.songRights')}</span>
+        </label>
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,video/mp4"
+          accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,audio/mpeg,audio/wav,audio/mp4,.mp3,.wav,.m4a,.mov"
           className="sr-only"
           onChange={onFileChange}
         />
@@ -261,7 +282,9 @@ export function GuestContribute() {
           disabled={pending || phase === 'uploading'}
           onClick={() => inputRef.current?.click()}
         >
-          {phase === 'uploading' ? `Uploading${progress ? ` ${progress}` : '…'}` : 'Add photos or videos  ↗'}
+          {phase === 'uploading'
+            ? `${creatorT(locale, 'creator.memories.uploading')}${progress ? ` ${progress}` : ''}`
+            : `${creatorT(locale, 'creator.guest.addMedia')}  ↗`}
         </button>
       </div>
       {error ? (

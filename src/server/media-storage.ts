@@ -184,16 +184,108 @@ export async function readMediaFile(
   return { bytes, contentType };
 }
 
+function ascii(bytes: Uint8Array, start: number, length: number): string {
+  return String.fromCharCode(...bytes.subarray(start, start + length));
+}
+
+/** Content type from magic bytes. Null when the file is not a supported photo, video, or song. */
+export function sniffMediaBytes(bytes: Uint8Array): string | null {
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return 'image/jpeg';
+  }
+  if (
+    bytes.length >= 8 &&
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47
+  ) {
+    return 'image/png';
+  }
+  if (bytes.length >= 12 && ascii(bytes, 0, 4) === 'RIFF' && ascii(bytes, 8, 4) === 'WEBP') {
+    return 'image/webp';
+  }
+  if (bytes.length >= 12 && ascii(bytes, 0, 4) === 'RIFF' && ascii(bytes, 8, 4) === 'WAVE') {
+    return 'audio/wav';
+  }
+  if (bytes.length >= 3 && bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
+    return 'audio/mpeg';
+  }
+  if (bytes.length >= 2 && bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0) {
+    return 'audio/mpeg';
+  }
+  if (bytes.length >= 12 && ascii(bytes, 4, 4) === 'ftyp') {
+    const brand = ascii(bytes, 8, 4);
+    if (brand === 'M4A ' || brand === 'M4B ' || brand === 'M4P ') {
+      return 'audio/mp4';
+    }
+    return 'video/mp4';
+  }
+  return null;
+}
+
+export function sniffedMatchesDeclared(declared: string, sniffed: string): boolean {
+  const normalized = declared.toLowerCase().split(';')[0]?.trim() ?? '';
+  if (normalized === 'application/octet-stream') {
+    return true;
+  }
+  if (sniffed === 'image/jpeg') {
+    return normalized === 'image/jpeg' || normalized === 'image/jpg';
+  }
+  if (sniffed === 'image/png') {
+    return normalized === 'image/png';
+  }
+  if (sniffed === 'image/webp') {
+    return normalized === 'image/webp';
+  }
+  if (sniffed === 'audio/wav') {
+    return normalized.includes('wav');
+  }
+  if (sniffed === 'audio/mpeg') {
+    return normalized.includes('mpeg') || normalized.includes('mp3');
+  }
+  if (sniffed === 'audio/mp4' || sniffed === 'video/mp4') {
+    return (
+      normalized.startsWith('video/') ||
+      normalized === 'audio/mp4' ||
+      normalized === 'audio/m4a' ||
+      normalized === 'audio/x-m4a'
+    );
+  }
+  return false;
+}
+
+export function isAudioUpload(contentType: string, filename: string): boolean {
+  const type = contentType.toLowerCase();
+  const name = filename.toLowerCase();
+  return type.startsWith('audio/') || name.endsWith('.mp3') || name.endsWith('.wav') || name.endsWith('.m4a');
+}
+
+export async function deleteMediaFile(tributePublicId: string, assetId: string): Promise<void> {
+  const file = mediaFilePath(tributePublicId, assetId);
+  if (!existsSync(file)) {
+    return;
+  }
+  const { unlink } = await import('node:fs/promises');
+  await unlink(file);
+}
+
 export function isAllowedUploadContentType(contentType: string, filename: string): boolean {
   const type = contentType.toLowerCase();
   const name = filename.toLowerCase();
-  if (type.startsWith('image/jpeg') || type.startsWith('image/png') || type === 'image/jpg') {
+  if (type.startsWith('image/jpeg') || type.startsWith('image/png') || type === 'image/jpg' || type === 'image/webp') {
+    return true;
+  }
+  if (name.endsWith('.webp') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png')) {
     return true;
   }
   if (type === 'image/heic' || type === 'image/heif' || name.endsWith('.heic') || name.endsWith('.heif')) {
     return true;
   }
-  if (type === 'video/mp4' || name.endsWith('.mp4')) {
+  if (type === 'video/mp4' || type === 'video/quicktime' || name.endsWith('.mp4') || name.endsWith('.mov')) {
+    return true;
+  }
+  if (isAudioUpload(type, name)) {
     return true;
   }
   return false;

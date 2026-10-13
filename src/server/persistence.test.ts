@@ -96,10 +96,11 @@ describe('creator persistence resolution', () => {
     });
   });
 
-  it('reports database preferred-but-unwired when DB env exists and disk is not writable', async () => {
+  it('reports database preferred-but-unwired when only a service role is set and disk is not writable', async () => {
     chmodSync(dataRoot, 0o555);
     process.env.VERCEL = '1';
-    process.env.DATABASE_URL = 'postgres://user:pass@127.0.0.1:5432/memorial';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-not-real';
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
     const persistence = await import('./persistence');
     const resolved = await persistence.resolvePersistence();
     expect(resolved).toEqual({
@@ -107,6 +108,18 @@ describe('creator persistence resolution', () => {
       writable: false,
       xb012Persistence: true,
       reason: 'database_preferred_unwired',
+    });
+  });
+
+  it('treats DATABASE_URL as a wired PostgreSQL store', async () => {
+    process.env.DATABASE_URL = 'postgres://user:pass@127.0.0.1:5432/memorial';
+    const persistence = await import('./persistence');
+    const resolved = await persistence.resolvePersistence();
+    expect(resolved).toEqual({
+      kind: 'database',
+      writable: true,
+      xb012Persistence: false,
+      reason: 'postgres',
     });
   });
 });

@@ -40,7 +40,9 @@ export function SetupForm() {
         setError(
           code === 'persistence_unavailable'
             ? 'Saving is temporarily unavailable on this host. Please try again later.'
-            : 'We could not save those details. Please try again.',
+            : code === 'auth_required'
+              ? 'Sign in before creating a memorial. Your details were not saved.'
+              : 'We could not save those details. Please try again.',
         );
         return;
       }

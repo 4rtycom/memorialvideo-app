@@ -1,11 +1,18 @@
 import { cookies } from 'next/headers';
+import { readFile } from 'node:fs/promises';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { resolveGuestContext } from '@/server/invites';
 import { probeWithFfprobe } from '@/server/local-encode';
-import { finalizeUploadToMedia, mediaFilePath } from '@/server/media-storage';
+import {
+  deleteMediaFile,
+  finalizeUploadToMedia,
+  mediaFilePath,
+  sniffedMatchesDeclared,
+  sniffMediaBytes,
+} from '@/server/media-storage';
 import { loadActiveTribute } from '@/server/session';
-import { attachMemoryBytes, getTribute, guestSessionCookieName } from '@/server/store';
+import { attachMemoryBytes, getTribute, guestSessionCookieName, markMemoryRejected } from '@/server/store';
 
 export const runtime = 'nodejs';
 
@@ -50,9 +57,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'mismatch' }, { status: 403 });
   }
 
+  const absolute = mediaFilePath(finalized.session.tributePublicId, finalized.session.assetId);
+  const storedBytes = await readFile(absolute);
+  const sniffed = sniffMediaBytes(storedBytes);
+  if (!sniffed || !sniffedMatchesDeclared(finalized.contentType, sniffed)) {
+    await deleteMediaFile(finalized.session.tributePublicId, finalized.session.assetId);
+    await markMemoryRejected(tributePublicId, parsed.data.assetId);
+    return NextResponse.json({ error: 'content_mismatch' }, { status: 415 });
+  }
+  if (sniffed.startsWith('audio/')) {
+    const current = await getTribute(tributePublicId);
+    const memory = current?.memories.find((item) => item.id === parsed.data.assetId);
+    if (memory?.rightsConfirmed !== true) {
+      await deleteMediaFile(finalized.session.tributePublicId, finalized.session.assetId);
+      await markMemoryRejected(tributePublicId, parsed.data.assetId);
+      return NextResponse.json({ error: 'rights_required' }, { status: 400 });
+    }
+  }
+
   let durationMs: number | undefined;
-  if (finalized.contentType.toLowerCase().startsWith('video/')) {
-    const absolute = mediaFilePath(finalized.session.tributePublicId, finalized.session.assetId);
+  if (sniffed === 'video/mp4') {
     const probe = await probeWithFfprobe(absolute);
     if (probe.durationSeconds && Number.isFinite(probe.durationSeconds) && probe.durationSeconds > 0) {
       durationMs = Math.round(probe.durationSeconds * 1000);
@@ -61,8 +85,9 @@ export async function POST(request: Request) {
 
   const memory = await attachMemoryBytes(tributePublicId, parsed.data.assetId, {
     imagePath: finalized.mediaPath,
-    contentType: finalized.contentType,
+    contentType: sniffed,
     durationMs,
+    checksumSha256: finalized.sha256,
   });
   if (!memory) {
     return NextResponse.json({ error: 'attach_failed' }, { status: 404 });

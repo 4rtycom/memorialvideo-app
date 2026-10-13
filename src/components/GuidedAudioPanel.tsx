@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import type { LaunchLanguage } from '@memorialvideo/contracts';
 import { Button, Card, ErrorState } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
 
 type Overview = {
   hasTimeline: boolean;
@@ -11,17 +13,21 @@ type Overview = {
   pending: boolean;
   duckingRegions: number;
   trackKinds: string[];
+  personalSongs?: Array<{ id: string; title: string }>;
+  musicClips?: Array<{ id: string; assetId?: string; startFrame: number; gainDb: number; fadeInFrames: number }>;
   tts: { available: false; status: string; reason: string };
   note: string;
 };
 
-export function GuidedAudioPanel() {
+export function GuidedAudioPanel({ locale }: { locale: LaunchLanguage }) {
   const router = useRouter();
   const [overview, setOverview] = useState<Overview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [rights, setRights] = useState(false);
+  const [fadeFrames, setFadeFrames] = useState(15);
+  const [secondGain, setSecondGain] = useState(-6);
 
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'failed'>('loading');
 
@@ -30,7 +36,7 @@ export function GuidedAudioPanel() {
     void fetch('/api/audio')
       .then(async (r) => {
         if (!r.ok) {
-          setError('Could not load Guided Audio.');
+          setError(creatorT(locale, 'creator.songs.loadFailed'));
           setLoadState('failed');
           return;
         }
@@ -41,7 +47,7 @@ export function GuidedAudioPanel() {
         setLoadState('ready');
       })
       .catch(() => {
-        setError('Could not load Guided Audio.');
+        setError(creatorT(locale, 'creator.songs.loadFailed'));
         setLoadState('failed');
       });
   }
@@ -49,6 +55,53 @@ export function GuidedAudioPanel() {
   useEffect(() => {
     reload();
   }, []);
+
+  function placeSongs() {
+    const songs = overview?.personalSongs ?? [];
+    if (songs.length < 2 || !overview?.hasTimeline) {
+      setError(creatorT(locale, 'creator.songs.placeNeed'));
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const listed = await fetch('/api/tributes/active/timeline');
+      const timelineBody = (await listed.json().catch(() => null)) as { totalFrames?: number } | null;
+      const total = timelineBody?.totalFrames ?? 0;
+      const span = Math.max(30, Math.floor(total / 3));
+      const response = await fetch('/api/audio', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          action: 'place_personal',
+          songs: [
+            {
+              memoryId: songs[0]!.id,
+              startFrame: 0,
+              durationFrames: Math.min(span, total),
+              fadeInFrames: fadeFrames,
+              fadeOutFrames: fadeFrames,
+              gainDb: 0,
+            },
+            {
+              memoryId: songs[1]!.id,
+              startFrame: Math.max(span, Math.min(total - span, span * 2)),
+              durationFrames: Math.min(span, total - Math.max(span, Math.min(total - span, span * 2))),
+              fadeInFrames: fadeFrames,
+              fadeOutFrames: fadeFrames,
+              gainDb: secondGain,
+            },
+          ],
+        }),
+      });
+      if (!response.ok) {
+        setError('Those songs could not be placed. Check rights, trim length, and that they start in different sections.');
+        return;
+      }
+      setStatus(creatorT(locale, 'creator.songs.placed'));
+      reload();
+      router.refresh();
+    });
+  }
 
   function run(action: string, okMessage: string) {
     setError(null);
@@ -86,14 +139,9 @@ export function GuidedAudioPanel() {
 
   return (
     <Card className="!p-7 mt-5" data-testid="guided-audio-panel">
-      <h2 className="serif text-[30px] m-0 mb-2">Guided Audio</h2>
-      <p className="text-[color:var(--muted)] mb-3">
-        Propose a ceremony-safe AudioMixContract with automatic music ducking. Voice cloning stays
-        blocked.
-      </p>
-      <p className="text-[12px] text-[color:var(--accent)] mb-4">
-        TTS / voice recreation unavailable (XB-009).
-      </p>
+      <h2 className="serif text-[30px] m-0 mb-2">{creatorT(locale, 'creator.songs.title')}</h2>
+      <p className="text-[color:var(--muted)] mb-3">{creatorT(locale, 'creator.songs.intro')}</p>
+      <p className="text-[12px] text-[color:var(--accent)] mb-4">{creatorT(locale, 'creator.songs.voiceBlocked')}</p>
       {loadState === 'loading' && !overview ? (
         <p className="text-[13px] text-[color:var(--muted)] mb-4" role="status">
           Loading Guided Audio…
@@ -101,11 +149,11 @@ export function GuidedAudioPanel() {
       ) : null}
       {loadState === 'failed' && !overview ? (
         <ErrorState
-          title={error ?? 'Could not load Guided Audio.'}
-          body="Your tribute work is still safe."
+          title={error ?? creatorT(locale, 'creator.songs.loadFailed')}
+          body={creatorT(locale, 'creator.songs.safe')}
           action={
             <Button variant="secondary" onClick={reload}>
-              Retry
+              {creatorT(locale, 'creator.songs.retry')}
             </Button>
           }
         />
@@ -123,6 +171,46 @@ export function GuidedAudioPanel() {
               (development catalog).
             </span>
           </label>
+          {(overview?.personalSongs?.length ?? 0) >= 2 ? (
+            <div className="mb-4 grid gap-3">
+              <p className="text-[14px] m-0">{creatorT(locale, 'creator.songs.placeBody')}</p>
+              <label className="text-[13px] text-[color:var(--muted)]">
+                {creatorT(locale, 'creator.songs.fade')}
+                <input
+                  className="field mt-1"
+                  type="number"
+                  min={0}
+                  max={120}
+                  value={fadeFrames}
+                  onChange={(event) => setFadeFrames(Number(event.target.value))}
+                />
+              </label>
+              <label className="text-[13px] text-[color:var(--muted)]">
+                {creatorT(locale, 'creator.songs.gain')}
+                <input
+                  className="field mt-1"
+                  type="number"
+                  min={-60}
+                  max={12}
+                  value={secondGain}
+                  onChange={(event) => setSecondGain(Number(event.target.value))}
+                />
+              </label>
+              <Button variant="secondary" disabled={pending} onClick={placeSongs}>
+                {creatorT(locale, 'creator.songs.placeButton')}
+              </Button>
+            </div>
+          ) : (
+            <p className="text-[13px] text-[color:var(--muted)] mb-4">
+              {creatorT(locale, 'creator.songs.needTwo')}
+            </p>
+          )}
+          {(overview?.musicClips?.length ?? 0) >= 2 ? (
+            <p className="text-[13px] mb-4" role="status">
+              {overview?.musicClips?.length} {creatorT(locale, 'creator.songs.onTimeline')}
+              {overview?.musicClips?.map((clip) => ` · ${clip.assetId ?? clip.id} at frame ${clip.startFrame}`).join('')}
+            </p>
+          ) : null}
           <div className="flex flex-wrap gap-3 mb-3">
             <Button
               variant="secondary"
@@ -172,10 +260,10 @@ export function GuidedAudioPanel() {
           {error ? (
             <ErrorState
               title={error}
-              body="Your tribute work is still safe."
+              body={creatorT(locale, 'creator.songs.safe')}
               action={
                 <Button variant="secondary" onClick={reload}>
-                  Retry
+                  {creatorT(locale, 'creator.songs.retry')}
                 </Button>
               }
             />

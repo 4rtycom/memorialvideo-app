@@ -2,13 +2,16 @@ import { AppShell } from '@/components/AppShell';
 import { ErrorRecovery } from '@/components/ErrorRecovery';
 import { LifeStoryPanel } from '@/components/LifeStoryPanel';
 import { Eyebrow, Hero, Lede } from '@/components/ui';
-import { possessive, shellProject } from '@/lib/tribute-view';
+import { creatorT } from '@/lib/creator-ui-messages';
+import { shellProject } from '@/lib/tribute-view';
+import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { ensureStoryChapters } from '@/server/store';
 
 export default async function LifeStoryPage() {
   const active = await loadActiveTribute();
   const tribute = active ? (await ensureStoryChapters(active.publicId)) ?? active : null;
+  const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
   const shell = shellProject(tribute);
 
   return (
@@ -16,15 +19,14 @@ export default async function LifeStoryPage() {
       brand={shell.brand}
       title={shell.title}
       ownerInitial={shell.ownerInitial}
+      locale={locale}
       footerTitle="Create it in your own time."
       footerBody="Everything saves as you go."
     >
       <Eyebrow>A STORY ONLY THEIR LIFE COULD TELL</Eyebrow>
       <Hero>A beautiful beginning is taking shape.</Hero>
       <Lede>
-        {tribute
-          ? `We group ${possessive(tribute.displayName)} memories by the years you provided. Change any chapter title.`
-          : 'We suggest a natural story from your memories. Change any chapter or detail.'}
+        {creatorT(locale, 'creator.story.pageLede')}
       </Lede>
 
       {tribute ? (
@@ -37,6 +39,7 @@ export default async function LifeStoryPage() {
             year: m.year,
           }))}
           displayName={tribute.displayName}
+          locale={locale}
         />
       ) : (
         <ErrorRecovery

@@ -43,6 +43,7 @@ import {
   resolvePersistence,
   writeKvStoreDocument,
 } from './persistence';
+import { actorAllowsTribute, currentAccountId } from './actor';
 import { applyFilmChoicesToTimeline, buildTimelineFromTribute } from './timeline';
 import { lifeSpanLabel as lifeSpanFromLabels } from './tribute-helpers';
 
@@ -55,6 +56,10 @@ export const memoryAssetSchema = z.object({
   ingestStatus: assetStatusSchema,
   failureCode: z.enum(['heic', 'rejected', 'failed', 'generic']).nullable().optional(),
   imagePath: z.string().max(240),
+  /** SHA-256 of stored original bytes. Absent until a private upload finishes. */
+  checksumSha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
+  /** Personal song uploads require an explicit rights confirmation. */
+  rightsConfirmed: z.boolean().optional(),
   /** Declared upload MIME — used to place short videos as TimelineContract video scenes. */
   contentType: z.string().max(120).optional(),
   /** Probed duration for video/mp4 (ms). Never invents length when absent. */
@@ -332,6 +337,12 @@ export const tributeSchema = z.object({
     )
     .max(40)
     .default([]),
+  /** Signed-in account that owns this tribute. Null only for unsigned local drafts. */
+  ownerAccountId: z
+    .string()
+    .regex(/^acc_[a-f0-9]{16}$/)
+    .nullable()
+    .default(null),
   openingTitle: z.string().max(180).default(''),
   enhancementConsentLocal: z.boolean().default(false),
   enhancementRequests: z
@@ -412,12 +423,22 @@ export const paymentEventSchema = z.object({
 
 export type StoredPaymentEvent = z.infer<typeof paymentEventSchema>;
 
+export const accountSchema = z.object({
+  id: z.string().regex(/^acc_[a-f0-9]{16}$/),
+  emailHash: z.string().regex(/^[a-f0-9]{64}$/),
+  passwordHash: z.string().min(20).max(300),
+  createdAt: z.string().min(10).max(40),
+});
+
+export type CreatorAccount = z.infer<typeof accountSchema>;
+
 const storeSchema = z.object({
   version: z.literal(5),
   tributes: z.record(z.string(), tributeSchema),
   guestSessions: z.record(z.string(), guestSessionSchema).default({}),
   orders: z.record(z.string(), checkoutOrderSchema).default({}),
   paymentEvents: z.record(z.string(), paymentEventSchema).default({}),
+  accounts: z.record(z.string(), accountSchema).default({}),
 });
 
 export type CreatorStore = z.infer<typeof storeSchema>;
@@ -433,6 +454,14 @@ export function guestSessionCookieName(): string {
   return GUEST_COOKIE;
 }
 
+export async function loadCreatorStore(): Promise<CreatorStore> {
+  return readStore();
+}
+
+export async function saveCreatorStore(store: CreatorStore): Promise<void> {
+  await writeStore(store);
+}
+
 function storeDir(): string {
   return path.join(process.cwd(), '.data');
 }
@@ -442,7 +471,7 @@ function storePath(): string {
 }
 
 function emptyStore(): CreatorStore {
-  return { version: 5, tributes: {}, guestSessions: {}, orders: {}, paymentEvents: {} };
+  return { version: 5, tributes: {}, guestSessions: {}, orders: {}, paymentEvents: {}, accounts: {} };
 }
 
 function migrateMemory(raw: Record<string, unknown>): MemoryAsset {
@@ -544,6 +573,7 @@ function parseStoreDocument(rawText: string): CreatorStore {
     guestSessions?: Record<string, unknown>;
     orders?: Record<string, unknown>;
     paymentEvents?: Record<string, unknown>;
+    accounts?: Record<string, unknown>;
   };
   const tributes: Record<string, z.infer<typeof tributeSchema>> = {};
   for (const [id, tribute] of Object.entries(raw.tributes ?? {})) {
@@ -570,12 +600,27 @@ function parseStoreDocument(rawText: string): CreatorStore {
       paymentEvents[id] = parsed.data;
     }
   }
-  return storeSchema.parse({ version: 5, tributes, guestSessions, orders, paymentEvents });
+  const accounts: Record<string, CreatorAccount> = {};
+  for (const [id, account] of Object.entries(raw.accounts ?? {})) {
+    const parsed = accountSchema.safeParse(account);
+    if (parsed.success) {
+      accounts[id] = parsed.data;
+    }
+  }
+  return storeSchema.parse({ version: 5, tributes, guestSessions, orders, paymentEvents, accounts });
 }
 
-async function readStore(): Promise<CreatorStore> {
+async function readStoreUnscoped(): Promise<CreatorStore> {
   const persistence = await resolvePersistence();
   try {
+    if (persistence.kind === 'database') {
+      const { readSqlDocument } = await import('./sql-store');
+      const document = await readSqlDocument();
+      if (!document) {
+        return emptyStore();
+      }
+      return parseStoreDocument(document);
+    }
     if (persistence.kind === 'vercel_kv') {
       const document = await readKvStoreDocument();
       if (!document) {
@@ -593,9 +638,29 @@ async function readStore(): Promise<CreatorStore> {
   }
 }
 
-async function writeStore(store: CreatorStore): Promise<void> {
+async function readStore(): Promise<CreatorStore> {
+  const store = await readStoreUnscoped();
+  const actor = currentAccountId();
+  if (!actor) {
+    return store;
+  }
+  const tributes: CreatorStore['tributes'] = {};
+  for (const [id, tribute] of Object.entries(store.tributes)) {
+    if (tribute.ownerAccountId === actor) {
+      tributes[id] = tribute;
+    }
+  }
+  return { ...store, tributes };
+}
+
+async function persistStore(store: CreatorStore): Promise<void> {
   const persistence = await assertPersistenceWritable();
   const payload = `${JSON.stringify(storeSchema.parse(store), null, 2)}\n`;
+  if (persistence.kind === 'database') {
+    const { writeSqlDocument } = await import('./sql-store');
+    await writeSqlDocument(payload);
+    return;
+  }
   if (persistence.kind === 'vercel_kv') {
     await writeKvStoreDocument(payload);
     return;
@@ -615,6 +680,27 @@ async function writeStore(store: CreatorStore): Promise<void> {
       { kind: 'unavailable', xb012: true },
     );
   }
+}
+
+async function writeStore(store: CreatorStore): Promise<void> {
+  const actor = currentAccountId();
+  if (!actor) {
+    await persistStore(store);
+    return;
+  }
+  const persisted = await readStoreUnscoped();
+  const tributes = { ...persisted.tributes };
+  for (const [id, tribute] of Object.entries(tributes)) {
+    if (tribute.ownerAccountId === actor) {
+      delete tributes[id];
+    }
+  }
+  for (const [id, tribute] of Object.entries(store.tributes)) {
+    if (tribute.ownerAccountId === actor) {
+      tributes[id] = tribute;
+    }
+  }
+  await persistStore({ ...store, tributes });
 }
 
 export type CreateTributeInput = {
@@ -673,6 +759,7 @@ export async function createTribute(input: CreateTributeInput): Promise<Tribute>
       timelineVersion: 0,
       finalRendersUsed: 0,
       entitlement: null,
+      ownerAccountId: currentAccountId(),
       isFixtureSeed: false,
       createdAt: now,
       updatedAt: now,
@@ -690,13 +777,21 @@ export async function getTribute(publicId: string): Promise<Tribute | null> {
   }
   const store = await readStore();
   const tribute = store.tributes[publicId];
-  return tribute ? migrateTribute(tribute as unknown as Record<string, unknown>) : null;
+  if (!tribute) {
+    return null;
+  }
+  const migrated = migrateTribute(tribute as unknown as Record<string, unknown>);
+  if (!actorAllowsTribute(migrated.ownerAccountId)) {
+    return null;
+  }
+  return migrated;
 }
 
 export async function listTributes(): Promise<Tribute[]> {
   const store = await readStore();
   return Object.values(store.tributes)
     .map((t) => migrateTribute(t as unknown as Record<string, unknown>))
+    .filter((tribute) => actorAllowsTribute(tribute.ownerAccountId))
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
@@ -1032,12 +1127,15 @@ export async function upsertPeopleProfile(
 }
 
 export type AddMemoryInput = {
+  id?: string;
   title: string;
   year?: string;
   imagePath?: string;
   filename?: string;
   contentType?: string;
   byteSize?: number;
+  rightsConfirmed?: boolean;
+  durationMs?: number;
   /** When true, start as READY (fixture/local sample after job complete). Default starts UPLOADING. */
   alreadyReady?: boolean;
   /** Start as PENDING_UPLOAD awaiting TUS bytes. */
@@ -1072,13 +1170,21 @@ export async function addMemory(publicId: string, input: AddMemoryInput): Promis
   }
 
   const memory = memoryAssetSchema.parse({
-    id: `mem_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`,
+    id:
+      input.id && /^mem_[a-f0-9]{16}$/.test(input.id)
+        ? input.id
+        : `mem_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`,
     title: input.title.trim(),
     year: input.year?.trim() ?? '',
     ingestStatus,
     failureCode,
     imagePath: input.imagePath?.trim() || '/fixtures/memory-a.png',
     contentType: input.contentType?.trim().slice(0, 120) || undefined,
+    rightsConfirmed: input.rightsConfirmed === true ? true : undefined,
+    durationMs:
+      typeof input.durationMs === 'number' && Number.isFinite(input.durationMs)
+        ? Math.max(0, Math.round(input.durationMs))
+        : undefined,
     originalFilenameHint: filename ? filename.replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 80) : undefined,
     source,
     contributorName: input.contributorName?.trim().slice(0, 40) || undefined,
@@ -1157,7 +1263,7 @@ export async function advanceIngestJobs(publicId: string): Promise<{
 export async function attachMemoryBytes(
   publicId: string,
   memoryId: string,
-  input: { imagePath: string; contentType?: string; durationMs?: number },
+  input: { imagePath: string; contentType?: string; durationMs?: number; checksumSha256?: string },
 ): Promise<MemoryAsset | null> {
   const store = await readStore();
   const existing = store.tributes[publicId];
@@ -1177,6 +1283,7 @@ export async function attachMemoryBytes(
       ...memory,
       imagePath: input.imagePath,
       contentType: input.contentType?.trim().slice(0, 120) || memory.contentType,
+      checksumSha256: input.checksumSha256 ?? memory.checksumSha256,
       durationMs:
         typeof input.durationMs === 'number' && Number.isFinite(input.durationMs)
           ? Math.max(0, Math.round(input.durationMs))
@@ -1185,6 +1292,42 @@ export async function attachMemoryBytes(
         memory.ingestStatus === 'PENDING_UPLOAD' || memory.ingestStatus === 'UPLOADING'
           ? 'UPLOADED'
           : memory.ingestStatus,
+      updatedAt: now,
+    });
+    return updated;
+  });
+  if (!updated) {
+    return null;
+  }
+  const next = migrateTribute(
+    tributeSchema.parse({
+      ...existing,
+      memories,
+      updatedAt: now,
+    }) as unknown as Record<string, unknown>,
+  );
+  store.tributes[publicId] = next;
+  await writeStore(store);
+  return updated;
+}
+
+export async function markMemoryRejected(publicId: string, memoryId: string): Promise<MemoryAsset | null> {
+  const store = await readStore();
+  const existing = store.tributes[publicId];
+  if (!existing) {
+    return null;
+  }
+  const now = new Date().toISOString();
+  let updated: MemoryAsset | null = null;
+  const memories = existing.memories.map((memory) => {
+    if (memory.id !== memoryId) {
+      return memory;
+    }
+    updated = memoryAssetSchema.parse({
+      ...memory,
+      ingestStatus: 'REJECTED',
+      failureCode: 'rejected',
+      imagePath: '',
       updatedAt: now,
     });
     return updated;
@@ -2539,7 +2682,8 @@ export async function applyEnhancementToFilm(
 
 export async function deleteTribute(publicId: string): Promise<boolean> {
   const store = await readStore();
-  if (!store.tributes[publicId]) {
+  const existing = store.tributes[publicId];
+  if (!existing || !actorAllowsTribute(existing.ownerAccountId)) {
     return false;
   }
   delete store.tributes[publicId];
