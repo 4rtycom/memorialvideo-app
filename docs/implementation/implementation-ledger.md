@@ -53,7 +53,7 @@ Spec slices from the masterplan. Ticket IDs in `memorialvideo/docs/AUTONOMOUS_BU
 
 - Status: VERIFIED
 - Browser: on `/film/edit`, saved the caption “A quiet garden”, reloaded and the caption was still there, lengthened the moment, undid that length change, reloaded with the caption intact, then enqueued another preview. Worker reached `preview · READY · verified · poster · current · v6`.
-- Known: the simple editor changes caption, duration, and transition. Scene reorder lives outside this pass.
+- Known at the time: scene reorder was not in the simple editor. Later milestone work added Move earlier / Move later on the shared timeline.
 
 ## Slice 06 — Two songs, trim, fade, mix
 
@@ -89,13 +89,22 @@ Spec slices from the masterplan. Ticket IDs in `memorialvideo/docs/AUTONOMOUS_BU
 - Status: NOT STARTED. The masterplan marks this post-beta or separately gated (M11). This app has no organization, delegated-user, or white-label model. A tenant system was not added in this pass.
 - Not a missing credential. Do not treat this as blocking slices that already have a local path.
 
+## First milestone — §12.1 synthetic album
+
+- Status: VERIFIED locally. This is not a consented production pack and not a live Stripe charge.
+- Build: a new account creates a project, adds 30 photos, 5 short silent clips, and 2 short wavs from `public/fixtures/milestone`, arranges the draft, swaps two moments (persisted), places the songs, activates `local_fake` entitlement, and a background worker writes a verified 1080p H.264/AAC MP4.
+- Tests: `corepack pnpm exec vitest run src/server/first-milestone.test.ts src/server/timeline-ops.test.ts` — passed. The milestone test finished in about 13s. Reorder unit test keeps the intro in place.
+- Browser: account created “Browser Album”, uploaded all 37 synthetic files (37 READY), arranged the film, Move later changed the first moment from `clip-5` to `clip-4` after reload, Dutch creation copy appeared, local pack unlocked a final download (1378924 bytes, H.264 1920×1080 + AAC). Screenshots `/opt/cursor/artifacts/milestone-nl-editor.png` and `/opt/cursor/artifacts/milestone-final-ready.png`.
+
 ## Slice 12 — Launch languages, support, operations
 
-- Status: PARTIAL. Release gate is not green.
+- Status: PARTIAL. Release gate is not green. Native-language review, live per-language Stripe checkout, and production alerting stay open. Draft translations are not launch-complete.
 - Build: auth, navigation, Memorial Pack, share, and music catalog strings exist for en, nl, de, fr, es, pt, it, pl. `locale-pack` test rejects a missing or raw key. Account deletion removes the local tribute.
 - Tests: `src/server/locale-pack.test.ts` covers every `CREATOR_UI_KEYS` entry in all eight languages (run earlier in the suite; key coverage is the assertion in that file).
 - Browser: Language select `nl` on `/share` showed “Herdenkingspakket” and Dutch navigation. Screenshot `/opt/cursor/artifacts/slice12-nl-share.png`. A separate account deleted “Delete Me” and the account page showed “Tribute deleted from local storage.” and “No tributes yet.”
-- Not met: memories, life story, the film editor, guest upload, and personal-song placement are still hardcoded English. Checkout in each language needs live Stripe (XB-005). Native copy review remains open. Production alerting and a hosted backup restore are not configured. Auto-deploy stays off.
+- Creation flows now use catalog keys for memories, life story, the editor (including reorder), guest upload, and song placement in en, nl, de, fr, es, pt, it, and pl. `locale-pack` fails if a critical key is missing or if a non-English language still returns the English sentence.
+- Browser: after Language `nl`, memories showed “Kies bestanden”, the editor showed “Eerder plaatsen” and “Begeleide audio”. Screenshot `/opt/cursor/artifacts/slice12-nl-memories.png`.
+- Still open: native review of these drafts, live Stripe checkout in each language (XB-005), production alerting, and the release gate. Other screens (setup, ceremony render, account) can still be English. Auto-deploy stays off.
 
 ## Still external
 

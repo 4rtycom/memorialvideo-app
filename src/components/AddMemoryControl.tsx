@@ -2,7 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useRef, useState, useTransition } from 'react';
+import type { LaunchLanguage } from '@memorialvideo/contracts';
 import { Button } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
 import {
   authorizeLocalUpload,
   completeLocalUpload,
@@ -19,7 +21,13 @@ const FIXTURE_ROTATION = [
   '/fixtures/memory-f.png',
 ] as const;
 
-export function AddMemoryControl({ nextIndex }: { nextIndex: number }) {
+export function AddMemoryControl({
+  nextIndex,
+  locale,
+}: {
+  nextIndex: number;
+  locale: LaunchLanguage;
+}) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [pending, startTransition] = useTransition();
@@ -47,12 +55,12 @@ export function AddMemoryControl({ nextIndex }: { nextIndex: number }) {
       if (!response.ok) {
         setError(
           response.status === 404
-            ? 'Open or create a tribute first.'
-            : 'We could not add that memory. Please try again.',
+            ? creatorT(locale, 'creator.memories.needTribute')
+            : creatorT(locale, 'creator.memories.addFailed'),
         );
         return;
       }
-      setInfo('Sample queued. Preparing in the background…');
+      setInfo(creatorT(locale, 'creator.memories.sampleQueued'));
       router.refresh();
     });
   }
@@ -65,7 +73,7 @@ export function AddMemoryControl({ nextIndex }: { nextIndex: number }) {
     }
     const audio = file.type.startsWith('audio/') || /\.(mp3|wav|m4a)$/i.test(file.name);
     if (audio && !rights) {
-      setError('Confirm you have the rights to this personal song before uploading it.');
+      setError(creatorT(locale, 'creator.memories.rightsRequired'));
       return;
     }
     setError(null);
@@ -82,22 +90,22 @@ export function AddMemoryControl({ nextIndex }: { nextIndex: number }) {
           musicRightsConfirmed: audio ? true : undefined,
         });
         if (auth.mode === 'rejected_heic') {
-          setInfo('HEIC files need conversion on your device — we cannot prepare them automatically.');
+          setInfo(creatorT(locale, 'creator.memories.heic'));
           router.refresh();
           return;
         }
         if (!auth.uploadUrl) {
-          setError('Upload could not start.');
+          setError(creatorT(locale, 'creator.memories.uploadStart'));
           return;
         }
-        setProgress('Uploading… 0%');
+        setProgress(`${creatorT(locale, 'creator.memories.uploading')} 0%`);
         await uploadFileLocalTus({
           file,
           uploadUrl: auth.uploadUrl,
           chunkHintBytes: auth.chunkHintBytes,
           onProgress: (sent, total) => {
             const pct = total > 0 ? Math.round((sent / total) * 100) : 0;
-            setProgress(`Uploading… ${pct}%`);
+            setProgress(`${creatorT(locale, 'creator.memories.uploading')} ${pct}%`);
           },
         });
         await completeLocalUpload({
@@ -105,11 +113,11 @@ export function AddMemoryControl({ nextIndex }: { nextIndex: number }) {
           assetId: auth.assetId,
         });
         setProgress(null);
-        setInfo('Upload complete. Preparing memory…');
+        setInfo(creatorT(locale, 'creator.memories.uploadDone'));
         router.refresh();
       } catch {
         setProgress(null);
-        setError('Upload failed. You can retry — partial local TUS offsets are kept when possible.');
+        setError(creatorT(locale, 'creator.memories.uploadFailed'));
       }
     });
   }
@@ -130,10 +138,10 @@ export function AddMemoryControl({ nextIndex }: { nextIndex: number }) {
           disabled={pending}
           className={pending ? 'opacity-70' : ''}
         >
-          Choose files  ↗
+          {creatorT(locale, 'creator.memories.choose')}  ↗
         </Button>
         <Button onClick={addSample} disabled={pending} className={pending ? 'opacity-70' : ''}>
-          {pending ? 'Working…' : 'Add a sample  ↗'}
+          {pending ? creatorT(locale, 'creator.memories.working') : `${creatorT(locale, 'creator.memories.sample')}  ↗`}
         </Button>
       </div>
       <label className="flex items-start gap-2 text-[12px] text-[color:var(--muted)] max-w-sm text-left">
@@ -142,7 +150,7 @@ export function AddMemoryControl({ nextIndex }: { nextIndex: number }) {
           checked={rights}
           onChange={(event) => setRights(event.target.checked)}
         />
-        <span>I have the rights to include a personal song in this private memorial.</span>
+        <span>{creatorT(locale, 'creator.memories.rights')}</span>
       </label>
       {progress ? (
         <p className="text-[12px] text-[color:var(--muted)] m-0" role="status">

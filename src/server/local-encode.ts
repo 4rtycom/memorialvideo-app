@@ -1312,7 +1312,11 @@ export async function encodeWithFfmpeg(input: {
     input.outputAbsolute,
   );
 
-  const result = await run('ffmpeg', args, 120_000);
+  // Local albums (30 photos plus short clips) outlast a fixed two-minute kill.
+  // veryfast keeps 1080p H.264/AAC; it does not change the TimelineContract.
+  args.splice(args.indexOf('-c:v'), 0, '-preset', 'veryfast');
+  const encodeBudgetMs = Math.min(20 * 60_000, Math.max(120_000, Math.ceil(durationSeconds * 8_000)));
+  const result = await run('ffmpeg', args, encodeBudgetMs);
   if (result.code !== 0) {
     return { ok: false, reason: `ffmpeg_failed:${result.code}` };
   }

@@ -3,7 +3,9 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import type { LaunchLanguage } from '@memorialvideo/contracts';
 import { Button, Card } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
 
 type Chapter = {
   id: string;
@@ -23,10 +25,12 @@ export function LifeStoryPanel({
   chapters,
   memories,
   displayName,
+  locale,
 }: {
   chapters: Chapter[];
   memories: Memory[];
   displayName: string;
+  locale: LaunchLanguage;
 }) {
   const router = useRouter();
   const [rows, setRows] = useState(chapters);
@@ -49,7 +53,7 @@ export function LifeStoryPanel({
         body: JSON.stringify({ storyChapters: rows }),
       });
       if (!response.ok) {
-        setError('Could not save chapter titles.');
+        setError(creatorT(locale, 'creator.story.saveFailed'));
         return;
       }
       setSaved(true);
@@ -60,11 +64,9 @@ export function LifeStoryPanel({
   if (rows.length === 0) {
     return (
       <Card soft className="!p-7">
-        <h3 className="serif text-[28px] m-0 mb-2">No chapters yet</h3>
-        <p className="text-[color:var(--muted)] mb-4">
-          Add ready memories first. We only group by years you supplied — we never invent a life story.
-        </p>
-        <Button href="/memories">Add memories  ↗</Button>
+        <h3 className="serif text-[28px] m-0 mb-2">{creatorT(locale, 'creator.story.emptyTitle')}</h3>
+        <p className="text-[color:var(--muted)] mb-4">{creatorT(locale, 'creator.story.emptyBody')}</p>
+        <Button href="/memories">{creatorT(locale, 'creator.story.addMemories')}  ↗</Button>
       </Card>
     );
   }
@@ -72,9 +74,9 @@ export function LifeStoryPanel({
   return (
     <div className="grid gap-5 lg:grid-cols-[1.8fr_0.85fr]">
       <Card className="!p-7">
-        <h2 className="serif text-[32px] m-0 mb-2">Suggested chapters</h2>
+        <h2 className="serif text-[32px] m-0 mb-2">{creatorT(locale, 'creator.story.suggested')}</h2>
         <p className="text-[color:var(--muted)] mb-5">
-          Derived from {displayName}&apos;s ready memories. Edit titles; facts are not invented.
+          {creatorT(locale, 'creator.story.derived').replace('{name}', displayName)}
         </p>
         <div className="grid gap-3">
           {rows.map((c) => {
@@ -108,7 +110,7 @@ export function LifeStoryPanel({
           })}
         </div>
         <Button className="mt-5" disabled={pending} onClick={save}>
-          Save chapter titles
+          {creatorT(locale, 'creator.story.save')}
         </Button>
         {error ? (
           <p className="text-[13px] text-[color:var(--accent)] mt-3" role="alert">
@@ -116,17 +118,14 @@ export function LifeStoryPanel({
           </p>
         ) : null}
         {saved ? (
-          <p className="text-[13px] text-[color:var(--muted)] mt-3">Chapter titles saved.</p>
+          <p className="text-[13px] text-[color:var(--muted)] mt-3">{creatorT(locale, 'creator.story.saved')}</p>
         ) : null}
       </Card>
       <Card soft className="!p-6">
-        <h3 className="serif text-[29px] m-0 mb-3">Story intelligence</h3>
-        <p className="text-[color:var(--muted)] mb-5">
-          Live generative story writing is not complete. This panel only organises family-supplied
-          memories.
-        </p>
+        <h3 className="serif text-[29px] m-0 mb-3">{creatorT(locale, 'creator.story.intelligenceTitle')}</h3>
+        <p className="text-[color:var(--muted)] mb-5">{creatorT(locale, 'creator.story.intelligenceBody')}</p>
         <Button href="/film/creating" className="btn-block">
-          Arrange first film  ↗
+          {creatorT(locale, 'creator.story.arrange')}  ↗
         </Button>
         <p className="text-[12px] text-[color:var(--muted)] mt-5 mb-0">Everything can be changed later.</p>
       </Card>

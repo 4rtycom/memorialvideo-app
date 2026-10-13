@@ -1135,6 +1135,7 @@ export type AddMemoryInput = {
   contentType?: string;
   byteSize?: number;
   rightsConfirmed?: boolean;
+  durationMs?: number;
   /** When true, start as READY (fixture/local sample after job complete). Default starts UPLOADING. */
   alreadyReady?: boolean;
   /** Start as PENDING_UPLOAD awaiting TUS bytes. */
@@ -1180,6 +1181,10 @@ export async function addMemory(publicId: string, input: AddMemoryInput): Promis
     imagePath: input.imagePath?.trim() || '/fixtures/memory-a.png',
     contentType: input.contentType?.trim().slice(0, 120) || undefined,
     rightsConfirmed: input.rightsConfirmed === true ? true : undefined,
+    durationMs:
+      typeof input.durationMs === 'number' && Number.isFinite(input.durationMs)
+        ? Math.max(0, Math.round(input.durationMs))
+        : undefined,
     originalFilenameHint: filename ? filename.replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 80) : undefined,
     source,
     contributorName: input.contributorName?.trim().slice(0, 40) || undefined,

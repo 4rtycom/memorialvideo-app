@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CRITICAL_CREATION_KEYS } from '../lib/creator-critical-copy';
 import { creatorT, CREATOR_UI_KEYS } from '../lib/creator-ui-messages';
 import { buildStoreZip } from './zip-store';
 
@@ -12,6 +13,17 @@ describe('creator locale catalogs + ceremony pack zip', () => {
         const value = creatorT(language, key);
         expect(value.length).toBeGreaterThan(0);
         expect(value).not.toBe(key);
+      }
+    }
+  });
+
+  it('fails when a critical creation string is missing or still English', () => {
+    for (const language of ['nl', 'de', 'fr', 'es', 'pt', 'it', 'pl'] as const) {
+      for (const key of CRITICAL_CREATION_KEYS) {
+        const value = creatorT(language, key);
+        expect(value.length).toBeGreaterThan(0);
+        expect(value).not.toBe(key);
+        expect(value).not.toBe(creatorT('en', key));
       }
     }
   });

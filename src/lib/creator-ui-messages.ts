@@ -1,4 +1,5 @@
 import { LAUNCH_LANGUAGES, type LaunchLanguage } from '@memorialvideo/contracts';
+import { CRITICAL_CREATION_KEYS, criticalDrafts, criticalEnglish } from '@/lib/creator-critical-copy';
 
 /** Creator-surface UI strings for locked launch languages. Native polish remains XB-004. */
 export const CREATOR_UI_KEYS = [
@@ -78,13 +79,14 @@ export const CREATOR_UI_KEYS = [
   'creator.auth.magicSent',
   'creator.auth.magicFailed',
   'creator.auth.magicUnconfigured',
+  ...CRITICAL_CREATION_KEYS,
 ] as const;
 
 export type CreatorUiKey = (typeof CREATOR_UI_KEYS)[number];
 
 type Catalog = Record<CreatorUiKey, string>;
 
-const en: Catalog = {
+const enCore = {
   'creator.nav.overview': 'Overview',
   'creator.nav.memories': 'Memories',
   'creator.nav.contributors': 'Contributors',
@@ -174,6 +176,8 @@ const en: Catalog = {
   'creator.auth.magicUnconfigured':
     'Magic links need Supabase to be configured. Password sign-in is available when this host has a session secret.',
 };
+
+const en: Catalog = { ...enCore, ...criticalEnglish };
 
 /** Draft translations — status remains draft until XB-004 native review. */
 const drafts: Record<Exclude<LaunchLanguage, 'en'>, Partial<Catalog>> = {
@@ -641,7 +645,7 @@ function catalogFor(language: LaunchLanguage): Catalog {
   if (language === 'en') {
     return en;
   }
-  return { ...en, ...drafts[language], ...authDrafts[language] };
+  return { ...en, ...drafts[language], ...authDrafts[language], ...criticalDrafts[language] };
 }
 
 export function creatorT(language: LaunchLanguage, key: CreatorUiKey): string {

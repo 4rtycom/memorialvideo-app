@@ -5,13 +5,16 @@ import { MemoryLibraryFilters } from '@/components/MemoryLibraryFilters';
 import { PeopleReviewPanel } from '@/components/PeopleReviewPanel';
 import { Button, Card, Eyebrow, Hero, Lede } from '@/components/ui';
 import type { CreatorLibraryCard } from '@/lib/library-filters';
+import { creatorT } from '@/lib/creator-ui-messages';
 import { possessive, shellProject } from '@/lib/tribute-view';
 import { memoryView } from '@/server/ingest';
+import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { hasInFlightIngest } from '@/server/store';
 
 export default async function MemoriesPage() {
   const tribute = await loadActiveTribute();
+  const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
   const shell = shellProject(tribute);
   const live = tribute?.memories ?? [];
   const inFlight = tribute ? hasInFlightIngest(tribute) : false;
@@ -36,6 +39,7 @@ export default async function MemoriesPage() {
       brand={shell.brand}
       title={shell.title}
       ownerInitial={shell.ownerInitial}
+      locale={locale}
       footerTitle="Private by default"
       footerBody="Only invited people can contribute."
     >
@@ -53,24 +57,24 @@ export default async function MemoriesPage() {
           <div className="flex items-start gap-4">
             <span className="text-[35px] text-[color:var(--accent)] leading-none">＋</span>
             <div>
-              <div className="font-medium text-[22px]">Drop photos or videos here</div>
+              <div className="font-medium text-[22px]">{creatorT(locale, 'creator.memories.drop')}</div>
               <p className="text-[13px] text-[color:var(--muted)] m-0">
-                Or choose files from your device · JPG, PNG, HEIC, MP4
+                {creatorT(locale, 'creator.memories.formats')}
               </p>
             </div>
           </div>
-          {tribute ? <AddMemoryControl nextIndex={live.length} /> : <Button href="/setup">Begin setup  ↗</Button>}
+          {tribute ? (
+            <AddMemoryControl nextIndex={live.length} locale={locale} />
+          ) : (
+            <Button href="/setup">{creatorT(locale, 'creator.memories.beginSetup')}  ↗</Button>
+          )}
         </div>
       </Card>
 
       {cards.length === 0 ? (
         <Card soft className="!p-7">
-          <h3 className="serif text-[28px] m-0 mb-2">No memories yet</h3>
-          <p className="text-[color:var(--muted)] m-0">
-            {tribute
-              ? 'Add the first photo or video. Status moves uploading → processing → ready as durable jobs complete.'
-              : 'Start setup to open a private tribute workspace.'}
-          </p>
+          <h3 className="serif text-[28px] m-0 mb-2">{creatorT(locale, 'creator.memories.emptyTitle')}</h3>
+          <p className="text-[color:var(--muted)] m-0">{creatorT(locale, 'creator.memories.emptyBody')}</p>
         </Card>
       ) : (
         <MemoryLibraryFilters cards={cards} />
