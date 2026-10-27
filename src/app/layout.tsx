@@ -19,13 +19,12 @@ export const metadata: Metadata = {
   description:
     "A calm, ceremony-first memorial video creator. AI does the heavy work. Families make the meaningful decisions.",
   applicationName: "MemorialVideo",
-  // Favicon / app icons: src/app/favicon.ico, icon.png, apple-icon.png (App Router file conventions)
-  // Extra PNG sizes also live in public/favicon-{16,32,48}.png
+  // Exact same App Router icon files as memorialvideo marketing:
+  // src/app/favicon.ico, icon.svg, apple-icon.png (byte-identical).
   icons: {
     icon: [
-      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.svg", type: "image/svg+xml" },
     ],
     apple: "/apple-icon.png",
   },

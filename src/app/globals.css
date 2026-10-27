@@ -76,18 +76,31 @@ button { font: inherit; cursor: pointer; }
   display: block;
   padding: 0 8px;
   margin-bottom: 40px;
-  line-height: 0;
 }
 
+/* Match marketing .fig-nav .fig-wordmark (SiteHeader / HomeNav). */
 .brand-wordmark {
-  display: block;
-  width: auto;
-  height: 22px;
-  max-width: 100%;
+  display: inline-flex;
+  align-items: baseline;
+  color: var(--ink);
+  font-family: var(--font-cormorant), Georgia, "Times New Roman", serif;
+  font-size: 26px;
+  font-weight: 500;
+  font-feature-settings: "kern" 1, "liga" 1;
+  letter-spacing: -0.034em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.brand-wordmark-tail {
+  color: #9c764e;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: -0.018em;
 }
 
 .brand-wordmark--mobile {
-  height: 20px;
+  font-size: 24px;
 }
 
 .nav-label {
