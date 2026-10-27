@@ -714,7 +714,10 @@ export async function resolveTimelineAssetPath(src: string, tributePublicId?: st
   ) {
     const absolute = path.isAbsolute(src)
       ? src
-      : path.join(process.cwd(), src.startsWith('.data/') ? src : path.join('.data', src));
+      : path.join(
+          /* turbopackIgnore: true */ process.cwd(),
+          src.startsWith('.data/') ? src : path.join('.data', src),
+        );
     if (tributePublicId && !absolute.includes(path.join('enhancements', tributePublicId))) {
       return null;
     }

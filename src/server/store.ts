@@ -2630,7 +2630,7 @@ export async function applyEnhancementToFilm(
   const { enhancementVariantAbsolutePath, enhancementVariantPublicPath } = await import('./local-encode');
   const absolute = path.isAbsolute(request.variantPath)
     ? request.variantPath
-    : path.join(process.cwd(), request.variantPath);
+    : path.join(/* turbopackIgnore: true */ process.cwd(), request.variantPath);
   const expected = enhancementVariantAbsolutePath(publicId, request.id);
   let variantBytesOk = false;
   try {

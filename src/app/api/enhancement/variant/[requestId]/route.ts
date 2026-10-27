@@ -25,7 +25,7 @@ export async function GET(_request: Request, { params }: Params) {
   }
   const absolute = path.isAbsolute(row.variantPath)
     ? row.variantPath
-    : path.join(process.cwd(), row.variantPath);
+    : path.join(/* turbopackIgnore: true */ process.cwd(), row.variantPath);
   try {
     const bytes = await readFile(absolute);
     return new NextResponse(new Uint8Array(bytes), {

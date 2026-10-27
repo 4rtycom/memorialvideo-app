@@ -54,7 +54,7 @@ export async function extractReadyPosterStill(input: {
   }
   const absoluteMp4 = path.isAbsolute(input.outputPath)
     ? input.outputPath
-    : path.join(process.cwd(), input.outputPath);
+    : path.join(/* turbopackIgnore: true */ process.cwd(), input.outputPath);
   try {
     await access(absoluteMp4);
   } catch {
@@ -121,7 +121,9 @@ export async function probeLocalOutput(outputPath: string | null): Promise<Outpu
   if (!outputPath) {
     return { exists: false, sizeBytes: 0 };
   }
-  const absolute = path.isAbsolute(outputPath) ? outputPath : path.join(process.cwd(), outputPath);
+  const absolute = path.isAbsolute(outputPath)
+    ? outputPath
+    : path.join(/* turbopackIgnore: true */ process.cwd(), outputPath);
   try {
     await access(absolute);
     if (absolute.endsWith('.mp4') || absolute.endsWith('.m4v')) {
@@ -298,7 +300,7 @@ export async function advanceRenderOnce(publicId: string): Promise<{
         } else {
           const relative = path.join('.data', 'renders', `${working.id}.marker`);
           await writeFile(
-            path.join(process.cwd(), relative),
+            path.join(/* turbopackIgnore: true */ process.cwd(), relative),
             `memorialvideo-local-render-marker\njob=${working.id}\nhash=${working.snapshotHash}\nreason=${encoded.reason}\n`,
             'utf8',
           );
@@ -308,7 +310,7 @@ export async function advanceRenderOnce(publicId: string): Promise<{
       } else {
         const relative = path.join('.data', 'renders', `${working.id}.marker`);
         await writeFile(
-          path.join(process.cwd(), relative),
+          path.join(/* turbopackIgnore: true */ process.cwd(), relative),
           `memorialvideo-local-render-marker\njob=${working.id}\nhash=${working.snapshotHash}\n`,
           'utf8',
         );
@@ -485,7 +487,7 @@ export async function resolveReadyFinalAbsolutePath(tribute: Tribute): Promise<s
   }
   const absolute = path.isAbsolute(ready.outputPath)
     ? ready.outputPath
-    : path.join(process.cwd(), ready.outputPath);
+    : path.join(/* turbopackIgnore: true */ process.cwd(), ready.outputPath);
   try {
     await access(absolute);
     return absolute;
@@ -497,7 +499,7 @@ export async function resolveReadyFinalAbsolutePath(tribute: Tribute): Promise<s
 function absoluteUnderCwd(relativeOrAbsolute: string): string {
   return path.isAbsolute(relativeOrAbsolute)
     ? relativeOrAbsolute
-    : path.join(process.cwd(), relativeOrAbsolute);
+    : path.join(/* turbopackIgnore: true */ process.cwd(), relativeOrAbsolute);
 }
 
 /** Owner-local READY JPEG for Account / Share desk — never a public URL. */
