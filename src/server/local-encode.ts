@@ -356,8 +356,76 @@ function escapeDrawtextFontfile(fontfile: string): string {
 }
 
 /**
+ * Presentation-only color grade from FilmStyleManifest (encode/preview — does not mutate library).
+ */
+export function buildFilmStyleGradeFilter(theme: FilmStyleManifest): string {
+  const contrast = theme.gradeContrast.toFixed(3);
+  const brightness = theme.gradeBrightness.toFixed(3);
+  const saturation = theme.gradeSaturation.toFixed(3);
+  const warmth = theme.gradeWarmth;
+  const rs = warmth.toFixed(3);
+  const bs = (-warmth * 0.85).toFixed(3);
+  return [
+    `eq=contrast=${contrast}:brightness=${brightness}:saturation=${saturation}`,
+    `colorbalance=rs=${rs}:gs=0:bs=${bs}`,
+  ].join(',');
+}
+
+/**
+ * Soft film grain matching Remotion FilmGrain opacity.
+ * Strength is derived from grainOpacity (0 = off).
+ */
+export function buildFilmStyleGrainFilter(theme: FilmStyleManifest, seed: number): string | null {
+  const opacity = Math.min(0.2, Math.max(0, theme.grainOpacity));
+  if (opacity <= 0.001) {
+    return null;
+  }
+  // ffmpeg noise c0s/c1s ~0–100; map 0.01–0.2 opacity → ~2–14 strength.
+  const strength = Math.max(1, Math.round(opacity * 70));
+  const alls = Math.min(20, strength);
+  const seedInt = Math.abs(seed >>> 0) % 100_000;
+  return `noise=alls=${alls}:allf=t+u:c0_seed=${seedInt}:c1_seed=${(seedInt + 17) % 100_000}:c2_seed=${(seedInt + 41) % 100_000}`;
+}
+
+/**
+ * Remotion MediaScene inset — editorial / spotlight pad onto mediaMatte; fullBleed = none.
+ */
+export function imageTreatmentInsetPx(
+  treatment: FilmStyleManifest['imageTreatment'],
+): number {
+  if (treatment === 'editorial') return 48;
+  if (treatment === 'spotlight') return 96;
+  return 0;
+}
+
+/**
+ * After cover/Ken Burns to timeline size, pad inward onto mediaMatte for editorial/spotlight.
+ */
+export function buildImageTreatmentPadFilter(
+  width: number,
+  height: number,
+  theme: FilmStyleManifest,
+): string | null {
+  const inset = imageTreatmentInsetPx(theme.imageTreatment);
+  if (inset <= 0) {
+    return null;
+  }
+  const innerW = Math.max(2, width - inset * 2);
+  const innerH = Math.max(2, height - inset * 2);
+  const evenW = innerW % 2 === 0 ? innerW : innerW - 1;
+  const evenH = innerH % 2 === 0 ? innerH : innerH - 1;
+  const matte = cssColorToFfmpegHex(theme.mediaMatte) ?? '0x1C2430';
+  return [
+    `scale=${evenW}:${evenH}:force_original_aspect_ratio=increase`,
+    `crop=${evenW}:${evenH}`,
+    `pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:${matte}`,
+    'setsar=1',
+  ].join(',');
+}
+
+/**
  * Remotion SafeType / MediaScene drawtext colors + sizes from FilmStyleManifest.
- * Title cards use ink/muted/accent on theme.background; captions follow MediaScene paper/ink rule.
+ * Title cards use ink/muted/accent on theme.background; captions follow captionTreatment.
  */
 export function buildDrawtextFilters(
   overlays: SceneOverlayLine[],
@@ -368,17 +436,31 @@ export function buildDrawtextFilters(
   const ink = cssColorToFfmpegHex(theme.ink) ?? '0xFFFFFF';
   const muted = cssColorToFfmpegHex(theme.muted) ?? ink;
   const accent = cssColorToFfmpegHex(theme.accent) ?? ink;
-  // MediaScene caption: cinematic_dark uses ink on dark matte; others use paper.
+  const paper = cssColorToFfmpegHex(theme.paper) ?? '0xFFFFFF';
+  // captionTreatment: matte → ink on dark; paper → light paper; minimal → soft muted.
   const captionColor =
-    theme.key === 'cinematic_dark'
+    theme.captionTreatment === 'matte'
       ? ink
-      : (cssColorToFfmpegHex(theme.paper) ?? '0xFFFFFF');
-  const titleSize = theme.titleSize;
+      : theme.captionTreatment === 'minimal'
+        ? muted
+        : paper;
+  const titleSize =
+    theme.chapterTreatment === 'bold'
+      ? theme.titleSize + 4
+      : theme.chapterTreatment === 'editorial'
+        ? theme.titleSize
+        : theme.titleSize;
   const eyebrowOffset = Math.round(titleSize * 0.55);
   const subtitleOffset = Math.max(56, Math.round(titleSize * 0.45));
-  // Light title cards need no stroke; captions over photos keep a soft edge for readability.
-  const cardStroke = theme.key === 'cinematic_dark' ? 'borderw=1:bordercolor=black@0.35' : 'borderw=0';
-  const captionStroke = 'borderw=2:bordercolor=black@0.55';
+  const cardStroke =
+    theme.key === 'cinematic_dark' || theme.captionTreatment === 'matte'
+      ? 'borderw=1:bordercolor=black@0.35'
+      : 'borderw=0';
+  const captionStroke =
+    theme.captionTreatment === 'minimal'
+      ? 'borderw=1:bordercolor=black@0.35'
+      : 'borderw=2:bordercolor=black@0.55';
+  const captionSize = theme.captionTreatment === 'minimal' ? 28 : 34;
   const parts: string[] = [];
   for (const line of overlays) {
     if (!line.text.trim()) continue;
@@ -387,7 +469,7 @@ export function buildDrawtextFilters(
     const escaped = escapeDrawtextValue(raw);
     if (line.role === 'caption') {
       parts.push(
-        `drawtext=fontfile=${font}:text='${escaped}':fontcolor=${captionColor}:${captionStroke}:fontsize=34:x=(w-text_w)/2:y=h-text_h-72`,
+        `drawtext=fontfile=${font}:text='${escaped}':fontcolor=${captionColor}:${captionStroke}:fontsize=${captionSize}:x=(w-text_w)/2:y=h-text_h-72`,
       );
     } else if (line.role === 'eyebrow') {
       parts.push(
@@ -399,8 +481,10 @@ export function buildDrawtextFilters(
       );
     } else {
       const size = raw.length > 28 ? titleSize - 20 : titleSize;
+      const xExpr =
+        theme.chapterTreatment === 'editorial' ? '160' : '(w-text_w)/2';
       parts.push(
-        `drawtext=fontfile=${font}:text='${escaped}':fontcolor=${ink}:${cardStroke}:fontsize=${size}:x=(w-text_w)/2:y=(h-text_h)/2`,
+        `drawtext=fontfile=${font}:text='${escaped}':fontcolor=${ink}:${cardStroke}:fontsize=${size}:x=${xExpr}:y=(h-text_h)/2`,
       );
     }
   }
@@ -592,6 +676,13 @@ export async function resolveTimelineAssetPath(src: string, tributePublicId?: st
       return null;
     }
     const absolute = path.join(process.cwd(), '.data', 'media', tributeId, assetId);
+    const normalized = `${absolute}.normalized.jpg`;
+    try {
+      await access(normalized);
+      return normalized;
+    } catch {
+      // fall through to raw upload bytes
+    }
     try {
       await access(absolute);
       return absolute;
@@ -1157,6 +1248,18 @@ export async function encodeWithFfmpeg(input: {
   const colorScale = `scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=${fps},format=yuv420p`;
   const defaultCover = buildSceneCoverScaleFilter(width, height, undefined, fps);
 
+  const styleGrade = buildFilmStyleGradeFilter(filmStyle);
+  const styleGrain = buildFilmStyleGrainFilter(filmStyle, input.timeline.seed);
+  const treatmentPad = buildImageTreatmentPadFilter(width, height, filmStyle);
+  const beautyChain = [
+    styleGrade,
+    treatmentPad,
+    styleGrain,
+  ]
+    .filter((part): part is string => Boolean(part))
+    .join(',');
+  const beautySuffix = beautyChain ? `,${beautyChain}` : '';
+
   const sceneVideoFilter = (index: number, media: SceneMediaInput, outLabel: string): string => {
     const dur = media.durationSeconds.toFixed(4);
     const overlayChain =
@@ -1167,15 +1270,17 @@ export async function encodeWithFfmpeg(input: {
     const fadeChain = arrive ? `,${arrive}` : '';
     if (media.kind === 'color') {
       // Solid slots are already timeline-sized; pad is a no-op safety.
+      // Title cards skip image grade/grain so type stays crisp on paper.
       return `[${index}:v]${colorScale}${overlayChain}${fadeChain}[${outLabel}]`;
     }
     if (media.kind === 'video') {
       // Trim long clips; hold last frame when the source is shorter than the scene slot.
       // Video stays static cover — Remotion MediaScene does not Ken Burns video.
-      return `[${index}:v]${defaultCover},trim=duration=${dur},setpts=PTS-STARTPTS,tpad=stop_mode=clone:stop_duration=${dur},trim=duration=${dur},setpts=PTS-STARTPTS${overlayChain}${fadeChain}[${outLabel}]`;
+      return `[${index}:v]${defaultCover}${beautySuffix},trim=duration=${dur},setpts=PTS-STARTPTS,tpad=stop_mode=clone:stop_duration=${dur},trim=duration=${dur},setpts=PTS-STARTPTS${overlayChain}${fadeChain}[${outLabel}]`;
     }
     // Image: seeded Ken Burns (zoompan) matching Remotion motion.ts; falls back to static cover
     // when motionIntensity is 0. zoompan emits durationFrames so still timing stays exact.
+    // Then full FilmStyleManifest tokens: grade + imageTreatment + grain.
     const kenBurns = buildSceneKenBurnsFilter(
       width,
       height,
@@ -1185,7 +1290,7 @@ export async function encodeWithFfmpeg(input: {
       media.motionSeed ?? 1,
       media.motionIntensity ?? 0,
     );
-    return `[${index}:v]${kenBurns}${overlayChain}${fadeChain}[${outLabel}]`;
+    return `[${index}:v]${kenBurns}${beautySuffix}${overlayChain}${fadeChain}[${outLabel}]`;
   };
 
   if (medias.length > 1) {

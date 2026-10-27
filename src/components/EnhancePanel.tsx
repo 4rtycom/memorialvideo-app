@@ -122,8 +122,10 @@ export function EnhancePanel({
             onChange={(e) => post({ action: 'consent', granted: e.target.checked })}
           />
           <span>
-            Allow local, reversible photo improvement on this tribute. External/model enhancement stays
-            off. Originals are never overwritten.
+            Allow local, reversible photo improvement on this tribute (ceremony-screen grade: contrast,
+            warmth, gentle sharpen). Film styles already apply a presentation look in preview/render —
+            this toggle only creates a durable library variant. External/model enhancement stays off.
+            Originals are never overwritten.
           </span>
         </label>
       </Card>

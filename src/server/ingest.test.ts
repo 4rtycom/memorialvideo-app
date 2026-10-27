@@ -27,5 +27,6 @@ describe('creator ingest helpers', () => {
     const view = memoryView({ ingestStatus: 'REJECTED', failureCode: 'heic' });
     expect(view.uiStatus).toBe('needs_attention');
     expect(view.label).toContain('HEIC');
+    expect(view.label).toContain('JPG');
   });
 });
