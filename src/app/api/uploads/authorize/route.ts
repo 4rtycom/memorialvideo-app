@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { randomBytes } from 'node:crypto';
 import { isHeicFilename } from '@/server/ingest';
 import {
   createUploadSession,
   isAllowedUploadContentType,
+  isAudioUpload,
   MAX_UPLOAD_BYTES,
+  mediaPublicPath,
   TUS_CHUNK_HINT,
 } from '@/server/media-storage';
 import { allowRequest } from '@/server/rate-limit';
@@ -19,6 +22,7 @@ const bodySchema = z.object({
   contentType: z.string().trim().min(3).max(120),
   byteSize: z.number().int().positive().max(MAX_UPLOAD_BYTES),
   year: z.string().max(16).optional(),
+  musicRightsConfirmed: z.boolean().optional(),
 });
 
 /**
@@ -47,15 +51,22 @@ export async function POST(request: Request) {
   if (!isAllowedUploadContentType(parsed.data.contentType, parsed.data.filename)) {
     return NextResponse.json({ error: 'unsupported_type' }, { status: 415 });
   }
+  const audio = isAudioUpload(parsed.data.contentType, parsed.data.filename);
+  if (audio && parsed.data.musicRightsConfirmed !== true) {
+    return NextResponse.json({ error: 'rights_required' }, { status: 400 });
+  }
 
+  const assetId = `mem_${randomBytes(8).toString('hex')}`;
   const memory = await addMemory(active.publicId, {
+    id: assetId,
     title: parsed.data.title,
     year: parsed.data.year,
     filename: parsed.data.filename,
     contentType: parsed.data.contentType,
     byteSize: parsed.data.byteSize,
     awaitBytes: !isHeicFilename(parsed.data.filename),
-    imagePath: '/fixtures/memory-a.png',
+    imagePath: mediaPublicPath(active.publicId, assetId),
+    rightsConfirmed: audio ? true : undefined,
   });
   if (!memory) {
     return NextResponse.json({ error: 'create_failed' }, { status: 500 });
@@ -89,9 +100,6 @@ export async function POST(request: Request) {
       chunkHintBytes: TUS_CHUNK_HINT,
       byteSize: parsed.data.byteSize,
       memory,
-      supabaseTus: false,
-      blocker:
-        'Supabase Storage resumable TUS requires Docker/local Supabase or hosted credentials (not configured here).',
     },
     { status: 201 },
   );

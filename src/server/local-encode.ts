@@ -18,7 +18,7 @@ import {
 } from '@memorialvideo/contracts';
 
 const CREATOR_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const VIDEO_ROOT = path.resolve(CREATOR_ROOT, '../video');
+const VIDEO_ROOT = path.resolve(CREATOR_ROOT, 'packages/video');
 const VIDEO_PUBLIC = path.join(VIDEO_ROOT, 'public');
 const VIDEO_ENTRY = path.join(VIDEO_ROOT, 'src', 'index.ts');
 const SYNTHETIC_CATALOG_WAV = path.join(VIDEO_PUBLIC, 'fixtures', 'multitrack', 'music-synthetic.wav');
@@ -736,8 +736,13 @@ export async function resolveCatalogPreviewAbsolute(trackId: string): Promise<st
 export async function resolveMusicSrcAbsolute(
   src: string,
   trackIdHint?: string | null,
+  tributePublicId?: string,
 ): Promise<string | null> {
   if (!src) return null;
+
+  if (src.startsWith('/api/media/')) {
+    return resolveTimelineAssetPath(src, tributePublicId);
+  }
 
   if (src.startsWith('/api/music/preview')) {
     try {
@@ -814,14 +819,17 @@ export async function resolveTimelineMusicAbsolutePath(
  * Resolve every unmuted AudioMix music clip (chapter slots, Guided Audio beds).
  * Falls back to a single full-timeline legacy/catalog clip when mix clips are absent.
  */
-export async function resolveTimelineMusicClips(timeline: TimelineContract): Promise<ResolvedMusicClip[]> {
+export async function resolveTimelineMusicClips(
+  timeline: TimelineContract,
+  tributePublicId?: string,
+): Promise<ResolvedMusicClip[]> {
   const clips: ResolvedMusicClip[] = [];
   const mixTracks = timeline.audio?.tracks ?? [];
   for (const track of mixTracks) {
     if (track.kind !== 'music' || track.muted) continue;
     for (const clip of track.clips ?? []) {
       if (!clip.src) continue;
-      const absolute = await resolveMusicSrcAbsolute(clip.src, timeline.music?.trackId);
+      const absolute = await resolveMusicSrcAbsolute(clip.src, timeline.music?.trackId, tributePublicId);
       if (!absolute) continue;
       clips.push({
         id: clip.id,
@@ -1081,7 +1089,7 @@ export async function encodeWithFfmpeg(input: {
   const width = input.timeline.width;
   const height = input.timeline.height;
   const filmStyle = resolveFilmStyleManifest(input.timeline.themeKey);
-  const musicClips = await resolveTimelineMusicClips(input.timeline);
+  const musicClips = await resolveTimelineMusicClips(input.timeline, input.tributePublicId);
   const dialogueClips = await resolveTimelineDialogueClips(input.timeline, input.tributePublicId);
   const fontfile = await resolveDrawtextFontAbsolute();
   const args: string[] = ['-y'];
@@ -1304,7 +1312,11 @@ export async function encodeWithFfmpeg(input: {
     input.outputAbsolute,
   );
 
-  const result = await run('ffmpeg', args, 120_000);
+  // Local albums (30 photos plus short clips) outlast a fixed two-minute kill.
+  // veryfast keeps 1080p H.264/AAC; it does not change the TimelineContract.
+  args.splice(args.indexOf('-c:v'), 0, '-preset', 'veryfast');
+  const encodeBudgetMs = Math.min(20 * 60_000, Math.max(120_000, Math.ceil(durationSeconds * 8_000)));
+  const result = await run('ffmpeg', args, encodeBudgetMs);
   if (result.code !== 0) {
     return { ok: false, reason: `ffmpeg_failed:${result.code}` };
   }

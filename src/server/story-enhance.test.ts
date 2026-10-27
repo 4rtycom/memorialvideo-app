@@ -42,6 +42,14 @@ describe('creator story chapters + enhancement honesty', () => {
     expect(ensured?.storyChapters.every((c) => c.memoryIds.length > 0)).toBe(true);
     const again = await store.ensureStoryChapters(created.publicId);
     expect(again?.storyChapters).toEqual(ensured?.storyChapters);
+
+    const edited = ensured!.storyChapters.map((chapter, index) =>
+      index === 0 ? { ...chapter, title: 'Family supplied chapter' } : chapter,
+    );
+    await store.updateTribute(created.publicId, { storyChapters: edited });
+    const afterEdit = await store.ensureStoryChapters(created.publicId);
+    expect(afterEdit?.storyChapters[0]?.title).toBe('Family supplied chapter');
+    expect(afterEdit?.storyChapters.map((c) => c.title).join(' ')).not.toMatch(/born in|died in|beloved/i);
   });
 
   it(

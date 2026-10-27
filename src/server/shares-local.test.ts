@@ -62,6 +62,13 @@ describe('creator private share + download honesty', () => {
     if (!redeemed.ok) return;
     expect(redeemed.tribute.timeline).toBeTruthy();
 
+    const revoked = await shares.revokeOwnerShare(tribute.publicId, created.issued.shareId);
+    expect(revoked).toEqual({ ok: true });
+    expect(await shares.redeemShareToken(created.issued.token)).toEqual({
+      ok: false,
+      reason: 'revoked',
+    });
+
     const download = shares.planCreatorDownload(reloaded);
     expect(download.canDownloadMp4).toBe(false);
     expect(download.canExportMetadata).toBe(true);

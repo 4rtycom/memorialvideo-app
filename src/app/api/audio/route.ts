@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import {
   applyGuidedAudio,
   loadGuidedAudioOverview,
+  placePersonalSongs,
   previewGuidedAudio,
   proposeGuidedAudio,
   revertGuidedAudio,
@@ -44,6 +46,33 @@ export async function POST(request: Request) {
     const action = (body as { action?: string }).action;
     if (!action) {
       return noStore({ error: 'bad_request' }, 400);
+    }
+
+    if (action === 'place_personal') {
+      const parsed = z
+        .object({
+          songs: z
+            .array(
+              z.object({
+                memoryId: z.string().min(8).max(80),
+                startFrame: z.number().int().nonnegative(),
+                durationFrames: z.number().int().positive(),
+                fadeInFrames: z.number().int().nonnegative(),
+                fadeOutFrames: z.number().int().nonnegative(),
+                gainDb: z.number(),
+              }),
+            )
+            .length(2),
+        })
+        .safeParse(body);
+      if (!parsed.success) {
+        return noStore({ error: 'invalid_body' }, 400);
+      }
+      const placed = await placePersonalSongs(tribute.publicId, parsed.data.songs);
+      if (!placed.ok) {
+        return noStore({ error: placed.error }, placed.status);
+      }
+      return noStore(placed);
     }
 
     const run =

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { AuthRequiredError, withRequestOwner } from '@/server/account-session';
 import { loadActiveTribute, setActiveTributeId } from '@/server/session';
 import { entitlementView, getTribute, updateTribute } from '@/server/store';
 
@@ -64,23 +65,30 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  if (parsed.data.publicId) {
-    const existing = await getTribute(parsed.data.publicId);
-    if (!existing) {
+  try {
+    if (parsed.data.publicId) {
+      const existing = await withRequestOwner(() => getTribute(parsed.data.publicId!));
+      if (!existing) {
+        return NextResponse.json({ error: 'not_found' }, { status: 404 });
+      }
+      await setActiveTributeId(parsed.data.publicId);
+      return NextResponse.json({ tribute: existing, entitlement: entitlementView(existing) });
+    }
+
+    const active = await loadActiveTribute();
+    if (!active) {
+      return NextResponse.json({ error: 'no_active_tribute' }, { status: 404 });
+    }
+    const { publicId: _ignore, ...patch } = parsed.data;
+    const updated = await withRequestOwner(() => updateTribute(active.publicId, patch));
+    if (!updated) {
       return NextResponse.json({ error: 'not_found' }, { status: 404 });
     }
-    await setActiveTributeId(parsed.data.publicId);
-    return NextResponse.json({ tribute: existing, entitlement: entitlementView(existing) });
+    return NextResponse.json({ tribute: updated, entitlement: entitlementView(updated) });
+  } catch (error) {
+    if (error instanceof AuthRequiredError) {
+      return NextResponse.json({ error: 'auth_required' }, { status: 401 });
+    }
+    throw error;
   }
-
-  const active = await loadActiveTribute();
-  if (!active) {
-    return NextResponse.json({ error: 'no_active_tribute' }, { status: 404 });
-  }
-  const { publicId: _ignore, ...patch } = parsed.data;
-  const updated = await updateTribute(active.publicId, patch);
-  if (!updated) {
-    return NextResponse.json({ error: 'not_found' }, { status: 404 });
-  }
-  return NextResponse.json({ tribute: updated, entitlement: entitlementView(updated) });
 }

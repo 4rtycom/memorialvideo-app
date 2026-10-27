@@ -16,6 +16,7 @@ export async function authorizeLocalUpload(input: {
   contentType: string;
   byteSize: number;
   year?: string;
+  musicRightsConfirmed?: boolean;
 }): Promise<AuthorizeResponse> {
   const response = await fetch('/api/uploads/authorize', {
     method: 'POST',

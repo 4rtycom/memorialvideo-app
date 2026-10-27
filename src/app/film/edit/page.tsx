@@ -5,11 +5,13 @@ import { GuidedEditor } from '@/components/GuidedEditor';
 import { GuidedVariantsPanel } from '@/components/GuidedVariantsPanel';
 import { Eyebrow, Hero, Lede } from '@/components/ui';
 import { shellProject } from '@/lib/tribute-view';
+import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { parseTimelineContract } from '@memorialvideo/contracts';
 
 export default async function EditPage() {
   const tribute = await loadActiveTribute();
+  const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
   const shell = shellProject(tribute);
   const timeline = tribute?.timeline ? parseTimelineContract(tribute.timeline) : null;
 
@@ -18,6 +20,7 @@ export default async function EditPage() {
       brand={shell.brand}
       title={shell.title}
       ownerInitial={shell.ownerInitial}
+      locale={locale}
       footerTitle="No complicated timeline needed."
       footerBody=""
     >
@@ -44,8 +47,9 @@ export default async function EditPage() {
             timelineVersion={tribute.timelineVersion}
             updatedAt={tribute.updatedAt}
             canUndo={Boolean(tribute.timelinePrevious)}
+            locale={locale}
           />
-          <GuidedAudioPanel />
+          <GuidedAudioPanel locale={locale} />
           <GuidedVariantsPanel />
         </>
       ) : (

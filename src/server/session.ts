@@ -1,5 +1,7 @@
 import { cookies } from 'next/headers';
 import { isProjectPublicId } from '@memorialvideo/domain';
+import { readAccountSession, withRequestOwner } from './account-session';
+import { creatorEnv } from './env';
 import { activeTributeCookieName, getTribute, type Tribute } from './store';
 
 export async function readActiveTributeId(): Promise<string | null> {
@@ -34,5 +36,9 @@ export async function loadActiveTribute(): Promise<Tribute | null> {
   if (!id) {
     return null;
   }
-  return getTribute(id);
+  const accountId = await readAccountSession();
+  if (!accountId && creatorEnv().APP_ENV !== 'local') {
+    return null;
+  }
+  return withRequestOwner(() => getTribute(id));
 }

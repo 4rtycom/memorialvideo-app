@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { AuthRequiredError, withRequestOwner } from '@/server/account-session';
 import {
   PersistenceUnavailableError,
   persistenceErrorResponse,
@@ -10,9 +11,13 @@ import { createTribute, deleteTribute, listTributeSummaries } from '@/server/sto
 
 export const runtime = 'nodejs';
 
+function authRequiredResponse() {
+  return NextResponse.json({ error: 'auth_required' }, { status: 401 });
+}
+
 export async function GET() {
   try {
-    const tributes = await listTributeSummaries();
+    const tributes = await withRequestOwner(() => listTributeSummaries());
     const activeId = await readActiveTributeId();
     return NextResponse.json({
       activePublicId: activeId,
@@ -25,6 +30,9 @@ export async function GET() {
     if (error instanceof PersistenceUnavailableError) {
       const mapped = persistenceErrorResponse(error);
       return NextResponse.json(mapped.body, { status: mapped.status });
+    }
+    if (error instanceof AuthRequiredError) {
+      return authRequiredResponse();
     }
     throw error;
   }
@@ -53,13 +61,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'invalid_body', details: parsed.error.flatten() }, { status: 400 });
   }
   try {
-    const tribute = await createTribute(parsed.data);
+    const tribute = await withRequestOwner(() => createTribute(parsed.data));
     await setActiveTributeId(tribute.publicId);
     return NextResponse.json({ tribute }, { status: 201 });
   } catch (error) {
     if (error instanceof PersistenceUnavailableError) {
       const mapped = persistenceErrorResponse(error);
       return NextResponse.json(mapped.body, { status: mapped.status });
+    }
+    if (error instanceof AuthRequiredError) {
+      return authRequiredResponse();
     }
     throw error;
   }
@@ -85,7 +96,7 @@ export async function DELETE(request: Request) {
   }
   try {
     const activeId = await readActiveTributeId();
-    const removed = await deleteTribute(parsed.data.publicId);
+    const removed = await withRequestOwner(() => deleteTribute(parsed.data.publicId));
     if (!removed) {
       return NextResponse.json({ error: 'not_found' }, { status: 404 });
     }
@@ -100,6 +111,9 @@ export async function DELETE(request: Request) {
     if (error instanceof PersistenceUnavailableError) {
       const mapped = persistenceErrorResponse(error);
       return NextResponse.json(mapped.body, { status: mapped.status });
+    }
+    if (error instanceof AuthRequiredError) {
+      return authRequiredResponse();
     }
     throw error;
   }

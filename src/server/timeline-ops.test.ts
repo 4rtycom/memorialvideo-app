@@ -56,4 +56,18 @@ describe('timeline ops', () => {
     expect(portrait.width).toBe(1080);
     expect(portrait.height).toBe(1920);
   });
+
+  it('swaps two story moments and leaves the intro in place', () => {
+    const base = sampleTimeline();
+    const images = base.scenes.filter((scene) => scene.type === 'image');
+    expect(images.length).toBeGreaterThan(1);
+    const first = images[0]!;
+    const second = images[1]!;
+    const toIndex = base.scenes.findIndex((scene) => scene.id === first.id);
+    const moved = applyTimelineOp(base, { op: 'move_scene', sceneId: second.id, toIndex });
+    const media = moved.scenes.filter((scene) => scene.type === 'image').map((scene) => scene.id);
+    expect(media[0]).toBe(second.id);
+    expect(media[1]).toBe(first.id);
+    expect(moved.scenes[0]?.type).toBe('intro');
+  });
 });
