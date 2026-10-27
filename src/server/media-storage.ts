@@ -162,19 +162,26 @@ export async function readMediaFile(
   tributePublicId: string,
   assetId: string,
 ): Promise<{ bytes: Buffer; contentType: string } | null> {
-  const file = mediaFilePath(tributePublicId, assetId);
+  const raw = mediaFilePath(tributePublicId, assetId);
+  const normalized = `${raw}.normalized.jpg`;
+  // Prefer ingest-normalized still (orientation + max edge) when present; original stays immutable.
+  const file = existsSync(normalized) ? normalized : raw;
   if (!existsSync(file)) {
     return null;
   }
   const bytes = await readFile(file);
-  let contentType = 'application/octet-stream';
+  let contentType = file.endsWith('.normalized.jpg')
+    ? 'image/jpeg'
+    : 'application/octet-stream';
   try {
     const names = await readdir(tusDir());
     for (const name of names) {
       if (!name.endsWith('.json')) continue;
       const session = await readUploadSession(name.replace(/\.json$/, ''));
       if (session?.tributePublicId === tributePublicId && session.assetId === assetId) {
-        contentType = session.contentType || contentType;
+        contentType = file.endsWith('.normalized.jpg')
+          ? 'image/jpeg'
+          : session.contentType || contentType;
         break;
       }
     }

@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
+import { THEME_KEYS } from '@memorialvideo/contracts';
+import { resolveCreatorThemeKey } from '@memorialvideo/domain';
 import { z } from 'zod';
 import { loadActiveTribute, setActiveTributeId } from '@/server/session';
 import { entitlementView, getTribute, updateTribute } from '@/server/store';
 
 export const runtime = 'nodejs';
+
+const themeInputSchema = z
+  .enum([...THEME_KEYS, 'joyful', 'peaceful'] as [string, ...string[]])
+  .transform((value) => resolveCreatorThemeKey(value));
 
 const patchSchema = z.object({
   publicId: z
@@ -14,7 +20,7 @@ const patchSchema = z.object({
   bornLabel: z.string().max(80).optional(),
   rememberedLabel: z.string().max(80).optional(),
   about: z.string().max(500).optional(),
-  themeKey: z.enum(['timeless', 'joyful', 'peaceful']).optional(),
+  themeKey: themeInputSchema.optional(),
   locale: z.enum(['en', 'nl', 'de', 'fr', 'es', 'pt', 'it', 'pl']).optional(),
   firstFilmStage: z
     .enum([

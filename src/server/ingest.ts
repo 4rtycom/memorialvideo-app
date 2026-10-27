@@ -14,6 +14,10 @@ export function isHeicFilename(name: string): boolean {
   return lower.endsWith('.heic') || lower.endsWith('.heif');
 }
 
+/** Family-facing HEIC guidance — convert on device; we do not silently invent JPG bytes. */
+export const HEIC_CONVERT_GUIDANCE =
+  'This photo is HEIC. Convert it to JPG or PNG on your phone or computer, then upload again. We keep the original listed so nothing is lost.';
+
 /** True when the memory is a short video upload (mp4), not a still photograph. */
 export function isVideoMemory(memory: {
   contentType?: string | null;
@@ -33,7 +37,7 @@ export function uiStatusLabel(ui: AssetUiStatus, failureCode?: AssetUiFailureCod
     case 'queued':
       return 'Still preparing';
     case 'needs_attention':
-      return failureCode === 'heic' ? 'HEIC needs conversion' : 'Needs attention';
+      return failureCode === 'heic' ? 'HEIC — convert to JPG/PNG' : 'Needs attention';
     case 'error':
       return 'Could not prepare — retry';
     default:

@@ -221,6 +221,29 @@ describe('creator local READY encode + download gate', () => {
     expect(burned.filter).toContain("enable='between(t,0.0000,1.0000)'");
   });
 
+  it('builds FilmStyleManifest grade, grain, and imageTreatment filters', async () => {
+    const encode = await import('./local-encode');
+    const timeless = resolveFilmStyleManifest('timeless');
+    const dark = resolveFilmStyleManifest('cinematic_dark');
+    const contemporary = resolveFilmStyleManifest('simple_contemporary');
+
+    const grade = encode.buildFilmStyleGradeFilter(timeless);
+    expect(grade).toContain('eq=contrast=');
+    expect(grade).toContain('colorbalance=rs=');
+
+    const grain = encode.buildFilmStyleGrainFilter(dark, 42);
+    expect(grain).toContain('noise=alls=');
+    expect(encode.buildFilmStyleGrainFilter({ ...contemporary, grainOpacity: 0 }, 1)).toBeNull();
+
+    expect(encode.imageTreatmentInsetPx('editorial')).toBe(48);
+    expect(encode.imageTreatmentInsetPx('spotlight')).toBe(96);
+    expect(encode.imageTreatmentInsetPx('fullBleed')).toBe(0);
+    const pad = encode.buildImageTreatmentPadFilter(1920, 1080, dark);
+    expect(pad).toContain('pad=1920:1080');
+    expect(pad).toContain(encode.cssColorToFfmpegHex(dark.mediaMatte)!);
+    expect(encode.buildImageTreatmentPadFilter(1920, 1080, contemporary)).toBeNull();
+  });
+
   it('maps FilmStyleManifest themeKey to lavfi color + themed drawtext (Remotion SafeType)', async () => {
     const encode = await import('./local-encode');
     expect(encode.cssColorToFfmpegHex('#F6F1E8')).toBe('0xF6F1E8');
@@ -270,7 +293,8 @@ describe('creator local READY encode + download gate', () => {
 
     const darkDraw = encode.buildDrawtextFilters(introLines, font, dark);
     expect(darkDraw).toContain(`fontcolor=${encode.cssColorToFfmpegHex(dark.ink)}`);
-    expect(darkDraw).toContain(`fontsize=${dark.titleSize}`);
+    // cinematic_dark chapterTreatment=bold bumps display title size on encode path.
+    expect(darkDraw).toContain(`fontsize=${dark.titleSize + 4}`);
 
     const captionDraw = encode.buildDrawtextFilters(
       [{ text: 'Garden', role: 'caption' }],

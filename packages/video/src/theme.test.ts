@@ -17,6 +17,8 @@ describe('theme versions', () => {
     expect(new Set([timeless.imageTreatment, warmLight.imageTreatment, cinematicDark.imageTreatment]).size).toBe(3);
     expect(resolveTheme('cinematic_dark').ink).not.toBe(resolveTheme('timeless').ink);
     expect(timeless.version).toBe(1);
+    expect(warmLight.gradeWarmth).toBeGreaterThan(cinematicDark.gradeWarmth);
+    expect(cinematicDark.grainOpacity).toBeGreaterThan(simpleContemporary.grainOpacity);
   });
 
   it('builds a dedicated golden contract for each theme', () => {

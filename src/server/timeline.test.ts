@@ -83,7 +83,7 @@ describe('creator timeline builder', () => {
         displayName: 'Empty',
         bornLabel: '',
         rememberedLabel: '',
-        themeKey: 'joyful',
+        themeKey: 'warm_light',
         entitlement: { packageKey: 'ceremony' },
         memories: [],
       }),
@@ -119,5 +119,47 @@ describe('creator timeline builder', () => {
     expect(parsed.music?.trackId).toBe('still-water');
     const intro = parsed.scenes.find((s) => s.type === 'intro');
     expect(intro && intro.type === 'intro' ? intro.displayName : null).toBe('In loving memory');
+  });
+
+  it('applies FilmStyleManifest pacing and preferred transitions per style', () => {
+    const dark = buildTimelineFromTribute({
+      publicId: 'mv_abcdef0123456789',
+      displayName: 'Ada',
+      bornLabel: '',
+      rememberedLabel: '',
+      themeKey: 'cinematic_dark',
+      entitlement: null,
+      memories: [
+        {
+          id: 'mem_aaaaaaaaaaaaaaaa',
+          title: 'One',
+          imagePath: '/fixtures/memory-a.png',
+          ingestStatus: 'READY',
+        },
+      ],
+    });
+    const contemporary = buildTimelineFromTribute({
+      publicId: 'mv_abcdef0123456789',
+      displayName: 'Ada',
+      bornLabel: '',
+      rememberedLabel: '',
+      themeKey: 'simple_contemporary',
+      entitlement: null,
+      memories: [
+        {
+          id: 'mem_aaaaaaaaaaaaaaaa',
+          title: 'One',
+          imagePath: '/fixtures/memory-a.png',
+          ingestStatus: 'READY',
+        },
+      ],
+    });
+    expect(dark).toBeTruthy();
+    expect(contemporary).toBeTruthy();
+    const darkImage = dark!.scenes.find((s) => s.type === 'image');
+    const contempImage = contemporary!.scenes.find((s) => s.type === 'image');
+    expect(darkImage?.transitionIn).toBe('dissolve');
+    expect(contempImage?.transitionIn).toBe('fade');
+    expect((darkImage?.durationFrames ?? 0) > (contempImage?.durationFrames ?? 0)).toBe(true);
   });
 });

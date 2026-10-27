@@ -81,12 +81,17 @@ describe('creator story chapters + enhancement honesty', () => {
     const updated = await store.updateTribute(created.publicId, {
       soundtrackTrackId: 'still-water',
       musicRightsConfirmed: true,
-      themeKey: 'joyful',
+      themeKey: 'warm_light',
       openingTitle: 'In loving memory',
     });
     expect(updated?.soundtrackTrackId).toBe('still-water');
     expect(updated?.musicRightsConfirmed).toBe(true);
-    expect(updated?.themeKey).toBe('joyful');
+    expect(updated?.themeKey).toBe('warm_light');
     expect(updated?.openingTitle).toBe('In loving memory');
+
+    const aliased = await store.updateTribute(created.publicId, {
+      themeKey: 'joyful' as 'warm_light',
+    });
+    expect(aliased?.themeKey).toBe('warm_light');
   });
 });

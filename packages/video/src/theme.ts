@@ -22,11 +22,26 @@ export type ThemeTokens = {
   imageTreatment: FilmStyleManifest['imageTreatment'];
   motionIntensity: number;
   grainOpacity: number;
+  gradeContrast: number;
+  gradeSaturation: number;
+  gradeBrightness: number;
+  gradeWarmth: number;
   soundtrackProfile: FilmStyleManifest['soundtrackProfile'];
   chapterTreatment: FilmStyleManifest['chapterTreatment'];
   captionTreatment: FilmStyleManifest['captionTreatment'];
   preferredTransition: FilmStyleManifest['preferredTransition'];
 };
+
+/** CSS filter approximating FilmStyleManifest grade for Remotion Player parity. */
+export function themeGradeCssFilter(theme: ThemeTokens): string {
+  const contrast = theme.gradeContrast;
+  const brightness = 1 + theme.gradeBrightness;
+  const saturate = theme.gradeSaturation;
+  // Warmth via slight sepia + hue-rotate (presentation-only; not generative).
+  const sepia = Math.max(0, theme.gradeWarmth) * 0.35;
+  const hue = theme.gradeWarmth * 12;
+  return `contrast(${contrast}) brightness(${brightness}) saturate(${saturate}) sepia(${sepia}) hue-rotate(${hue}deg)`;
+}
 
 export const videoSafe = {
   paddingX: 160,
@@ -51,6 +66,10 @@ function tokensFromManifest(manifest: FilmStyleManifest): ThemeTokens {
     imageTreatment: manifest.imageTreatment,
     motionIntensity: manifest.motionIntensity,
     grainOpacity: manifest.grainOpacity,
+    gradeContrast: manifest.gradeContrast,
+    gradeSaturation: manifest.gradeSaturation,
+    gradeBrightness: manifest.gradeBrightness,
+    gradeWarmth: manifest.gradeWarmth,
     soundtrackProfile: manifest.soundtrackProfile,
     chapterTreatment: manifest.chapterTreatment,
     captionTreatment: manifest.captionTreatment,
