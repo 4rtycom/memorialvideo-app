@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { BrandWordmark } from "@/components/BrandWordmark";
 import { project } from "@/lib/copy";
 
 export default function GuestThanksPage() {
   return (
     <div className="mobile-shell">
       <header className="mobile-top">
-        <div className="font-medium text-[21px]">{project.brand}</div>
+        <BrandWordmark alt={project.brand} className="brand-wordmark brand-wordmark--mobile" />
         <div className="text-[11px] text-[color:var(--muted)]">Private contribution</div>
       </header>
       <main className="px-6 pt-16 text-center">
