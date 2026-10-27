@@ -50,7 +50,7 @@ export const CREATOR_UI_KEYS = [
   'creator.pack.filmLength',
   'creator.pack.allowance',
   'creator.pack.upToMinutes',
-  'creator.pack.upgradeOver8',
+  'creator.pack.upgradeOver10',
   'creator.pack.upgradeOver20',
   'creator.pack.stripeNotWired',
   'creator.pack.stripeNotWiredBody',
@@ -150,8 +150,8 @@ const enCore = {
   'creator.pack.filmLength': 'Finished film length',
   'creator.pack.allowance': 'Pack allowance',
   'creator.pack.upToMinutes': 'Up to {minutes} minutes',
-  'creator.pack.upgradeOver8':
-    'Your film is longer than 8 minutes, so we moved you to the next pack (Life Story).',
+  'creator.pack.upgradeOver10':
+    'Your film is longer than 10 minutes, so we moved you to the next pack (Life Story).',
   'creator.pack.upgradeOver20':
     'Your film is longer than 20 minutes, so we moved you to Forever Legacy.',
   'creator.pack.stripeNotWired': 'Paid pack checkout is not wired yet',

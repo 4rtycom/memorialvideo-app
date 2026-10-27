@@ -68,21 +68,21 @@ describe('pack-duration-local', () => {
     vi.resetModules();
   });
 
-  it('auto-moves selected pack to Life Story when film exceeds 8 minutes', async () => {
+  it('auto-moves selected pack to Life Story when film exceeds 10 minutes', async () => {
     const store = await import('./store');
     const pack = await import('./pack-duration-local');
     const created = await store.createTribute({ displayName: 'Duration Person' });
     await store.updateTribute(created.publicId, {
       selectedConsumerPackId: 'memorial-tribute',
     });
-    const saved = await store.saveTimeline(created.publicId, timelineForSeconds(8 * 60 + 15), {
+    const saved = await store.saveTimeline(created.publicId, timelineForSeconds(10 * 60 + 15), {
       expectedVersion: 0,
     });
     expect(saved.ok).toBe(true);
 
     const synced = await pack.syncConsumerPackForFilmDuration(created.publicId);
     expect(synced?.view.recommendation.selectedPlanId).toBe('life-story');
-    expect(synced?.view.recommendation.reason).toBe('over_eight_minutes');
+    expect(synced?.view.recommendation.reason).toBe('over_ten_minutes');
     expect(synced?.view.recommendation.autoUpgraded).toBe(true);
     expect(synced?.tribute.selectedConsumerPackId).toBe('life-story');
   });

@@ -21,7 +21,7 @@ Source: [MemorialVideo — Marketing Website ONLY | Cinema of a Life — 2026](h
 | 12 Music & words / Personal touches | `/music` | Dev catalog + AudioMix apply (XB-002 masters pending) |
 | 13 Photo improvement / Before & after | `/film/enhance` | Local ffmpeg pixel-ops; generative not COMPLETE |
 | 14 Studio / Optional advanced controls | `/film/studio` | Shared TimelineContract + Guided Variants panel |
-| 15 Finish / Download & private sharing | `/share` | READY QC download (HTTP Range) + metadata ZIP + checklist .txt + stale-final warn + Ceremony Pack + readiness + duration→pack auto-upgrade (>8 min / >20 min) |
+| 15 Finish / Download & private sharing | `/share` | READY QC download (HTTP Range) + metadata ZIP + checklist .txt + stale-final warn + Ceremony Pack + readiness + duration→pack auto-upgrade (>10 min / >20 min) |
 | 16–19 Guest flows | `/guest`… | Hash redeem + contribute |
 | 20 Owner mobile / Workspace home | `/m` | Implemented |
 | 00 Empty / failure / permission states | `/states` | Implemented |

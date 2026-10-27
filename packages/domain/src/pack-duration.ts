@@ -5,17 +5,17 @@ import {
   type ProposedPlanId,
 } from './proposed-pricing';
 
-/** Inclusive minute caps: Tribute ≤8, Life Story ≤20, Forever Legacy ≤40. */
+/** Inclusive minute caps: Tribute ≤10, Life Story ≤20, Forever Legacy ≤40. */
 export const PACK_FILM_MINUTE_CAPS = {
-  'memorial-tribute': 8,
+  'memorial-tribute': 10,
   'life-story': 20,
   'forever-legacy': 40,
-} as const satisfies Record<ProposedPlanId, 8 | 20 | 40>;
+} as const satisfies Record<ProposedPlanId, 10 | 20 | 40>;
 
-/** Duration steps that force the next commercial pack (Glenn: >8 then >20). */
+/** Duration steps that force the next commercial pack (Glenn: >10 then >20). */
 export const PACK_DURATION_UPGRADE_THRESHOLDS_SECONDS = {
-  /** Over 8:00 → Life Story (next pack after Memorial Tribute). */
-  overEightMinutes: 8 * 60,
+  /** Over 10:00 → Life Story (next pack after Memorial Tribute). */
+  overTenMinutes: 10 * 60,
   /** Over 20:00 → Forever Legacy (next pack after Life Story / +20 step). */
   overTwentyMinutes: 20 * 60,
 } as const;
@@ -28,7 +28,7 @@ const PLAN_ORDER: readonly ProposedPlanId[] = [
 
 export type PackDurationUpgradeReason =
   | 'within_allowance'
-  | 'over_eight_minutes'
+  | 'over_ten_minutes'
   | 'over_twenty_minutes';
 
 export type PackDurationRecommendation = {
@@ -64,8 +64,8 @@ function requirePlan(id: ProposedPlanId): ProposedPlan {
 
 /**
  * Map finished-film duration to the minimum consumer pack.
- * - ≤ 8:00 → Memorial Tribute
- * - > 8:00 → Life Story
+ * - ≤ 10:00 → Memorial Tribute
+ * - > 10:00 → Life Story
  * - > 20:00 → Forever Legacy
  */
 export function requiredConsumerPackForDurationSeconds(durationSeconds: number): ProposedPlanId {
@@ -73,7 +73,7 @@ export function requiredConsumerPackForDurationSeconds(durationSeconds: number):
   if (seconds > PACK_DURATION_UPGRADE_THRESHOLDS_SECONDS.overTwentyMinutes) {
     return 'forever-legacy';
   }
-  if (seconds > PACK_DURATION_UPGRADE_THRESHOLDS_SECONDS.overEightMinutes) {
+  if (seconds > PACK_DURATION_UPGRADE_THRESHOLDS_SECONDS.overTenMinutes) {
     return 'life-story';
   }
   return 'memorial-tribute';
@@ -85,7 +85,7 @@ export function upgradeReasonForDurationSeconds(durationSeconds: number): PackDu
     return 'over_twenty_minutes';
   }
   if (required === 'life-story') {
-    return 'over_eight_minutes';
+    return 'over_ten_minutes';
   }
   return 'within_allowance';
 }
@@ -100,7 +100,7 @@ export function nextConsumerPack(planId: ProposedPlanId): ProposedPlanId | null 
 
 /**
  * Resolve the pack to present/select for a finished film.
- * Auto-moves upward when duration crosses 8:00 or 20:00; never silently charges
+ * Auto-moves upward when duration crosses 10:00 or 20:00; never silently charges
  * (checkout stays stripe_not_wired until paid SKUs exist).
  */
 export function resolvePackForFilmDuration(input: {

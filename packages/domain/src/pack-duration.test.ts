@@ -11,21 +11,26 @@ import {
 } from './pack-duration';
 
 describe('pack duration upgrade thresholds', () => {
-  it('locks the 8-minute and 20-minute step points', () => {
-    expect(PACK_DURATION_UPGRADE_THRESHOLDS_SECONDS.overEightMinutes).toBe(480);
+  it('locks the 10-minute and 20-minute step points', () => {
+    expect(PACK_DURATION_UPGRADE_THRESHOLDS_SECONDS.overTenMinutes).toBe(600);
     expect(PACK_DURATION_UPGRADE_THRESHOLDS_SECONDS.overTwentyMinutes).toBe(1200);
     expect(PACK_FILM_MINUTE_CAPS).toEqual({
-      'memorial-tribute': 8,
+      'memorial-tribute': 10,
       'life-story': 20,
       'forever-legacy': 40,
     });
   });
 
-  it('keeps Memorial Tribute at exactly 8:00 and steps at +1s', () => {
+  it('keeps Memorial Tribute at exactly 10:00 and steps at +1s', () => {
     expect(requiredConsumerPackForDurationSeconds(0)).toBe('memorial-tribute');
-    expect(requiredConsumerPackForDurationSeconds(8 * 60)).toBe('memorial-tribute');
-    expect(requiredConsumerPackForDurationSeconds(8 * 60 + 1)).toBe('life-story');
-    expect(upgradeReasonForDurationSeconds(8 * 60 + 1)).toBe('over_eight_minutes');
+    expect(requiredConsumerPackForDurationSeconds(10 * 60)).toBe('memorial-tribute');
+    expect(requiredConsumerPackForDurationSeconds(10 * 60 + 1)).toBe('life-story');
+    expect(upgradeReasonForDurationSeconds(10 * 60 + 1)).toBe('over_ten_minutes');
+  });
+
+  it('does not upgrade at the old 8:00 threshold', () => {
+    expect(requiredConsumerPackForDurationSeconds(8 * 60 + 1)).toBe('memorial-tribute');
+    expect(upgradeReasonForDurationSeconds(8 * 60 + 1)).toBe('within_allowance');
   });
 
   it('steps again over 20:00 toward Forever Legacy', () => {
@@ -37,13 +42,13 @@ describe('pack duration upgrade thresholds', () => {
     expect(nextConsumerPack('forever-legacy')).toBeNull();
   });
 
-  it('auto-selects Life Story when duration crosses 8 minutes with no prior pack', () => {
-    const result = resolvePackForFilmDuration({ filmDurationSeconds: 8 * 60 + 30 });
+  it('auto-selects Life Story when duration crosses 10 minutes with no prior pack', () => {
+    const result = resolvePackForFilmDuration({ filmDurationSeconds: 10 * 60 + 30 });
     expect(result.selectedPlanId).toBe('life-story');
     expect(result.requiredPlanId).toBe('life-story');
     expect(result.autoUpgraded).toBe(true);
     expect(result.previousPlanId).toBe('memorial-tribute');
-    expect(result.reason).toBe('over_eight_minutes');
+    expect(result.reason).toBe('over_ten_minutes');
     expect(result.checkoutBlock).toBe('stripe_not_wired');
   });
 

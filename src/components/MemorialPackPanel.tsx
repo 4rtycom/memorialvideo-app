@@ -16,7 +16,7 @@ type PanelMode = 'local_fake' | 'stripe' | 'unavailable';
 export type PackRecommendationView = {
   selectedPlanId: ProposedPlanId;
   requiredPlanId: ProposedPlanId;
-  reason: 'within_allowance' | 'over_eight_minutes' | 'over_twenty_minutes';
+  reason: 'within_allowance' | 'over_ten_minutes' | 'over_twenty_minutes';
   autoUpgraded: boolean;
   previousPlanId: ProposedPlanId | null;
   filmDurationSeconds: number;
@@ -41,8 +41,8 @@ function upgradeExplanation(
   if (recommendation.reason === 'over_twenty_minutes') {
     return creatorT(locale, 'creator.pack.upgradeOver20');
   }
-  if (recommendation.reason === 'over_eight_minutes') {
-    return creatorT(locale, 'creator.pack.upgradeOver8');
+  if (recommendation.reason === 'over_ten_minutes') {
+    return creatorT(locale, 'creator.pack.upgradeOver10');
   }
   return null;
 }
