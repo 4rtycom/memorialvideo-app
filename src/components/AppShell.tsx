@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import type { LaunchLanguage } from '@memorialvideo/contracts';
+import { BrandWordmark } from '@/components/BrandWordmark';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { creatorNavLabels, creatorT } from '@/lib/creator-ui-messages';
 import { navItems } from '@/lib/copy';
@@ -48,8 +49,8 @@ export function AppShell({
   return (
     <div className={`app-shell ${cinema ? 'cinema-mode' : ''}`}>
       <aside className="sidebar">
-        <Link href="/" className="brand">
-          {brand}
+        <Link href="/" className="brand" aria-label={brand}>
+          <BrandWordmark alt={brand} priority />
         </Link>
         <div className="nav-label">{creatorT(locale, 'creator.nav.yourTribute')}</div>
         <nav className="nav-list" aria-label="Tribute navigation">

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { BrandWordmark } from "@/components/BrandWordmark";
 import { project } from "@/lib/copy";
 
 const tabs = [
@@ -14,7 +15,7 @@ export default function MobileHomePage() {
   return (
     <div className="mobile-shell">
       <header className="mobile-top">
-        <div className="font-medium text-[21px]">{project.brand}</div>
+        <BrandWordmark alt={project.brand} className="brand-wordmark brand-wordmark--mobile" />
         <div className="text-[21px]" aria-hidden>☰</div>
       </header>
       <main className="px-6 pt-8">
