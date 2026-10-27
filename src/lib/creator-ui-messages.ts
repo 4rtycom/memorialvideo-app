@@ -46,6 +46,14 @@ export const CREATOR_UI_KEYS = [
   'creator.pack.retry',
   'creator.pack.checkoutFailed',
   'creator.pack.localOnlyNote',
+  'creator.pack.chooseTitle',
+  'creator.pack.filmLength',
+  'creator.pack.allowance',
+  'creator.pack.upToMinutes',
+  'creator.pack.upgradeOver10',
+  'creator.pack.upgradeOver20',
+  'creator.pack.stripeNotWired',
+  'creator.pack.stripeNotWiredBody',
   'creator.music.opening',
   'creator.music.openingHint',
   'creator.music.soundtrack',
@@ -130,7 +138,7 @@ const enCore = {
   'creator.pack.active': 'Memorial Pack is active · private playback · ceremony download',
   'creator.pack.missing': 'Unlock ceremony-ready download and private sharing for this tribute.',
   'creator.pack.activateLocal': 'Activate Memorial Pack (local)',
-  'creator.pack.buyStripe': 'Purchase Memorial Pack',
+  'creator.pack.buyStripe': 'Purchase pack',
   'creator.pack.stripeUnavailable': 'Memorial Pack checkout is unavailable (XB-005).',
   'creator.pack.stripeUnavailableBody':
     'Stripe credentials are not configured on this host. Checkout cannot invent a paid entitlement. Retry after secrets are set, or use local fulfill only in APP_ENV=local.',
@@ -138,6 +146,17 @@ const enCore = {
   'creator.pack.checkoutFailed': 'Memorial Pack checkout could not start. Please try again.',
   'creator.pack.localOnlyNote':
     'Local fake fulfill only — not live paid COMPLETE. Configure Stripe (XB-005) for Checkout Session + webhook.',
+  'creator.pack.chooseTitle': 'Choose your memorial pack',
+  'creator.pack.filmLength': 'Finished film length',
+  'creator.pack.allowance': 'Pack allowance',
+  'creator.pack.upToMinutes': 'Up to {minutes} minutes',
+  'creator.pack.upgradeOver10':
+    'Your film is longer than 10 minutes, so we moved you to the next pack (Life Story).',
+  'creator.pack.upgradeOver20':
+    'Your film is longer than 20 minutes, so we moved you to Forever Legacy.',
+  'creator.pack.stripeNotWired': 'Paid pack checkout is not wired yet',
+  'creator.pack.stripeNotWiredBody':
+    'Your pack is selected from the film length. No charge was made — Stripe consumer-pack SKUs are not connected (stripe_not_wired).',
   'creator.music.opening': 'Opening words',
   'creator.music.openingHint': 'Shown at the start of the film.',
   'creator.music.soundtrack': 'The soundtrack',

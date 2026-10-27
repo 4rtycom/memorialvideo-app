@@ -378,6 +378,14 @@ export const tributeSchema = z.object({
   /** Previous TimelineContract for one-step undo. */
   timelinePrevious: z.unknown().nullable().default(null),
   finalRendersUsed: z.number().int().nonnegative().default(0),
+  /**
+   * Approved commercial pack selection (Memorial Tribute / Life Story / Forever Legacy).
+   * Auto-moved when finished film duration crosses 8:00 or 20:00 — not a PackageKey entitlement.
+   */
+  selectedConsumerPackId: z
+    .enum(['memorial-tribute', 'life-story', 'forever-legacy'])
+    .nullable()
+    .default(null),
   entitlement: z
     .object({
       packageKey: z.literal(MEMORIAL_PACK_PACKAGE_KEY),
@@ -813,6 +821,7 @@ export async function updateTribute(
       | 'openingTitle'
       | 'enhancementConsentLocal'
       | 'storyChapters'
+      | 'selectedConsumerPackId'
     >
   >,
 ): Promise<Tribute | null> {

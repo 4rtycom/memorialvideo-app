@@ -1,8 +1,9 @@
+import { DEFAULT_FPS, formatTimelineClock, secondsToFrames } from '@memorialvideo/contracts';
 import { AppShell } from '@/components/AppShell';
 import { CeremonyChecklistPanel } from '@/components/CeremonyChecklistPanel';
 import { CeremonyReadinessPanel } from '@/components/CeremonyReadinessPanel';
 import { ErrorRecovery } from '@/components/ErrorRecovery';
-import { MemorialPackPanel } from '@/components/MemorialPackPanel';
+import { MemorialPackPanel, type PackRecommendationView } from '@/components/MemorialPackPanel';
 import { RenderJobPanel } from '@/components/RenderJobPanel';
 import { ShareDownloadPanel } from '@/components/ShareDownloadPanel';
 import { Button, Eyebrow, Hero, Lede } from '@/components/ui';
@@ -11,6 +12,7 @@ import { shellProject } from '@/lib/tribute-view';
 import { planCeremonyPackWithReadiness } from '@/server/ceremony-pack-local';
 import { isLocalCreatorEnv } from '@/server/env';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
+import { syncConsumerPackForFilmDuration } from '@/server/pack-duration-local';
 import { planDownloadFromJobs, summarizeRenderJobs } from '@/server/render';
 import { loadActiveTribute } from '@/server/session';
 import { summarizeShareList } from '@/server/share-list';
@@ -18,7 +20,9 @@ import { entitlementView } from '@/server/store';
 import { isStripeMemorialPackConfigured } from '@/server/stripe-checkout';
 
 export default async function SharePage() {
-  const tribute = await loadActiveTribute();
+  const active = await loadActiveTribute();
+  const synced = active ? await syncConsumerPackForFilmDuration(active.publicId) : null;
+  const tribute = synced?.tribute ?? active;
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
   const shell = shellProject(tribute);
   const entitlement = entitlementView(tribute);
@@ -31,6 +35,28 @@ export default async function SharePage() {
   const watchPath = tribute
     ? `Create a private link for ${tribute.displayName}`
     : 'Create a tribute to share a private screening';
+  const packRecommendation: PackRecommendationView | null = synced
+    ? {
+        selectedPlanId: synced.view.recommendation.selectedPlanId,
+        requiredPlanId: synced.view.recommendation.requiredPlanId,
+        reason: synced.view.recommendation.reason,
+        autoUpgraded: synced.view.recommendation.autoUpgraded,
+        previousPlanId: synced.view.recommendation.previousPlanId,
+        filmDurationSeconds: synced.view.recommendation.filmDurationSeconds,
+        filmClock: formatTimelineClock(
+          secondsToFrames(synced.view.recommendation.filmDurationSeconds, DEFAULT_FPS),
+          DEFAULT_FPS,
+        ),
+        exceedsTopTierAllowance: synced.view.recommendation.exceedsTopTierAllowance,
+        checkoutBlock: synced.view.recommendation.checkoutBlock,
+        plans: synced.view.plans.map((plan) => ({
+          id: plan.id,
+          displayName: plan.displayName,
+          amountEur: plan.amountEur,
+          filmMinutes: plan.filmMinutes,
+        })),
+      }
+    : null;
 
   return (
     <AppShell
@@ -66,6 +92,7 @@ export default async function SharePage() {
             stripeConfigured={stripeConfigured}
             projectPublicId={tribute.publicId}
             locale={locale}
+            packRecommendation={packRecommendation}
           />
         </>
       ) : (
