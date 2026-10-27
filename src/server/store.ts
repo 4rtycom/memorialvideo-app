@@ -23,6 +23,7 @@ import {
 } from '@memorialvideo/domain';
 import {
   RENDER_JOB_STATUSES,
+  THEME_KEYS,
   ceremonyMusicPlanSchema,
   parseTimelineContract,
   peopleConsentSchema,
@@ -32,10 +33,12 @@ import {
   type PeopleConsent,
   type TimelineContract,
 } from '@memorialvideo/contracts';
-import { peopleProcessingAllowed } from '@memorialvideo/domain';
+import { peopleProcessingAllowed, resolveCreatorThemeKey } from '@memorialvideo/domain';
 import { z } from 'zod';
 import { creatorEnv } from './env';
-import { isHeicFilename, isIngestTerminal, nextIngestStatus } from './ingest';
+import { isHeicFilename, isIngestTerminal, isVideoMemory, nextIngestStatus } from './ingest';
+import { mediaFilePath } from './media-storage';
+import { normalizeStillWithFfmpeg, normalizedStillAbsolutePath } from './normalize-still';
 import {
   PersistenceUnavailableError,
   assertPersistenceWritable,
@@ -292,7 +295,7 @@ export const tributeSchema = z.object({
   rememberedLabel: z.string().max(80).default(''),
   about: z.string().max(500).default(''),
   ownerInitial: z.string().max(2).default('Y'),
-  themeKey: z.enum(['timeless', 'joyful', 'peaceful']).default('timeless'),
+  themeKey: z.enum(THEME_KEYS).default('timeless'),
   locale: z.enum(['en', 'nl', 'de', 'fr', 'es', 'pt', 'it', 'pl']).default('en'),
   firstFilmStage: z
     .enum(['idle', 'preparing_memories', 'building_story', 'arranging_film', 'finishing', 'ready_to_review', 'blocked'])
@@ -543,6 +546,9 @@ function migrateTribute(raw: Record<string, unknown>): Tribute {
         ];
   const parsed = tributeSchema.parse({
     ...raw,
+    themeKey: resolveCreatorThemeKey(
+      typeof raw.themeKey === 'string' ? raw.themeKey : 'timeless',
+    ),
     collectionStatus: raw.collectionStatus ?? 'NOT_STARTED',
     memories,
     invites: invitesRaw,
@@ -830,13 +836,19 @@ export async function updateTribute(
   if (!existing) {
     return null;
   }
+  const resolvedPatch = {
+    ...patch,
+    ...(patch.themeKey !== undefined
+      ? { themeKey: resolveCreatorThemeKey(patch.themeKey) }
+      : {}),
+  };
   const filmChoiceTouched =
-    patch.themeKey !== undefined ||
-    patch.openingTitle !== undefined ||
-    patch.soundtrackTrackId !== undefined ||
-    patch.musicRightsConfirmed !== undefined ||
-    patch.displayName !== undefined ||
-    patch.locale !== undefined;
+    resolvedPatch.themeKey !== undefined ||
+    resolvedPatch.openingTitle !== undefined ||
+    resolvedPatch.soundtrackTrackId !== undefined ||
+    resolvedPatch.musicRightsConfirmed !== undefined ||
+    resolvedPatch.displayName !== undefined ||
+    resolvedPatch.locale !== undefined;
   let timeline = existing.timeline as TimelineContract | null;
   let timelineVersion = existing.timelineVersion;
   let timelinePrevious = existing.timelinePrevious;
@@ -844,7 +856,7 @@ export async function updateTribute(
     const merged = migrateTribute(
       tributeSchema.parse({
         ...existing,
-        ...patch,
+        ...resolvedPatch,
       }) as unknown as Record<string, unknown>,
     );
     timelinePrevious = timeline;
@@ -862,7 +874,7 @@ export async function updateTribute(
   const next = migrateTribute(
     tributeSchema.parse({
       ...existing,
-      ...patch,
+      ...resolvedPatch,
       timeline,
       timelinePrevious,
       timelineVersion,
@@ -1227,6 +1239,8 @@ export async function addMemory(publicId: string, input: AddMemoryInput): Promis
 
 /**
  * Advance pending ingest jobs one step (worker:once / poll). No setTimeout.
+ * On PROCESSING → READY for stills: orient + cap long edge into a durable sibling JPEG.
+ * HEIC stays needs_attention (no silent convert). Videos skip still normalize.
  */
 export async function advanceIngestJobs(publicId: string): Promise<{
   tribute: Tribute | null;
@@ -1239,21 +1253,43 @@ export async function advanceIngestJobs(publicId: string): Promise<{
   }
   let advanced = 0;
   const now = new Date().toISOString();
-  const memories = existing.memories.map((memory) => {
+  const memories: MemoryAsset[] = [];
+  for (const memory of existing.memories) {
     if (isIngestTerminal(memory.ingestStatus)) {
-      return memory;
+      memories.push(memory);
+      continue;
     }
     const nextStatus = nextIngestStatus(memory.ingestStatus);
     if (!nextStatus) {
-      return memory;
+      memories.push(memory);
+      continue;
     }
     advanced += 1;
-    return memoryAssetSchema.parse({
+    let nextMemory = memoryAssetSchema.parse({
       ...memory,
       ingestStatus: nextStatus,
       updatedAt: now,
     });
-  });
+    if (
+      memory.ingestStatus === 'PROCESSING' &&
+      nextStatus === 'READY' &&
+      memory.failureCode !== 'heic' &&
+      !isVideoMemory(memory) &&
+      !isHeicFilename(memory.originalFilenameHint ?? '')
+    ) {
+      const source = mediaFilePath(publicId, memory.id);
+      const output = normalizedStillAbsolutePath(source);
+      const normalized = await normalizeStillWithFfmpeg({
+        sourceAbsolute: source,
+        outputAbsolute: output,
+      });
+      // Normalize is best-effort: originals stay READY even if ffmpeg fails (honest non-block).
+      if (!normalized.ok) {
+        // Keep READY with raw bytes — do not fail the family for a grade-path miss.
+      }
+    }
+    memories.push(nextMemory);
+  }
   if (advanced === 0) {
     return { tribute: migrateTribute(existing as unknown as Record<string, unknown>), advanced: 0 };
   }

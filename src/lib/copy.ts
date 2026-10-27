@@ -41,10 +41,48 @@ export const filmChapters = [
   "04  Forever close",
 ] as const;
 
+/** All five FilmStyleManifest keys — first-class in the creator desk. */
 export const styles = [
-  { id: "timeless", title: "Timeless", desc: "Tender and full of warmth", image: "/fixtures/chapter-b.png", selected: true },
-  { id: "joyful", title: "Joyful", desc: "Bright, loving, full of life", image: "/fixtures/chapter-c.png", selected: false },
-  { id: "peaceful", title: "Peaceful", desc: "A calm moment of reflection", image: "/fixtures/studio-f.png", selected: false },
+  {
+    id: "timeless",
+    title: "Timeless",
+    desc: "Tender paper light, quiet dissolve, soft editorial frames.",
+    image: "/fixtures/chapter-b.png",
+    swatch: "#F6F1E8",
+    accent: "#A9784C",
+  },
+  {
+    id: "warm_light",
+    title: "Warm Light",
+    desc: "Golden afternoons, full-bleed photos, a gentle warm grade.",
+    image: "/fixtures/chapter-c.png",
+    swatch: "#F3E3CF",
+    accent: "#C46A3A",
+  },
+  {
+    id: "cinematic_dark",
+    title: "Cinematic Dark",
+    desc: "Spotlight stills, deeper grain, bold titles on night matte.",
+    image: "/fixtures/studio-j.png",
+    swatch: "#121418",
+    accent: "#D4B483",
+  },
+  {
+    id: "family_album",
+    title: "Family Album",
+    desc: "Album pacing, soft grain, editorial chapters that feel close.",
+    image: "/fixtures/studio-f.png",
+    swatch: "#EFE6D6",
+    accent: "#8B5A3C",
+  },
+  {
+    id: "simple_contemporary",
+    title: "Simple & Contemporary",
+    desc: "Clean type, calm fades, a restrained modern grade.",
+    image: "/fixtures/chapter-d.png",
+    swatch: "#F4F2EE",
+    accent: "#4A5560",
+  },
 ] as const;
 
 export const soundtrack = [

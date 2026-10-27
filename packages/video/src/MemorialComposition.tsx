@@ -4,6 +4,7 @@ import React from 'react';
 import { AbsoluteFill, Audio, Sequence, staticFile, useCurrentFrame } from 'remotion';
 
 import { AudioMixLayer, speechSceneIds } from './AudioMixLayer';
+import { FilmGrain } from './FilmGrain';
 import { MediaScene } from './MediaScene';
 import { sceneSeed } from './motion';
 import { SafeType } from './SafeType';
@@ -84,6 +85,7 @@ export function MemorialComposition(props: TimelineContract) {
           </Sequence>
         );
       })}
+      <FilmGrain theme={theme} />
       {props.watermark ? <Watermark theme={theme} /> : null}
     </AbsoluteFill>
   );

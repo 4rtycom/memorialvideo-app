@@ -2,7 +2,7 @@ import React from 'react';
 import { AbsoluteFill, Img, OffthreadVideo, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 
 import { kenBurnsScale, kenBurnsShift } from './motion';
-import { resolveTheme, videoSafe, type ThemeTokens } from './theme';
+import { resolveTheme, themeGradeCssFilter, videoSafe, type ThemeTokens } from './theme';
 
 type MediaSceneProps = {
   src: string;
@@ -40,6 +40,14 @@ export function MediaScene({
       : { x: 0, y: 0 };
   const resolved = src.startsWith('http') || src.startsWith('data:') || src.startsWith('blob:') ? src : staticFile(src);
   const inset = theme.imageTreatment === 'editorial' ? 48 : theme.imageTreatment === 'spotlight' ? 96 : 0;
+  const captionColor =
+    theme.captionTreatment === 'matte'
+      ? theme.ink
+      : theme.captionTreatment === 'minimal'
+        ? theme.muted
+        : theme.paper;
+  const captionSize = theme.captionTreatment === 'minimal' ? 28 : 34;
+  const gradeFilter = themeGradeCssFilter(theme);
 
   return (
     <AbsoluteFill style={{ backgroundColor: theme.mediaMatte }}>
@@ -49,6 +57,7 @@ export function MediaScene({
           alignItems: 'center',
           padding: inset,
           overflow: 'hidden',
+          filter: gradeFilter,
         }}
       >
         {kind === 'image' ? (
@@ -84,10 +93,15 @@ export function MediaScene({
             left: videoSafe.paddingX,
             right: videoSafe.paddingX,
             bottom: 72,
-            color: theme.key === 'cinematic_dark' ? theme.ink : theme.paper,
+            color: captionColor,
             fontFamily: theme.titleFamily,
-            fontSize: 34,
-            textShadow: '0 2px 16px rgba(0,0,0,0.45)',
+            fontSize: captionSize,
+            textAlign: theme.captionTreatment === 'minimal' ? 'left' : 'center',
+            textShadow:
+              theme.captionTreatment === 'minimal'
+                ? '0 1px 8px rgba(0,0,0,0.35)'
+                : '0 2px 16px rgba(0,0,0,0.45)',
+            letterSpacing: theme.captionTreatment === 'matte' ? '0.04em' : undefined,
           }}
         >
           {caption}

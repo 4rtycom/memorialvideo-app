@@ -59,3 +59,4 @@ export * from './ops-access';
 export * from './stripe-commerce';
 export * from './account-deletion';
 export * from './memorial-finish';
+export * from './creator-themes';

@@ -6,12 +6,15 @@ import {
   OUTRO_DEFAULT_FRAMES,
   VIDEO_MAX_FRAMES,
   parseTimelineContract,
+  preferredTransitionForTheme,
+  scaleImageDurationSeconds,
   secondsToFrames,
   totalDurationFrames,
   formatTimelineClock,
   type TimelineContract,
   type ThemeKey,
 } from '@memorialvideo/contracts';
+import { resolveCreatorThemeKey } from '@memorialvideo/domain';
 import { isVideoMemory } from './ingest';
 import { lifeSpanLabel } from './tribute-helpers';
 
@@ -23,7 +26,8 @@ export type TimelineTributeInput = {
   displayName: string;
   bornLabel: string;
   rememberedLabel: string;
-  themeKey: 'timeless' | 'joyful' | 'peaceful';
+  /** Canonical ThemeKey or legacy joyful/peaceful alias. */
+  themeKey: ThemeKey | 'joyful' | 'peaceful' | string;
   openingTitle?: string;
   soundtrackTrackId?: string | null;
   musicRightsConfirmed?: boolean;
@@ -50,15 +54,17 @@ export function videoMemoryDurationFrames(durationMs?: number): number {
   return IMAGE_DEFAULT_FRAMES;
 }
 
-const CREATOR_THEME_TO_CONTRACT: Record<TimelineTributeInput['themeKey'], ThemeKey> = {
-  timeless: 'timeless',
-  joyful: 'warm_light',
-  peaceful: 'family_album',
-};
+function imageDurationFramesForTheme(themeKey: ThemeKey, readyCount: number): number {
+  const baseSeconds =
+    readyCount <= 5 ? 6 : readyCount <= 14 ? 4 : 3;
+  const scaled = scaleImageDurationSeconds(themeKey, baseSeconds);
+  return secondsToFrames(scaled, DEFAULT_FPS);
+}
 
 /**
  * Build a validated TimelineContract from ready memories.
  * Seed is derived from tribute id (stable; no Math.random during play/render).
+ * Honors FilmStyleManifest transition + image pacing so style is unmistakable.
  */
 export function buildTimelineFromTribute(tribute: TimelineTributeInput): TimelineContract | null {
   const ready = tribute.memories.filter((m) => m.ingestStatus === 'READY');
@@ -66,6 +72,9 @@ export function buildTimelineFromTribute(tribute: TimelineTributeInput): Timelin
     return null;
   }
 
+  const themeKey = resolveCreatorThemeKey(tribute.themeKey);
+  const preferredTransition = preferredTransitionForTheme(themeKey);
+  const imageFrames = imageDurationFramesForTheme(themeKey, ready.length);
   const seed = Number.parseInt(tribute.publicId.replace(/[^0-9a-f]/gi, '').slice(0, 8), 16) || 1;
   const span = lifeSpanLabel(tribute);
   const introTitle = tribute.openingTitle?.trim() || tribute.displayName;
@@ -78,15 +87,15 @@ export function buildTimelineFromTribute(tribute: TimelineTributeInput): Timelin
       displayName: introTitle,
       lifeSpanLabel: span || undefined,
       transitionIn: 'fade',
-      transitionOut: 'fade',
+      transitionOut: preferredTransition,
     },
     {
       id: 'chapter-1',
       type: 'chapter',
       durationFrames: CHAPTER_DEFAULT_FRAMES,
       title: 'Cherished moments',
-      transitionIn: 'fade',
-      transitionOut: 'dissolve',
+      transitionIn: preferredTransition,
+      transitionOut: preferredTransition,
     },
   ];
 
@@ -95,7 +104,7 @@ export function buildTimelineFromTribute(tribute: TimelineTributeInput): Timelin
       continue;
     }
     const caption = memory.title.slice(0, 180);
-    const transitionIn = index === 0 ? 'dissolve' : 'fade';
+    const transitionIn = index === 0 ? preferredTransition : preferredTransition === 'none' ? 'fade' : preferredTransition;
     if (
       isVideoMemory({
         contentType: memory.contentType,
@@ -112,21 +121,21 @@ export function buildTimelineFromTribute(tribute: TimelineTributeInput): Timelin
         },
         caption,
         transitionIn,
-        transitionOut: 'fade',
+        transitionOut: preferredTransition === 'dissolve' ? 'fade' : preferredTransition,
       });
       continue;
     }
     scenes.push({
       id: `image-${memory.id}`,
       type: 'image',
-      durationFrames: IMAGE_DEFAULT_FRAMES,
+      durationFrames: imageFrames,
       asset: {
         assetId: memory.id,
         src: memory.imagePath,
       },
       caption,
       transitionIn,
-      transitionOut: 'fade',
+      transitionOut: preferredTransition === 'dissolve' ? 'fade' : preferredTransition,
       crop: { focalX: 0.5, focalY: 0.5, zoom: 1 },
     });
   }
@@ -136,7 +145,7 @@ export function buildTimelineFromTribute(tribute: TimelineTributeInput): Timelin
     type: 'outro',
     durationFrames: OUTRO_DEFAULT_FRAMES,
     closingLine: 'Always remembered.',
-    transitionIn: 'fade',
+    transitionIn: preferredTransition,
     transitionOut: 'none',
   });
 
@@ -158,7 +167,7 @@ export function buildTimelineFromTribute(tribute: TimelineTributeInput): Timelin
     height: 1080,
     seed,
     locale: tribute.locale ?? 'en',
-    themeKey: CREATOR_THEME_TO_CONTRACT[tribute.themeKey],
+    themeKey,
     styleManifestVersion: 1,
     watermark: !tribute.entitlement,
     displayName: tribute.displayName,
@@ -177,10 +186,19 @@ export function applyFilmChoicesToTimeline(
     'themeKey' | 'openingTitle' | 'displayName' | 'soundtrackTrackId' | 'musicRightsConfirmed' | 'locale' | 'entitlement'
   >,
 ): TimelineContract {
+  const themeKey = resolveCreatorThemeKey(tribute.themeKey);
+  const preferredTransition = preferredTransitionForTheme(themeKey);
   const introTitle = tribute.openingTitle?.trim() || tribute.displayName;
   const scenes = timeline.scenes.map((scene) => {
     if (scene.type === 'intro') {
       return { ...scene, displayName: introTitle };
+    }
+    // Keep family-edited transitions; only seed preferred style on scenes still at defaults.
+    if (
+      (scene.type === 'image' || scene.type === 'video' || scene.type === 'chapter') &&
+      (scene.transitionIn === 'fade' || scene.transitionIn === 'dissolve')
+    ) {
+      return { ...scene, transitionIn: preferredTransition };
     }
     return scene;
   });
@@ -195,7 +213,7 @@ export function applyFilmChoicesToTimeline(
       : undefined;
   return parseTimelineContract({
     ...timeline,
-    themeKey: CREATOR_THEME_TO_CONTRACT[tribute.themeKey],
+    themeKey,
     locale: tribute.locale ?? timeline.locale,
     watermark: !tribute.entitlement,
     displayName: tribute.displayName,

@@ -96,7 +96,7 @@ export async function POST(request: Request) {
       {
         assetId: memory.id,
         mode: 'rejected_heic',
-        note: 'HEIC is not auto-converted; convert on device and re-upload JPG/PNG.',
+        note: 'This photo is HEIC. Convert it to JPG or PNG on your phone or computer, then upload again. We keep it listed so nothing is lost — we do not invent a conversion.',
       },
       { status: 201 },
     );

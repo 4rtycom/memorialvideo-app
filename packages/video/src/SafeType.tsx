@@ -15,9 +15,23 @@ export function SafeType({
   eyebrow,
   title,
   subtitle,
-  align = 'center',
+  align,
   theme = resolveTheme('timeless'),
 }: SafeTypeProps) {
+  const resolvedAlign =
+    align ??
+    (theme.chapterTreatment === 'editorial'
+      ? 'start'
+      : theme.chapterTreatment === 'bold'
+        ? 'center'
+        : 'center');
+  const titleSize =
+    theme.chapterTreatment === 'bold'
+      ? theme.titleSize + 4
+      : theme.chapterTreatment === 'editorial'
+        ? theme.titleSize - 4
+        : theme.titleSize;
+
   return (
     <AbsoluteFill
       style={{
@@ -25,8 +39,8 @@ export function SafeType({
         color: theme.ink,
         padding: `${videoSafe.paddingY}px ${videoSafe.paddingX}px`,
         justifyContent: 'center',
-        alignItems: align === 'center' ? 'center' : 'flex-start',
-        textAlign: align === 'center' ? 'center' : 'left',
+        alignItems: resolvedAlign === 'center' ? 'center' : 'flex-start',
+        textAlign: resolvedAlign === 'center' ? 'center' : 'left',
       }}
     >
       {eyebrow ? (
@@ -38,6 +52,7 @@ export function SafeType({
             textTransform: 'uppercase',
             color: theme.accent,
             marginBottom: 28,
+            fontWeight: theme.chapterTreatment === 'bold' ? 500 : 400,
           }}
         >
           {eyebrow}
@@ -46,10 +61,11 @@ export function SafeType({
       <div
         style={{
           fontFamily: theme.titleFamily,
-          fontSize: title.length > 28 ? theme.titleSize - 20 : theme.titleSize,
-          lineHeight: 1.08,
-          fontWeight: 400,
-          maxWidth: 1480,
+          fontSize: title.length > 28 ? titleSize - 20 : titleSize,
+          lineHeight: theme.chapterTreatment === 'bold' ? 1.02 : 1.08,
+          fontWeight: theme.chapterTreatment === 'bold' ? 500 : 400,
+          maxWidth: theme.chapterTreatment === 'editorial' ? 1280 : 1480,
+          letterSpacing: theme.chapterTreatment === 'bold' ? theme.letterSpacing : undefined,
         }}
       >
         {title}

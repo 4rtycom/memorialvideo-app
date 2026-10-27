@@ -28,11 +28,13 @@ export async function runLocalPixelOps(input: {
         '-i',
         source,
         '-vf',
-        'eq=contrast=1.08:brightness=0.02:saturation=1.04',
+        // Ceremony-screen local grade — deterministic pixel ops only (consent-gated).
+        // Not generative restore / face synthesis. Orientation is handled at ingest.
+        'scale=1920:1920:force_original_aspect_ratio=decrease:flags=lanczos,eq=contrast=1.1:brightness=0.025:saturation=1.06,colorbalance=rs=0.04:gs=0:bs=-0.03,unsharp=5:5:0.35:5:5:0.0',
         '-frames:v',
         '1',
         '-q:v',
-        '3',
+        '2',
         absolute,
       ],
       { stdio: ['ignore', 'ignore', 'pipe'] },
