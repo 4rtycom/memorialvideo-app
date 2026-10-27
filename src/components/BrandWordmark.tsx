@@ -2,25 +2,27 @@ type BrandWordmarkProps = {
   className?: string;
   /** Accessible name; defaults to memorialvideo */
   alt?: string;
+  /** Kept for call-site compatibility; unused (text wordmark, not an image). */
   priority?: boolean;
 };
 
-/** Canonical lowercase memorialvideo wordmark (dark ink on cream). */
+/**
+ * Same header wordmark as memorialvideo marketing SiteHeader / HomeNav:
+ * lowercase “memorialvideo” with Cormorant and gold italic “video”.
+ * Not a derived lettermark or reinterpreted PNG.
+ */
 export function BrandWordmark({
   className = 'brand-wordmark',
   alt = 'memorialvideo',
-  priority = false,
 }: BrandWordmarkProps) {
+  const name = 'memorialvideo';
+  const tail = 'video';
+  const lead = name.slice(0, -tail.length);
+
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- static brand asset; next/image unoptimized globally
-    <img
-      src="/brand/memorialvideo-wordmark.png"
-      alt={alt}
-      width={221}
-      height={49}
-      className={className}
-      decoding="async"
-      {...(priority ? { fetchPriority: 'high' as const } : {})}
-    />
+    <span className={className} aria-label={alt} role="img">
+      <span className="brand-wordmark-lead">{lead}</span>
+      <span className="brand-wordmark-tail">{tail}</span>
+    </span>
   );
 }
