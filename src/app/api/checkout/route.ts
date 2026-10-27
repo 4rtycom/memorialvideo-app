@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 
 import {
+  approvedPackCheckoutBlock,
   checkoutProviderMode,
   MEMORIAL_PACK_PACKAGE_KEY,
   parseCheckoutRequest,
   planCheckoutStart,
+  proposedPlanById,
 } from '@memorialvideo/domain';
 
 import { creatorEnv } from '@/server/env';
@@ -45,9 +47,41 @@ export async function POST(request: Request) {
       projectPublicId?: string;
       orderId?: string;
       packageKey?: string;
+      consumerPackId?: string;
       successUrl?: string;
       cancelUrl?: string;
     };
+
+    // Approved consumer packs (Memorial Tribute / Life Story / Forever Legacy) stay unwired.
+    const consumerPackId =
+      typeof payload.consumerPackId === 'string' ? payload.consumerPackId : undefined;
+    if (consumerPackId && proposedPlanById(consumerPackId)) {
+      return noStore(
+        {
+          error: 'stripe_not_wired',
+          checkoutBlock: approvedPackCheckoutBlock(consumerPackId),
+          consumerPackId,
+          mode: 'unavailable',
+          stripeConfigured: false,
+          retryable: true,
+          note: 'Consumer pack selected and explained only — no silent charge while Stripe pack SKUs are unwired.',
+        },
+        503,
+      );
+    }
+    if (payload.packageKey && proposedPlanById(payload.packageKey)) {
+      return noStore(
+        {
+          error: 'stripe_not_wired',
+          checkoutBlock: approvedPackCheckoutBlock(payload.packageKey),
+          consumerPackId: payload.packageKey,
+          mode: 'unavailable',
+          stripeConfigured: false,
+          retryable: true,
+        },
+        503,
+      );
+    }
 
     const origin = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '');
     const checkout = parseCheckoutRequest(
