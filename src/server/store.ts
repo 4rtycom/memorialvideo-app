@@ -1122,72 +1122,131 @@ export async function addMemory(publicId: string, input: AddMemoryInput): Promis
   return memory;
 }
 
+type IngestAdvanceResult = { tribute: Tribute | null; advanced: number };
+
+/** One in-flight advance per tribute so 1.5s polls do not stack ffmpeg or store writes. */
+const ingestAdvanceInflight = new Map<string, Promise<IngestAdvanceResult>>();
+
+/** Serializes ingest commits. Normalize stays outside so one tribute cannot pin the document. */
+let ingestCommitTail: Promise<void> = Promise.resolve();
+
+function enqueueIngestCommit<T>(fn: () => Promise<T>): Promise<T> {
+  const run = ingestCommitTail.then(fn, fn);
+  ingestCommitTail = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
 /**
  * Advance pending ingest jobs one step (worker:once / poll). No setTimeout.
  * On PROCESSING → READY for stills: orient + cap long edge into a durable sibling JPEG.
+ * ffmpeg runs before the store write so a long normalize cannot replay a stale snapshot.
  * HEIC stays needs_attention (no silent convert). Videos skip still normalize.
  */
-export async function advanceIngestJobs(publicId: string): Promise<{
-  tribute: Tribute | null;
-  advanced: number;
-}> {
+export function advanceIngestJobs(publicId: string): Promise<IngestAdvanceResult> {
+  const inflight = ingestAdvanceInflight.get(publicId);
+  if (inflight) {
+    return inflight;
+  }
+  const run = advanceIngestJobsOnce(publicId);
+  ingestAdvanceInflight.set(publicId, run);
+  void run.finally(() => {
+    if (ingestAdvanceInflight.get(publicId) === run) {
+      ingestAdvanceInflight.delete(publicId);
+    }
+  });
+  return run;
+}
+
+async function advanceIngestJobsOnce(publicId: string): Promise<IngestAdvanceResult> {
   const store = await readStore();
   const existing = store.tributes[publicId];
   if (!existing) {
     return { tribute: null, advanced: 0 };
   }
-  let advanced = 0;
-  const now = new Date().toISOString();
-  const memories: MemoryAsset[] = [];
+
+  const plans: Array<{
+    id: string;
+    fromStatus: MemoryAsset['ingestStatus'];
+    toStatus: MemoryAsset['ingestStatus'];
+    normalize: { sourceAbsolute: string; outputAbsolute: string } | null;
+  }> = [];
   for (const memory of existing.memories) {
     if (isIngestTerminal(memory.ingestStatus)) {
-      memories.push(memory);
       continue;
     }
     const nextStatus = nextIngestStatus(memory.ingestStatus);
     if (!nextStatus) {
-      memories.push(memory);
       continue;
     }
-    advanced += 1;
-    let nextMemory = memoryAssetSchema.parse({
-      ...memory,
-      ingestStatus: nextStatus,
-      updatedAt: now,
-    });
-    if (
+    const sourceAbsolute = mediaFilePath(publicId, memory.id);
+    const shouldNormalize =
       memory.ingestStatus === 'PROCESSING' &&
       nextStatus === 'READY' &&
       memory.failureCode !== 'heic' &&
       !isVideoMemory(memory) &&
-      !isHeicFilename(memory.originalFilenameHint ?? '')
-    ) {
-      const source = mediaFilePath(publicId, memory.id);
-      const output = normalizedStillAbsolutePath(source);
-      const normalized = await normalizeStillWithFfmpeg({
-        sourceAbsolute: source,
-        outputAbsolute: output,
-      });
-      // Normalize is best-effort: originals stay READY even if ffmpeg fails (honest non-block).
-      if (!normalized.ok) {
-        // Keep READY with raw bytes — do not fail the family for a grade-path miss.
-      }
-    }
-    memories.push(nextMemory);
+      !isHeicFilename(memory.originalFilenameHint ?? '');
+    plans.push({
+      id: memory.id,
+      fromStatus: memory.ingestStatus,
+      toStatus: nextStatus,
+      normalize: shouldNormalize
+        ? {
+            sourceAbsolute,
+            outputAbsolute: normalizedStillAbsolutePath(sourceAbsolute),
+          }
+        : null,
+    });
   }
-  if (advanced === 0) {
+  if (plans.length === 0) {
     return { tribute: migrateTribute(existing as unknown as Record<string, unknown>), advanced: 0 };
   }
-  const next = migrateTribute(
-    tributeSchema.parse({
-      ...existing,
-      memories,
-      updatedAt: now,
-    }) as unknown as Record<string, unknown>,
-  );
-  store.tributes[publicId] = next;
-  await writeStore(store);
-  return { tribute: next, advanced };
+
+  for (const plan of plans) {
+    if (!plan.normalize) {
+      continue;
+    }
+    // Best-effort: originals still become READY when ffmpeg fails (honest non-block).
+    await normalizeStillWithFfmpeg(plan.normalize);
+  }
+
+  return enqueueIngestCommit(async () => {
+    const fresh = await readStore();
+    const current = fresh.tributes[publicId];
+    if (!current) {
+      return { tribute: null, advanced: 0 };
+    }
+    const now = new Date().toISOString();
+    const planById = new Map(plans.map((plan) => [plan.id, plan]));
+    let advanced = 0;
+    const memories = current.memories.map((memory) => {
+      const plan = planById.get(memory.id);
+      if (!plan || memory.ingestStatus !== plan.fromStatus) {
+        return memory;
+      }
+      advanced += 1;
+      return memoryAssetSchema.parse({
+        ...memory,
+        ingestStatus: plan.toStatus,
+        updatedAt: now,
+      });
+    });
+    if (advanced === 0) {
+      return { tribute: migrateTribute(current as unknown as Record<string, unknown>), advanced: 0 };
+    }
+    const next = migrateTribute(
+      tributeSchema.parse({
+        ...current,
+        memories,
+        updatedAt: now,
+      }) as unknown as Record<string, unknown>,
+    );
+    fresh.tributes[publicId] = next;
+    await writeStore(fresh);
+    return { tribute: next, advanced };
+  });
 }
 
 export async function attachMemoryBytes(

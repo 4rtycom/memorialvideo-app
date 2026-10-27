@@ -448,7 +448,7 @@ export function buildDrawtextFilters(
     theme.chapterTreatment === 'bold'
       ? theme.titleSize + 4
       : theme.chapterTreatment === 'editorial'
-        ? theme.titleSize
+        ? theme.titleSize - 4
         : theme.titleSize;
   const eyebrowOffset = Math.round(titleSize * 0.55);
   const subtitleOffset = Math.max(56, Math.round(titleSize * 0.45));
@@ -461,6 +461,10 @@ export function buildDrawtextFilters(
       ? 'borderw=1:bordercolor=black@0.35'
       : 'borderw=2:bordercolor=black@0.55';
   const captionSize = theme.captionTreatment === 'minimal' ? 28 : 34;
+  // Remotion videoSafe.paddingX — editorial SafeType is start-aligned; minimal captions are left-aligned.
+  const safeX = '160';
+  const typeX = theme.chapterTreatment === 'editorial' ? safeX : '(w-text_w)/2';
+  const captionX = theme.captionTreatment === 'minimal' ? safeX : '(w-text_w)/2';
   const parts: string[] = [];
   for (const line of overlays) {
     if (!line.text.trim()) continue;
@@ -469,22 +473,20 @@ export function buildDrawtextFilters(
     const escaped = escapeDrawtextValue(raw);
     if (line.role === 'caption') {
       parts.push(
-        `drawtext=fontfile=${font}:text='${escaped}':fontcolor=${captionColor}:${captionStroke}:fontsize=${captionSize}:x=(w-text_w)/2:y=h-text_h-72`,
+        `drawtext=fontfile=${font}:text='${escaped}':fontcolor=${captionColor}:${captionStroke}:fontsize=${captionSize}:x=${captionX}:y=h-text_h-72`,
       );
     } else if (line.role === 'eyebrow') {
       parts.push(
-        `drawtext=fontfile=${font}:text='${escaped}':fontcolor=${accent}:${cardStroke}:fontsize=28:x=(w-text_w)/2:y=(h-text_h)/2-${eyebrowOffset}`,
+        `drawtext=fontfile=${font}:text='${escaped}':fontcolor=${accent}:${cardStroke}:fontsize=28:x=${typeX}:y=(h-text_h)/2-${eyebrowOffset}`,
       );
     } else if (line.role === 'subtitle') {
       parts.push(
-        `drawtext=fontfile=${font}:text='${escaped}':fontcolor=${muted}:${cardStroke}:fontsize=32:x=(w-text_w)/2:y=(h-text_h)/2+${subtitleOffset}`,
+        `drawtext=fontfile=${font}:text='${escaped}':fontcolor=${muted}:${cardStroke}:fontsize=32:x=${typeX}:y=(h-text_h)/2+${subtitleOffset}`,
       );
     } else {
       const size = raw.length > 28 ? titleSize - 20 : titleSize;
-      const xExpr =
-        theme.chapterTreatment === 'editorial' ? '160' : '(w-text_w)/2';
       parts.push(
-        `drawtext=fontfile=${font}:text='${escaped}':fontcolor=${ink}:${cardStroke}:fontsize=${size}:x=${xExpr}:y=(h-text_h)/2`,
+        `drawtext=fontfile=${font}:text='${escaped}':fontcolor=${ink}:${cardStroke}:fontsize=${size}:x=${typeX}:y=(h-text_h)/2`,
       );
     }
   }

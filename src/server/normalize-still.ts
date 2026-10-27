@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { access, copyFile, mkdir, rename, stat } from 'node:fs/promises';
+import { access, copyFile, mkdir, rename, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 /** Longest edge after ingest normalize — ceremony-screen ready without AI upscale. */
@@ -41,60 +41,65 @@ export async function normalizeStillWithFfmpeg(input: {
   }
 
   await mkdir(path.dirname(input.outputAbsolute), { recursive: true });
-  const tmp = `${input.outputAbsolute}.${process.pid}.tmp.jpg`;
+  // Per-call temp: overlapping ingest ticks share a pid and must not tear one JPEG.
+  const tmp = `${input.outputAbsolute}.${process.pid}.${crypto.randomUUID()}.tmp.jpg`;
   const vf = buildStillNormalizeFilter(input.maxEdge ?? MAX_STILL_EDGE_PX);
 
-  const code = await new Promise<number>((resolve) => {
-    const child = spawn(
-      'ffmpeg',
-      [
-        '-y',
-        '-i',
-        input.sourceAbsolute,
-        '-vf',
-        vf,
-        '-frames:v',
-        '1',
-        '-q:v',
-        '2',
-        tmp,
-      ],
-      { stdio: ['ignore', 'ignore', 'pipe'] },
-    );
-    let settled = false;
-    const finish = (exit: number) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolve(exit);
-    };
-    const timer = setTimeout(() => {
-      child.kill('SIGKILL');
-      finish(124);
-    }, 45_000);
-    child.on('error', () => finish(127));
-    child.on('close', (exit) => finish(exit ?? 1));
-  });
-
-  if (code !== 0) {
-    return { ok: false, reason: `ffmpeg_${code}` };
-  }
-
   try {
-    const info = await stat(tmp);
-    if (info.size < 32) {
-      return { ok: false, reason: 'output_empty' };
-    }
-    await rename(tmp, input.outputAbsolute);
-  } catch {
-    try {
-      await copyFile(tmp, input.outputAbsolute);
-    } catch {
-      return { ok: false, reason: 'output_write_failed' };
-    }
-  }
+    const code = await new Promise<number>((resolve) => {
+      const child = spawn(
+        'ffmpeg',
+        [
+          '-y',
+          '-i',
+          input.sourceAbsolute,
+          '-vf',
+          vf,
+          '-frames:v',
+          '1',
+          '-q:v',
+          '2',
+          tmp,
+        ],
+        { stdio: ['ignore', 'ignore', 'pipe'] },
+      );
+      let settled = false;
+      const finish = (exit: number) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(exit);
+      };
+      const timer = setTimeout(() => {
+        child.kill('SIGKILL');
+        finish(124);
+      }, 45_000);
+      child.on('error', () => finish(127));
+      child.on('close', (exit) => finish(exit ?? 1));
+    });
 
-  return { ok: true, absolutePath: input.outputAbsolute, normalized: true };
+    if (code !== 0) {
+      return { ok: false, reason: `ffmpeg_${code}` };
+    }
+
+    try {
+      const info = await stat(tmp);
+      if (info.size < 32) {
+        return { ok: false, reason: 'output_empty' };
+      }
+      await rename(tmp, input.outputAbsolute);
+    } catch {
+      try {
+        await copyFile(tmp, input.outputAbsolute);
+      } catch {
+        return { ok: false, reason: 'output_write_failed' };
+      }
+    }
+
+    return { ok: true, absolutePath: input.outputAbsolute, normalized: true };
+  } finally {
+    await rm(tmp, { force: true }).catch(() => undefined);
+  }
 }
 
 /** Derived normalized still path for a media asset (sibling of the raw object). */

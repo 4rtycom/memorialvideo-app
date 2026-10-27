@@ -184,16 +184,21 @@ export function applyFilmChoicesToTimeline(
   >,
 ): TimelineContract {
   const themeKey = resolveCreatorThemeKey(tribute.themeKey);
+  const previousThemeKey = resolveCreatorThemeKey(timeline.themeKey);
   const preferredTransition = preferredTransitionForTheme(themeKey);
+  const previousPreferred = preferredTransitionForTheme(previousThemeKey);
+  // fade and dissolve are both style defaults and Studio choices — only the previous
+  // style's preferred value is still a default, and only a style change may re-seed it.
+  const reseedTransitions = themeKey !== previousThemeKey && previousPreferred !== preferredTransition;
   const introTitle = tribute.openingTitle?.trim() || tribute.displayName;
   const scenes = timeline.scenes.map((scene) => {
     if (scene.type === 'intro') {
       return { ...scene, displayName: introTitle };
     }
-    // Keep family-edited transitions; only seed preferred style on scenes still at defaults.
     if (
+      reseedTransitions &&
       (scene.type === 'image' || scene.type === 'video' || scene.type === 'chapter') &&
-      (scene.transitionIn === 'fade' || scene.transitionIn === 'dissolve')
+      scene.transitionIn === previousPreferred
     ) {
       return { ...scene, transitionIn: preferredTransition };
     }
