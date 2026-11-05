@@ -14,7 +14,7 @@ export const navItems = [
   { href: "/contributors", label: "Contributors", icon: "♧" },
   { href: "/life-story", label: "Life story", icon: "◈" },
   { href: "/film", label: "The film", icon: "▷" },
-  { href: "/music", label: "Music & words", icon: "♫" },
+  { href: "/music", label: "Music & moments", icon: "♫" },
   { href: "/share", label: "Share & download", icon: "↓" },
 ] as const;
 

@@ -16,4 +16,5 @@ export * from './output-variant';
 export * from './collaboration';
 export * from './ceremony-readiness';
 export * from './ceremony-music';
+export * from './music-director';
 export * from './memorial-finish';

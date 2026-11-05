@@ -172,7 +172,12 @@ export async function applyCreatorCeremonyMusic(
   if (!tribute.timeline) {
     return { ok: false, error: 'needs_timeline', status: 409 };
   }
-  if (!plan.slots.tribute.trackKey) {
+  const soundtrackTrackId =
+    plan.slots.tribute.trackKey ??
+    plan.slots.opening.trackKey ??
+    plan.slots.closing.trackKey ??
+    plan.slots.reflection.trackKey;
+  if (!soundtrackTrackId) {
     return { ok: false, error: 'music_plan_empty', status: 400 };
   }
 
@@ -188,7 +193,7 @@ export async function applyCreatorCeremonyMusic(
     publicId,
     plan,
     timeline: nextTimeline,
-    soundtrackTrackId: plan.slots.tribute.trackKey,
+    soundtrackTrackId,
   });
   if (!persisted.ok) {
     return { ok: false, error: 'not_found', status: 404 };

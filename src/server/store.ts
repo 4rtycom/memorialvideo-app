@@ -25,11 +25,13 @@ import {
   RENDER_JOB_STATUSES,
   THEME_KEYS,
   ceremonyMusicPlanSchema,
+  musicDirectorPlanSchema,
   parseTimelineContract,
   peopleConsentSchema,
   sanitizePersonLabel,
   type AudioMixContract,
   type CeremonyMusicPlan,
+  type MusicDirectorPlan,
   type PeopleConsent,
   type TimelineContract,
 } from '@memorialvideo/contracts';
@@ -322,6 +324,8 @@ export const tributeSchema = z.object({
   musicRightsConfirmed: z.boolean().default(false),
   /** Ceremony music plan (single or 4-moment). Null until applied/saved. */
   ceremonyMusicPlan: ceremonyMusicPlanSchema.nullable().default(null),
+  /** Family Music Director plan (Opening / Memories / Farewell + speech pauses). */
+  musicDirectorPlan: musicDirectorPlanSchema.nullable().default(null),
   /** Pending Guided Audio mix (propose → preview → apply). */
   guidedAudioPending: z.unknown().nullable().default(null),
   /** People Intelligence consent — disabled by default; face detection not COMPLETE here. */
@@ -824,6 +828,7 @@ export async function updateTribute(
       | 'soundtrackTrackId'
       | 'musicRightsConfirmed'
       | 'ceremonyMusicPlan'
+      | 'musicDirectorPlan'
       | 'openingTitle'
       | 'enhancementConsentLocal'
       | 'storyChapters'
@@ -895,6 +900,7 @@ export async function persistCeremonyMusicApply(input: {
   plan: CeremonyMusicPlan;
   timeline: TimelineContract;
   soundtrackTrackId: string | null;
+  musicDirectorPlan?: MusicDirectorPlan | null;
 }): Promise<
   | { ok: true; tribute: Tribute }
   | { ok: false; reason: 'not_found' }
@@ -910,6 +916,9 @@ export async function persistCeremonyMusicApply(input: {
     tributeSchema.parse({
       ...current,
       ceremonyMusicPlan: input.plan,
+      ...(input.musicDirectorPlan !== undefined
+        ? { musicDirectorPlan: input.musicDirectorPlan }
+        : {}),
       soundtrackTrackId: input.soundtrackTrackId,
       musicRightsConfirmed: true,
       timeline: input.timeline,

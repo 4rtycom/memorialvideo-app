@@ -1,6 +1,6 @@
 import { AppShell } from '@/components/AppShell';
 import { ErrorRecovery } from '@/components/ErrorRecovery';
-import { MusicCatalogPanel } from '@/components/MusicCatalogPanel';
+import { MusicDirectorPanel } from '@/components/MusicDirectorPanel';
 import { Eyebrow, Hero, Lede } from '@/components/ui';
 import { shellProject } from '@/lib/tribute-view';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
@@ -17,17 +17,18 @@ export default async function MusicPage() {
       title={shell.title}
       ownerInitial={shell.ownerInitial}
       locale={locale}
-      footerTitle="No complicated timeline needed."
-      footerBody=""
+      footerTitle="Three songs are enough."
+      footerBody="Opening, Memories, Farewell — change them anytime."
     >
-      <Eyebrow>FINISHING TOUCHES</Eyebrow>
-      <Hero>Set the feeling with music and words.</Hero>
-      <Lede>Choose the soundtrack, opening words and gentle details. You can always change them.</Lede>
+      <Eyebrow>MUSIC & MOMENTS</Eyebrow>
+      <Hero>Choose three favourite songs.</Hero>
+      <Lede>
+        Opening, Memories, and Farewell. Search, type a title, or paste a link as a reference for the
+        venue. Add speech pauses for live moments at the service.
+      </Lede>
 
       {tribute ? (
-        <MusicCatalogPanel
-          selectedTrackId={tribute.soundtrackTrackId}
-          rightsConfirmed={tribute.musicRightsConfirmed}
+        <MusicDirectorPanel
           openingTitle={tribute.openingTitle}
           displayName={tribute.displayName}
           locale={locale}
