@@ -1,4 +1,5 @@
 import { AppShell } from '@/components/AppShell';
+import { CeremonyOperatorPlayer } from '@/components/CeremonyOperatorPlayer';
 import { RemotionCinemaPlayer } from '@/components/RemotionCinemaPlayer';
 import { Eyebrow, Hero, Lede } from '@/components/ui';
 import { filmChapters } from '@/lib/copy';
@@ -24,15 +25,15 @@ export default async function FilmPage() {
       brand={shell.brand}
       title={shell.title}
       ownerInitial={shell.ownerInitial}
-      footerTitle="No complicated timeline needed."
+      footerTitle="No complicated editing needed."
       footerBody=""
     >
       <Eyebrow>{timeline ? 'YOUR FILM IS READY' : 'YOUR FILM'}</Eyebrow>
       <Hero className="!text-white">{heroName}</Hero>
       <Lede>
         {timeline
-          ? `Private Remotion screening · ${clock?.totalLabel ?? ''} · TimelineContract v${timeline.schemaVersion}`
-          : 'Arrange the first film to open a TimelineContract-backed Remotion screening room.'}
+          ? `Private screening · ${clock?.totalLabel ?? ''} · your film`
+          : 'Arrange the first film to open the screening room.'}
       </Lede>
 
       <RemotionCinemaPlayer timeline={timeline} origin={origin} />
@@ -53,6 +54,10 @@ export default async function FilmPage() {
         ))}
       </div>
 
+      <div className="mt-8">
+        <CeremonyOperatorPlayer timeline={timeline} origin={origin} />
+      </div>
+
       <div className="mt-8 flex flex-wrap gap-3">
         {!timeline ? (
           <Link className="btn btn-secondary" href="/film/creating">
@@ -69,7 +74,7 @@ export default async function FilmPage() {
           Studio
         </Link>
         <Link className="btn btn-secondary" href="/share">
-          Share & download
+          Ready for the service
         </Link>
       </div>
     </AppShell>

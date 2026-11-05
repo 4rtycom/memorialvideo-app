@@ -34,6 +34,11 @@ describe('creator readiness + account delete', () => {
     expect(summary.findings.some((f: { code: string }) => f.code === 'playback_not_ready')).toBe(
       true,
     );
+    expect(summary.notCheckedCount).toBeGreaterThan(0);
+    expect(summary.findings.some((f: { checkState: string }) => f.checkState === 'not_checked')).toBe(
+      true,
+    );
+    expect(summary.allChecksComplete).toBe(false);
   });
 
   it('deletes a tribute from the local store', async () => {

@@ -12,9 +12,9 @@ type Checklist = {
 };
 
 const ITEMS: Array<{ key: keyof Omit<Checklist, 'updatedAt'>; label: string }> = [
-  { key: 'downloadDevice', label: 'Download to your device' },
-  { key: 'testVenue', label: 'Test playback with the venue' },
-  { key: 'soundtrackCleared', label: 'Confirm the soundtrack is cleared for use' },
+  { key: 'downloadDevice', label: 'Download the venue pack to the ceremony computer' },
+  { key: 'testVenue', label: 'Test playback and pause/resume with the venue' },
+  { key: 'soundtrackCleared', label: 'Confirm the soundtrack is cleared for the service' },
 ];
 
 export function CeremonyChecklistPanel({
@@ -48,7 +48,7 @@ export function CeremonyChecklistPanel({
 
   return (
     <div className="border-t border-[color:var(--border)] pt-5 mt-5">
-      <h3 className="serif text-[23px] m-0 mb-4">Before the ceremony</h3>
+      <h3 className="serif text-[23px] m-0 mb-4">Before the service</h3>
       <ul className="list-none p-0 m-0 grid gap-3 text-[14px]">
         {ITEMS.map((item) => (
           <li key={item.key}>

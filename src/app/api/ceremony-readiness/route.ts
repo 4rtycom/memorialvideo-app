@@ -19,6 +19,6 @@ export async function GET() {
     ...summarizeReadiness(evaluated.report),
     packAllowed: evaluated.packAllowed,
     packReason: evaluated.packReason,
-    note: 'Deterministic Ceremony Readiness — composes Output QC; does not invent moderation or faces.',
+    note: 'Ceremony readiness lists checked items separately from items not checked yet. Deferred checks never count as a pass.',
   });
 }
