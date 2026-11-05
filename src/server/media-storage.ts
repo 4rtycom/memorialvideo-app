@@ -170,18 +170,22 @@ export async function readMediaFile(
     return null;
   }
   const bytes = await readFile(file);
-  let contentType = file.endsWith('.normalized.jpg')
-    ? 'image/jpeg'
-    : 'application/octet-stream';
+  if (file.endsWith('.normalized.jpg')) {
+    return { bytes, contentType: 'image/jpeg' };
+  }
+  // Bytes win over session declaration — HEIC→JPEG conversion rewrites the object in place.
+  const sniffed = sniffMediaBytes(bytes);
+  if (sniffed) {
+    return { bytes, contentType: sniffed };
+  }
+  let contentType = 'application/octet-stream';
   try {
     const names = await readdir(tusDir());
     for (const name of names) {
       if (!name.endsWith('.json')) continue;
       const session = await readUploadSession(name.replace(/\.json$/, ''));
       if (session?.tributePublicId === tributePublicId && session.assetId === assetId) {
-        contentType = file.endsWith('.normalized.jpg')
-          ? 'image/jpeg'
-          : session.contentType || contentType;
+        contentType = session.contentType || contentType;
         break;
       }
     }
@@ -318,6 +322,7 @@ export async function replaceMediaBytes(
   tributePublicId: string,
   assetId: string,
   bytes: Buffer,
+  contentType?: string,
 ): Promise<{ sha256: string; byteSize: number }> {
   await mkdir(mediaDir(tributePublicId), { recursive: true });
   const dest = mediaFilePath(tributePublicId, assetId);
@@ -325,6 +330,27 @@ export async function replaceMediaBytes(
   const tmp = `${dest}.${process.pid}.tmp`;
   await writeFile(tmp, bytes);
   await rename(tmp, dest);
+  if (contentType) {
+    try {
+      const names = await readdir(tusDir());
+      for (const name of names) {
+        if (!name.endsWith('.json')) continue;
+        const uploadId = name.replace(/\.json$/, '');
+        const session = await readUploadSession(uploadId);
+        if (session?.tributePublicId === tributePublicId && session.assetId === assetId) {
+          await writeSession(
+            sessionSchema.parse({
+              ...session,
+              contentType: contentType.slice(0, 120),
+            }),
+          );
+          break;
+        }
+      }
+    } catch {
+      // Session metadata is best-effort; sniff on read remains the safety net.
+    }
+  }
   return { sha256, byteSize: bytes.byteLength };
 }
 

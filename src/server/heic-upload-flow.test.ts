@@ -143,5 +143,7 @@ describe('HEIC contribution conversion (MV-AUD-007)', () => {
     const stored = await media.readMediaFile(tribute.publicId, authBody.assetId);
     expect(stored).not.toBeNull();
     expect(media.sniffMediaBytes(stored!.bytes)).toBe('image/jpeg');
+    // Served Content-Type must match JPEG bytes (nosniff) — not the original HEIC session type.
+    expect(stored!.contentType).toBe('image/jpeg');
   });
 });

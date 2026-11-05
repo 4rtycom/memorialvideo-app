@@ -88,6 +88,7 @@ export async function POST(request: Request) {
       finalized.session.tributePublicId,
       finalized.session.assetId,
       converted.jpeg,
+      'image/jpeg',
     );
     storedBytes = converted.jpeg;
     sniffed = 'image/jpeg';
