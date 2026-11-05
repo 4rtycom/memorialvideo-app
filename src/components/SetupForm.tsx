@@ -6,7 +6,11 @@ import { useState, useTransition } from 'react';
 import type { LaunchLanguage } from '@memorialvideo/contracts';
 import { Button, Card, Eyebrow, Hero, Lede } from '@/components/ui';
 import { creatorT } from '@/lib/creator-ui-messages';
-import { reportShellSave } from '@/lib/shell-save-status';
+import {
+  clearShellSaveRetry,
+  reportShellSave,
+  setShellSaveRetry,
+} from '@/lib/shell-save-status';
 
 export function SetupForm({ locale = 'en' }: { locale?: LaunchLanguage }) {
   const router = useRouter();
@@ -17,29 +21,37 @@ export function SetupForm({ locale = 'en' }: { locale?: LaunchLanguage }) {
   const [rememberedLabel, setRememberedLabel] = useState('');
   const [about, setAbout] = useState('');
 
-  function onSubmit(event: React.FormEvent) {
-    event.preventDefault();
+  function createTribute(payload: {
+    displayName: string;
+    bornLabel: string;
+    rememberedLabel: string;
+    about: string;
+    ownerInitial: string;
+    locale: LaunchLanguage;
+  }) {
     setError(null);
     startTransition(async () => {
-      reportShellSave('saving');
-      const response = await fetch('/api/tributes', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          displayName,
-          // Persist English prefixes so lifeSpanLabel can strip them to years.
-          bornLabel: bornLabel ? `Born  ·  ${bornLabel}` : '',
-          rememberedLabel: rememberedLabel ? `Remembered  ·  ${rememberedLabel}` : '',
-          about,
-          ownerInitial: displayName.trim().slice(0, 1) || 'Y',
-          locale,
-        }),
+      setShellSaveRetry(() => {
+        createTribute(payload);
       });
+      reportShellSave('saving');
+      let response: Response;
+      try {
+        response = await fetch('/api/tributes', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } catch {
+        reportShellSave('offline');
+        setError(creatorT(locale, 'creator.setup.errorGeneric'));
+        return;
+      }
       if (!response.ok) {
         let code: string | undefined;
         try {
-          const payload = (await response.json()) as { error?: string };
-          code = payload.error;
+          const body = (await response.json()) as { error?: string };
+          code = body.error;
         } catch {
           code = undefined;
         }
@@ -53,9 +65,23 @@ export function SetupForm({ locale = 'en' }: { locale?: LaunchLanguage }) {
         );
         return;
       }
+      clearShellSaveRetry();
       reportShellSave('saved');
       router.push('/workspace');
       router.refresh();
+    });
+  }
+
+  function onSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    createTribute({
+      displayName,
+      // Persist English prefixes so lifeSpanLabel can strip them to years.
+      bornLabel: bornLabel ? `Born  ·  ${bornLabel}` : '',
+      rememberedLabel: rememberedLabel ? `Remembered  ·  ${rememberedLabel}` : '',
+      about,
+      ownerInitial: displayName.trim().slice(0, 1) || 'Y',
+      locale,
     });
   }
 

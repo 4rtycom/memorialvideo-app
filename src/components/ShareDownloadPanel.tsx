@@ -49,6 +49,9 @@ function familyDownloadReason(reason: string): string {
   }
 }
 
+/**
+ * Venue pack + handoff are primary (MV-AUD-013). Private share links stay optional/secondary.
+ */
 export function ShareDownloadPanel({
   entitlementActive,
   download,
@@ -148,8 +151,8 @@ export function ShareDownloadPanel({
   }
 
   return (
-    <div className="grid gap-5 lg:grid-cols-2">
-      <div className="card !p-4">
+    <div className="grid gap-5" data-testid="share-ceremony-first">
+      <div className="card !p-4" data-testid="venue-pack-primary">
         {download.hasPoster && download.readyJobId ? (
           <img
             className="tribute-poster tribute-poster-share"
@@ -210,59 +213,71 @@ export function ShareDownloadPanel({
             <a href="/api/renders/export-metadata">{creatorT(locale, 'creator.share.metadataExport')}</a>
           </p>
         ) : null}
-      </div>
-      <div className="card !p-7">
-        <h2 className="serif text-[34px] m-0 mb-3">{creatorT(locale, 'creator.share.privateTitle')}</h2>
-        <p className="text-[color:var(--muted)] mb-5">{creatorT(locale, 'creator.share.privateBody')}</p>
-        <div className="field flex items-center mb-4 text-[14px] overflow-hidden">
-          <span className="truncate">{actionUrl ?? watchPathPlaceholder}</span>
-        </div>
-        <div className="flex flex-wrap gap-3 mb-4">
-          <Button onClick={createShare} disabled={pending || !entitlementActive}>
-            {pending ? 'Working…' : `${creatorT(locale, 'creator.share.createLink')}  ↗`}
-          </Button>
-          <Button variant="secondary" onClick={copyLink} disabled={!actionUrl}>
-            {copied ? creatorT(locale, 'creator.share.copied') : `${creatorT(locale, 'creator.share.copy')}  ↗`}
-          </Button>
-        </div>
-        {note ? <p className="text-[12px] text-[color:var(--muted)] mb-3">{note}</p> : null}
-        {error ? (
-          <p className="text-[14px] text-[color:var(--accent)] mb-3" role="alert">
-            {error}
-          </p>
-        ) : null}
-        {shares.length > 0 ? (
-          <ul className="list-none p-0 m-0 grid gap-2 text-[13px] text-[color:var(--muted)] mb-4">
-            {shares.map((share) => (
-              <li key={share.id} className="flex justify-between gap-3 items-center">
-                <span>
-                  {share.status === 'revoked' || share.revoked
-                    ? creatorT(locale, 'creator.share.statusRevoked')
-                    : share.status === 'expired' || !share.usable
-                      ? creatorT(locale, 'creator.share.statusExpired')
-                      : creatorT(locale, 'creator.share.statusActive')}{' '}
-                  · {share.expiresAt.slice(0, 10)}
-                </span>
-                {share.usable ? (
-                  <Button variant="ghost" onClick={() => revoke(share.id)} disabled={pending}>
-                    {creatorT(locale, 'creator.share.revoke')}
-                  </Button>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        ) : null}
-        <div className="border-t border-[color:var(--border)] pt-5">
-          <h3 className="serif text-[23px] m-0 mb-4">Venue handoff</h3>
+
+        <div
+          className="border-t border-[color:var(--border)] pt-5 mt-5"
+          data-testid="venue-handoff"
+        >
+          <h3 className="serif text-[23px] m-0 mb-4">{creatorT(locale, 'creator.share.venueHandoff')}</h3>
           <ul className="list-none p-0 m-0 grid gap-2 text-[14px] text-[color:var(--muted)]">
-            <li>○  Download the Ceremony Pack to the venue computer</li>
-            <li>○  Print or save the cue sheet running order</li>
-            <li>○  Open ceremony-player.html (or in-app Ceremony Player) for live speech holds</li>
-            <li>○  Rehearse pause and resume before the service</li>
-            <li>○  Private family link is optional and secondary</li>
+            <li>○  {creatorT(locale, 'creator.share.handoffPack')}</li>
+            <li>○  {creatorT(locale, 'creator.share.handoffCue')}</li>
+            <li>○  {creatorT(locale, 'creator.share.handoffPlayer')}</li>
+            <li>○  {creatorT(locale, 'creator.share.handoffRehearse')}</li>
+            <li>○  {creatorT(locale, 'creator.share.handoffShareSecondary')}</li>
           </ul>
         </div>
       </div>
+
+      <details className="card !p-5" data-testid="optional-private-share">
+        <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+          <p className="eyebrow m-0 mb-2">{creatorT(locale, 'creator.share.optionalLabel')}</p>
+          <h2 className="serif text-[28px] m-0 mb-2">{creatorT(locale, 'creator.share.privateTitle')}</h2>
+          <p className="text-[color:var(--muted)] m-0 text-[14px]">
+            {creatorT(locale, 'creator.share.privateBody')}
+          </p>
+        </summary>
+        <div className="mt-5 pt-5 border-t border-[color:var(--border)]">
+          <div className="field flex items-center mb-4 text-[14px] overflow-hidden">
+            <span className="truncate">{actionUrl ?? watchPathPlaceholder}</span>
+          </div>
+          <div className="flex flex-wrap gap-3 mb-4">
+            <Button onClick={createShare} disabled={pending || !entitlementActive} variant="secondary">
+              {pending ? creatorT(locale, 'creator.music.working') : `${creatorT(locale, 'creator.share.createLink')}  ↗`}
+            </Button>
+            <Button variant="ghost" onClick={copyLink} disabled={!actionUrl}>
+              {copied ? creatorT(locale, 'creator.share.copied') : `${creatorT(locale, 'creator.share.copy')}  ↗`}
+            </Button>
+          </div>
+          {note ? <p className="text-[12px] text-[color:var(--muted)] mb-3">{note}</p> : null}
+          {error ? (
+            <p className="text-[14px] text-[color:var(--accent)] mb-3" role="alert">
+              {error}
+            </p>
+          ) : null}
+          {shares.length > 0 ? (
+            <ul className="list-none p-0 m-0 grid gap-2 text-[13px] text-[color:var(--muted)] mb-0">
+              {shares.map((share) => (
+                <li key={share.id} className="flex justify-between gap-3 items-center">
+                  <span>
+                    {share.status === 'revoked' || share.revoked
+                      ? creatorT(locale, 'creator.share.statusRevoked')
+                      : share.status === 'expired' || !share.usable
+                        ? creatorT(locale, 'creator.share.statusExpired')
+                        : creatorT(locale, 'creator.share.statusActive')}{' '}
+                    · {share.expiresAt.slice(0, 10)}
+                  </span>
+                  {share.usable ? (
+                    <Button variant="ghost" onClick={() => revoke(share.id)} disabled={pending}>
+                      {creatorT(locale, 'creator.share.revoke')}
+                    </Button>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      </details>
     </div>
   );
 }
