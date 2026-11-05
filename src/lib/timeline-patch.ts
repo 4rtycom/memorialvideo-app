@@ -1,5 +1,9 @@
 import { mapAutosaveHttpToUi, type AutosaveUiState } from '@memorialvideo/domain';
-import { reportShellSaveFromAutosave } from '@/lib/shell-save-status';
+import {
+  clearShellSaveRetry,
+  reportShellSaveFromAutosave,
+  setShellSaveRetry,
+} from '@/lib/shell-save-status';
 
 export type TimelinePatchResult =
   | {
@@ -20,6 +24,10 @@ export type TimelinePatchResult =
 export async function patchTimeline(
   body: Record<string, unknown>,
 ): Promise<TimelinePatchResult> {
+  // Safe retry replays the same payload — never invents a newer write.
+  setShellSaveRetry(() => {
+    void patchTimeline(body);
+  });
   reportShellSaveFromAutosave('saving');
   try {
     const response = await fetch('/api/tributes/active/timeline', {
@@ -44,6 +52,7 @@ export async function patchTimeline(
         ui,
       };
     }
+    clearShellSaveRetry();
     return {
       ok: true,
       timelineVersion: payload.timelineVersion ?? Number(body.expectedVersion) + 1,

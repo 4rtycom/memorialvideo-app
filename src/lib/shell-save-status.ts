@@ -17,6 +17,10 @@ export type ShellSaveEventDetail = {
   state: Extract<ShellSaveState, 'saving' | 'saved' | 'failed' | 'offline'>;
 };
 
+export type ShellSaveRetryFn = () => void | Promise<void>;
+
+let pendingRetry: ShellSaveRetryFn | null = null;
+
 export function shellSaveMessageKey(state: ShellSaveState): CreatorUiKey {
   switch (state) {
     case 'checking':
@@ -37,6 +41,23 @@ export function shellSaveMessageKey(state: ShellSaveState): CreatorUiKey {
   }
 }
 
+/** Offline / failed / unavailable surfaces offer a safe retry. */
+export function shellSaveNeedsRetry(state: ShellSaveState): boolean {
+  return state === 'failed' || state === 'offline' || state === 'unavailable';
+}
+
+export function setShellSaveRetry(fn: ShellSaveRetryFn | null): void {
+  pendingRetry = fn;
+}
+
+export function clearShellSaveRetry(): void {
+  pendingRetry = null;
+}
+
+export function hasShellSaveRetry(): boolean {
+  return pendingRetry !== null;
+}
+
 export function reportShellSave(state: ShellSaveEventDetail['state']): void {
   if (typeof window === 'undefined') {
     return;
@@ -55,6 +76,7 @@ export function reportShellSaveFromAutosave(ui: AutosaveUiState): void {
       reportShellSave('saving');
       return;
     case 'saved':
+      clearShellSaveRetry();
       reportShellSave('saved');
       return;
     case 'offline':
@@ -67,4 +89,46 @@ export function reportShellSaveFromAutosave(ui: AutosaveUiState): void {
     default:
       return;
   }
+}
+
+/**
+ * Re-check whether storage is writable. Does not claim "saved".
+ * Used before replaying a pending mutation.
+ */
+export async function probeShellPersistence(
+  fetchImpl: typeof fetch = fetch,
+): Promise<Extract<ShellSaveState, 'idle' | 'unavailable' | 'offline'>> {
+  try {
+    const response = await fetchImpl('/api/health/ready', { cache: 'no-store' });
+    if (!response.ok) {
+      return 'offline';
+    }
+    const body = (await response.json()) as { persistenceWritable?: boolean };
+    return body.persistenceWritable ? 'idle' : 'unavailable';
+  } catch {
+    return 'offline';
+  }
+}
+
+/**
+ * Safe retry: probe storage first, then replay at most one registered mutation.
+ * Returns the probe/idle outcome when no mutation is pending; mutation handlers
+ * report their own saving/saved/failed/offline via `reportShellSave`.
+ */
+export async function runShellSaveRetry(
+  fetchImpl: typeof fetch = fetch,
+): Promise<
+  | { kind: 'probe'; state: Extract<ShellSaveState, 'idle' | 'unavailable' | 'offline'> }
+  | { kind: 'replayed' }
+> {
+  const probed = await probeShellPersistence(fetchImpl);
+  if (probed !== 'idle') {
+    return { kind: 'probe', state: probed };
+  }
+  const retry = pendingRetry;
+  if (!retry) {
+    return { kind: 'probe', state: 'idle' };
+  }
+  await retry();
+  return { kind: 'replayed' };
 }
