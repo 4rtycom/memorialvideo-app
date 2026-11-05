@@ -93,6 +93,32 @@ export async function writeSqlDocument(document: string): Promise<void> {
   );
 }
 
+/**
+ * Write → read → delete a disposable row. Does not touch the live `v5` creator document.
+ * Used by Gate A persistence probes (MV-AUD-002).
+ */
+export async function probeSqlRoundTrip(token: string): Promise<void> {
+  await ensureCreatorStoreSchema();
+  const id = `probe:${token}`;
+  await query(
+    `insert into creator_store (id, document, updated_at)
+     values ($1, $2, now())
+     on conflict (id) do update
+       set document = excluded.document,
+           updated_at = now()`,
+    [id, token],
+  );
+  const rows = await query(`select document from creator_store where id = $1`, [id]);
+  const document = rows[0]?.document;
+  if (document !== token) {
+    throw new PersistenceUnavailableError('PostgreSQL persistence probe read mismatch.', {
+      kind: 'database',
+      xb012: false,
+    });
+  }
+  await query(`delete from creator_store where id = $1`, [id]);
+}
+
 /** Test helper: reset the schema promise between isolated databases. */
 export function resetSqlSchemaForTests(): void {
   schemaReady = null;

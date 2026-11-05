@@ -295,3 +295,96 @@ export async function localStorePathExists(): Promise<boolean> {
     return false;
   }
 }
+
+export type PersistenceProbeResult = {
+  ok: boolean;
+  kind: PersistenceKind;
+  writable: boolean;
+  reason: PersistenceResolution['reason'] | 'probe_failed';
+  roundTripMs: number;
+  error?: string;
+};
+
+/**
+ * Prove a real write→read→delete round-trip on the resolved backend.
+ * Resolution alone is not Gate A evidence — env presence can lie; this ack cannot.
+ */
+export async function probePersistenceWrite(
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<PersistenceProbeResult> {
+  const started = Date.now();
+  let resolution: PersistenceResolution;
+  try {
+    resolution = await assertPersistenceWritable(env);
+  } catch (error) {
+    const unavailable =
+      error instanceof PersistenceUnavailableError
+        ? error
+        : new PersistenceUnavailableError('Durable tribute persistence is unavailable on this host.');
+    const resolved = await resolvePersistence(env);
+    return {
+      ok: false,
+      kind: resolved.kind,
+      writable: false,
+      reason: resolved.reason,
+      roundTripMs: Date.now() - started,
+      error: unavailable.message,
+    };
+  }
+
+  const token = `ok_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  try {
+    if (resolution.kind === 'database') {
+      const { probeSqlRoundTrip } = await import('./sql-store');
+      await probeSqlRoundTrip(token);
+    } else if (resolution.kind === 'vercel_kv') {
+      const key = `mv:creator:probe:${token}`;
+      await writeKvString(key, token);
+      const readBack = await readKvString(key);
+      if (readBack !== token) {
+        throw new PersistenceUnavailableError('Vercel KV persistence probe read mismatch.', {
+          kind: 'vercel_kv',
+          xb012: false,
+        });
+      }
+      await deleteKvString(key);
+    } else if (resolution.kind === 'local_file') {
+      const dir = path.join(process.cwd(), '.data');
+      const probe = path.join(dir, `.persist-probe.${process.pid}.${token}`);
+      await mkdir(dir, { recursive: true });
+      await writeFile(probe, token, 'utf8');
+      const { readFile } = await import('node:fs/promises');
+      const readBack = await readFile(probe, 'utf8');
+      if (readBack !== token) {
+        throw new PersistenceUnavailableError('Local file persistence probe read mismatch.', {
+          kind: 'local_file',
+          xb012: Boolean(env.VERCEL),
+        });
+      }
+      await unlink(probe);
+    } else {
+      throw new PersistenceUnavailableError('No writable persistence backend for probe.', {
+        kind: 'unavailable',
+      });
+    }
+
+    return {
+      ok: true,
+      kind: resolution.kind,
+      writable: true,
+      reason: resolution.reason,
+      roundTripMs: Date.now() - started,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Persistence probe failed without a message.';
+    return {
+      ok: false,
+      kind: resolution.kind,
+      writable: resolution.writable,
+      reason: 'probe_failed',
+      roundTripMs: Date.now() - started,
+      error: message,
+    };
+  }
+}

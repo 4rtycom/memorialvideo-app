@@ -1,4 +1,5 @@
 import { mapAutosaveHttpToUi, type AutosaveUiState } from '@memorialvideo/domain';
+import { reportShellSaveFromAutosave } from '@/lib/shell-save-status';
 
 export type TimelinePatchResult =
   | {
@@ -19,6 +20,7 @@ export type TimelinePatchResult =
 export async function patchTimeline(
   body: Record<string, unknown>,
 ): Promise<TimelinePatchResult> {
+  reportShellSaveFromAutosave('saving');
   try {
     const response = await fetch('/api/tributes/active/timeline', {
       method: 'PATCH',
@@ -32,6 +34,7 @@ export async function patchTimeline(
       canUndo?: boolean;
     };
     const ui = mapAutosaveHttpToUi({ ok: response.ok, status: response.status });
+    reportShellSaveFromAutosave(ui);
     if (!response.ok) {
       return {
         ok: false,
@@ -49,6 +52,7 @@ export async function patchTimeline(
       ui,
     };
   } catch {
+    reportShellSaveFromAutosave('offline');
     return { ok: false, error: 'network', ui: 'offline' };
   }
 }

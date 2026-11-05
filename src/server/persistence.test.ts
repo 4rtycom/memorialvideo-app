@@ -122,6 +122,15 @@ describe('creator persistence resolution', () => {
       reason: 'postgres',
     });
   });
+
+  it('local_file probe acknowledges a real write round-trip', async () => {
+    const persistence = await import('./persistence');
+    const probe = await persistence.probePersistenceWrite();
+    expect(probe.ok).toBe(true);
+    expect(probe.kind).toBe('local_file');
+    expect(probe.writable).toBe(true);
+    expect(probe.roundTripMs).toBeGreaterThanOrEqual(0);
+  });
 });
 
 describe('POST /api/tributes persistence failure mode', () => {
