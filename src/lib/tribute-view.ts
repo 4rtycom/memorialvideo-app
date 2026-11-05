@@ -75,3 +75,49 @@ export function overviewCopy(tribute: Tribute | null): {
     progressWidth: ready ? '70%' : readyCount > 0 ? '40%' : '15%',
   };
 }
+
+/** Owner mobile home (`/m`) — live tribute only; never invent Eleanor / 48 memories. */
+export function mobileHomeCopy(tribute: Tribute | null): {
+  eyebrow: string;
+  heroLine1: string;
+  heroLine2: string;
+  meta: string;
+  filmTitle: string;
+  primaryHref: string;
+  primaryLabel: string;
+  posterSrc: string;
+} {
+  if (!tribute) {
+    return {
+      eyebrow: 'YOUR PERSONAL WORKSPACE',
+      heroLine1: 'Begin a memorial',
+      heroLine2: 'film here.',
+      meta: 'No tribute open yet',
+      filmTitle: 'Your remembrance',
+      primaryHref: '/setup',
+      primaryLabel: 'Begin setup  ↗',
+      posterSrc: '/fixtures/workspace-family.png',
+    };
+  }
+
+  const count = memoryCount(tribute);
+  const ready = tribute.firstFilmStage === 'ready_to_review';
+  const memoryWord = count === 1 ? 'memory' : 'memories';
+  const firstMemory = tribute.memories[0]?.imagePath;
+  const posterSrc =
+    firstMemory ??
+    (tribute.isFixtureSeed ? '/fixtures/eleanor.png' : '/fixtures/workspace-family.png');
+
+  return {
+    eyebrow: `${possessive(tribute.displayName).toUpperCase()} PERSONAL WORKSPACE`,
+    heroLine1: ready ? `${possessive(tribute.displayName)} story is` : `Gather memories for`,
+    heroLine2: ready ? 'ready to watch.' : `${possessive(tribute.displayName)} story.`,
+    meta: ready
+      ? `${count} ${memoryWord} collected  ·  First film ready`
+      : `${count} ${memoryWord} collected  ·  Workspace waiting`,
+    filmTitle: `${possessive(tribute.displayName)} remembrance`,
+    primaryHref: ready ? '/film' : '/memories',
+    primaryLabel: ready ? '▶  Watch the first film' : 'Add memories  ↗',
+    posterSrc,
+  };
+}

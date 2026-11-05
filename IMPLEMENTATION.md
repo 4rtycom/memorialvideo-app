@@ -23,7 +23,7 @@ Source: [MemorialVideo — Marketing Website ONLY | Cinema of a Life — 2026](h
 | 14 Studio / Optional advanced controls | `/film/studio` | Shared TimelineContract + Guided Variants panel |
 | 15 Finish / Download & private sharing | `/share` | READY QC download (HTTP Range) + metadata ZIP + checklist .txt + stale-final warn + Ceremony Pack + readiness + duration→pack auto-upgrade (>10 min / >20 min) |
 | 16–19 Guest flows | `/guest`… | Hash redeem + contribute |
-| 20 Owner mobile / Workspace home | `/m` | Implemented |
+| 20 Owner mobile / Workspace home | `/m` | Live active tribute (MV-AUD-006; no hard-coded Eleanor fixture) |
 | 00 Empty / failure / permission states | `/states` | Implemented |
 
 ## Production path (2026-10-11)

@@ -1,38 +1,61 @@
-import Image from "next/image";
-import Link from "next/link";
-import { BrandWordmark } from "@/components/BrandWordmark";
-import { project } from "@/lib/copy";
+import Image from 'next/image';
+import Link from 'next/link';
+import { BrandWordmark } from '@/components/BrandWordmark';
+import { mobileHomeCopy, shellProject } from '@/lib/tribute-view';
+import { loadActiveTribute } from '@/server/session';
 
 const tabs = [
-  ["/", "⌂", "Home"],
-  ["/memories", "▦", "Memories"],
-  ["/film", "▷", "Film"],
-  ["/contributors", "♧", "Invite"],
-  ["/share", "↓", "Share"],
-];
+  ['/', '⌂', 'Home'],
+  ['/memories', '▦', 'Memories'],
+  ['/film', '▷', 'Film'],
+  ['/contributors', '♧', 'Invite'],
+  ['/share', '↓', 'Share'],
+] as const;
 
-export default function MobileHomePage() {
+export default async function MobileHomePage() {
+  const tribute = await loadActiveTribute();
+  const shell = shellProject(tribute);
+  const copy = mobileHomeCopy(tribute);
+
   return (
     <div className="mobile-shell">
       <header className="mobile-top">
-        <BrandWordmark alt={project.brand} className="brand-wordmark brand-wordmark--mobile" />
-        <div className="text-[21px]" aria-hidden>☰</div>
+        <BrandWordmark alt={shell.brand} className="brand-wordmark brand-wordmark--mobile" />
+        <div className="text-[21px]" aria-hidden>
+          ☰
+        </div>
       </header>
       <main className="px-6 pt-8">
-        <p className="eyebrow">ELEANOR’S PERSONAL WORKSPACE</p>
-        <h1 className="serif text-[47px] leading-[1.02] m-0 mb-4">Her story is ready<br />to watch.</h1>
-        <p className="text-[14px] text-[color:var(--muted)] mb-8">48 memories collected  ·  First film ready</p>
+        <p className="eyebrow">{copy.eyebrow}</p>
+        <h1 className="serif text-[47px] leading-[1.02] m-0 mb-4">
+          {copy.heroLine1}
+          <br />
+          {copy.heroLine2}
+        </h1>
+        <p className="text-[14px] text-[color:var(--muted)] mb-8">{copy.meta}</p>
         <div className="relative h-[255px] rounded-[10px] overflow-hidden">
-          <Image src="/fixtures/mobile-portrait.png" alt="" fill className="object-cover" sizes="342px" />
+          <Image src={copy.posterSrc} alt="" fill className="object-cover" sizes="342px" />
         </div>
         <div className="bg-[color:var(--primary)] text-white rounded-[8px] px-4 py-4 -mt-1 relative">
-          <div className="serif text-[31px] leading-none">{project.title}</div>
+          <div className="serif text-[31px] leading-none">{copy.filmTitle}</div>
         </div>
-        <Link href="/film" className="btn btn-primary btn-block mt-6">▶  Watch the first film</Link>
+        <Link href={copy.primaryHref} className="btn btn-primary btn-block mt-6">
+          {copy.primaryLabel}
+        </Link>
         <p className="text-center font-medium text-[13px] mt-6 mb-0">
-          <Link href="/memories">Add memories</Link>
-          {"    ·    "}
-          <Link href="/contributors">Invite loved ones</Link>
+          {tribute ? (
+            <>
+              <Link href="/memories">Add memories</Link>
+              {'    ·    '}
+              <Link href="/contributors">Invite loved ones</Link>
+            </>
+          ) : (
+            <>
+              <Link href="/setup">Begin setup</Link>
+              {'    ·    '}
+              <Link href="/workspace">Open workspace</Link>
+            </>
+          )}
         </p>
       </main>
       <nav className="mobile-nav" aria-label="Mobile">
