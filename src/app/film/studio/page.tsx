@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { AppShell } from '@/components/AppShell';
 import { ErrorRecovery } from '@/components/ErrorRecovery';
 import { GuidedVariantsPanel } from '@/components/GuidedVariantsPanel';
@@ -27,6 +28,13 @@ export default async function StudioPage() {
       <Eyebrow>{creatorT(locale, 'creator.studio.eyebrow')}</Eyebrow>
       <Hero>{creatorT(locale, 'creator.studio.hero')}</Hero>
       <Lede>{creatorT(locale, 'creator.studio.lede')}</Lede>
+      <p className="text-[13px] text-[color:var(--muted)] mb-6">
+        <Link href="/film/edit" className="underline-offset-2 hover:underline">
+          {creatorT(locale, 'creator.film.edit')}
+        </Link>
+        {' · '}
+        {creatorT(locale, 'creator.moreControl')}
+      </p>
 
       {!tribute ? (
         <ErrorRecovery

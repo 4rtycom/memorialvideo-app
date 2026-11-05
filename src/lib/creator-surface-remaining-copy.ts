@@ -150,7 +150,7 @@ const remainingEnglish: RemainingCatalog = {
   'creator.studio.eyebrow': 'ADVANCED TOOLS, WHEN YOU WANT THEM',
   'creator.studio.hero': 'Your film. Your creative control.',
   'creator.studio.lede':
-    'Guided editing stays simple. Studio adjusts the same TimelineContract — aspect, length, order, transitions — with conflict-safe autosave.',
+    'Optional Advanced Studio for operators who want precise control. Families can stay on guided editing — aspect, length, order and transitions share the same film.',
   'creator.studio.footerTitle': 'A beautiful film, made together.',
   'creator.studio.emptyLabel': 'EMPTY WORKSPACE',
   'creator.studio.emptyTitle': 'No tribute open yet',
@@ -244,7 +244,7 @@ const nl: RemainingCatalog = {
   'creator.studio.eyebrow': 'GEAVANCEERDE TOOLS, WANNEER U WILT',
   'creator.studio.hero': 'Uw film. Uw creatieve controle.',
   'creator.studio.lede':
-    'Begeleide bewerking blijft eenvoudig. Studio past hetzelfde TimelineContract aan — beeldverhouding, lengte, volgorde, overgangen — met conflictveilige autosave.',
+    'Optionele Advanced Studio voor operators die precieze controle willen. Families kunnen bij begeleide bewerking blijven — beeldverhouding, lengte, volgorde en overgangen delen dezelfde film.',
   'creator.studio.footerTitle': 'Een mooie film, samen gemaakt.',
   'creator.studio.emptyLabel': 'LEGE WERKRUIMTE',
   'creator.studio.emptyTitle': 'Nog geen eerbetoon open',
@@ -339,7 +339,7 @@ const de: RemainingCatalog = {
   'creator.studio.eyebrow': 'ERWEITERTE WERKZEUGE, WENN SIE WOLLEN',
   'creator.studio.hero': 'Ihr Film. Ihre kreative Kontrolle.',
   'creator.studio.lede':
-    'Geführte Bearbeitung bleibt einfach. Studio passt denselben TimelineContract an — Format, Länge, Reihenfolge, Übergänge — mit konfliktsicherem Autosave.',
+    'Optionales Advanced Studio für Operatoren mit präziser Kontrolle. Familien können bei der geführten Bearbeitung bleiben — Format, Länge, Reihenfolge und Übergänge teilen denselben Film.',
   'creator.studio.footerTitle': 'Ein schöner Film, gemeinsam gemacht.',
   'creator.studio.emptyLabel': 'LEERER ARBEITSBEREICH',
   'creator.studio.emptyTitle': 'Noch kein Gedenken geöffnet',
@@ -433,7 +433,7 @@ const fr: RemainingCatalog = {
   'creator.studio.eyebrow': 'OUTILS AVANCÉS, QUAND VOUS VOULEZ',
   'creator.studio.hero': 'Votre film. Votre contrôle créatif.',
   'creator.studio.lede':
-    'L’édition Guidée reste simple. Studio ajuste le même TimelineContract — format, durée, ordre, transitions — avec une sauvegarde automatique sans conflit.',
+    'Studio avancé optionnel pour les opérateurs qui veulent un contrôle précis. Les familles peuvent rester sur l\'édition Guidée — format, durée, ordre et transitions partagent le même film.',
   'creator.studio.footerTitle': 'Un beau film, fait ensemble.',
   'creator.studio.emptyLabel': 'ESPACE VIDE',
   'creator.studio.emptyTitle': 'Aucun hommage ouvert',
@@ -527,7 +527,7 @@ const es: RemainingCatalog = {
   'creator.studio.eyebrow': 'HERRAMIENTAS AVANZADAS, CUANDO QUIERA',
   'creator.studio.hero': 'Su película. Su control creativo.',
   'creator.studio.lede':
-    'La edición Guiada sigue simple. Studio ajusta el mismo TimelineContract — formato, duración, orden, transiciones — con autoguardado seguro ante conflictos.',
+    'Studio avanzado opcional para operadores que quieren control preciso. Las familias pueden quedarse en la edición Guiada — formato, duración, orden y transiciones comparten la misma película.',
   'creator.studio.footerTitle': 'Una película hermosa, hecha juntos.',
   'creator.studio.emptyLabel': 'ESPACIO VACÍO',
   'creator.studio.emptyTitle': 'Ningún homenaje abierto',
@@ -621,7 +621,7 @@ const pt: RemainingCatalog = {
   'creator.studio.eyebrow': 'FERRAMENTAS AVANÇADAS, QUANDO QUISER',
   'creator.studio.hero': 'O seu filme. O seu controlo criativo.',
   'creator.studio.lede':
-    'A edição Guiada mantém-se simples. O Studio ajusta o mesmo TimelineContract — formato, duração, ordem, transições — com gravação automática segura.',
+    'Studio avançado opcional para operadores que querem controlo preciso. As famílias podem ficar na edição Guiada — formato, duração, ordem e transições partilham o mesmo filme.',
   'creator.studio.footerTitle': 'Um belo filme, feito em conjunto.',
   'creator.studio.emptyLabel': 'ESPAÇO VAZIO',
   'creator.studio.emptyTitle': 'Nenhuma homenagem aberta',
@@ -715,7 +715,7 @@ const it: RemainingCatalog = {
   'creator.studio.eyebrow': 'STRUMENTI AVANZATI, QUANDO VUOI',
   'creator.studio.hero': 'Il tuo film. Il tuo controllo creativo.',
   'creator.studio.lede':
-    'La modifica Guidata resta semplice. Studio regola lo stesso TimelineContract — formato, durata, ordine, transizioni — con salvataggio automatico sicuro.',
+    'Studio avanzato opzionale per operatori che vogliono controllo preciso. Le famiglie possono restare sulla modifica Guidata — formato, durata, ordine e transizioni condividono lo stesso film.',
   'creator.studio.footerTitle': 'Un bel film, fatto insieme.',
   'creator.studio.emptyLabel': 'SPAZIO VUOTO',
   'creator.studio.emptyTitle': 'Nessun omaggio aperto',
@@ -809,7 +809,7 @@ const pl: RemainingCatalog = {
   'creator.studio.eyebrow': 'ZAAWANSOWANE NARZĘDZIA, GDY CHCESZ',
   'creator.studio.hero': 'Twój film. Twoja kontrola twórcza.',
   'creator.studio.lede':
-    'Edycja Prowadzona pozostaje prosta. Studio dostosowuje ten sam TimelineContract — format, długość, kolejność, przejścia — z bezpiecznym autozapisem.',
+    'Opcjonalne Studio zaawansowane dla operatorów, którzy chcą precyzyjnej kontroli. Rodziny mogą zostać przy edycji Prowadzonej — format, długość, kolejność i przejścia dzielą ten sam film.',
   'creator.studio.footerTitle': 'Piękny film, stworzony razem.',
   'creator.studio.emptyLabel': 'PUSTA PRZESTRZEŃ',
   'creator.studio.emptyTitle': 'Brak otwartego upamiętnienia',

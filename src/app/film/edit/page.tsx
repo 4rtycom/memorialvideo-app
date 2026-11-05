@@ -1,9 +1,12 @@
+import Link from 'next/link';
 import { AppShell } from '@/components/AppShell';
 import { ErrorRecovery } from '@/components/ErrorRecovery';
 import { GuidedEditor } from '@/components/GuidedEditor';
 import { GuidedVariantsPanel } from '@/components/GuidedVariantsPanel';
+import { MoreControlDisclosure } from '@/components/MoreControlDisclosure';
 import { MusicDirectorPanel } from '@/components/MusicDirectorPanel';
 import { Eyebrow, Hero, Lede } from '@/components/ui';
+import { ADVANCED_STUDIO_HREF } from '@/lib/advanced-control';
 import { creatorT } from '@/lib/creator-ui-messages';
 import { shellProject } from '@/lib/tribute-view';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
@@ -53,7 +56,14 @@ export default async function EditPage() {
             openingTitle={tribute.openingTitle}
             displayName={tribute.displayName}
           />
-          <GuidedVariantsPanel />
+          <MoreControlDisclosure locale={locale} className="mt-6">
+            <div className="flex flex-wrap gap-3 mb-4">
+              <Link className="btn btn-secondary" href={ADVANCED_STUDIO_HREF}>
+                {creatorT(locale, 'creator.film.studio')}
+              </Link>
+            </div>
+            <GuidedVariantsPanel />
+          </MoreControlDisclosure>
         </>
       ) : (
         <ErrorRecovery
