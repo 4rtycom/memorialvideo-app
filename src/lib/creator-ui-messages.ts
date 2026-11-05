@@ -5,6 +5,11 @@ import {
   surfaceDrafts,
   surfaceEnglish,
 } from '@/lib/creator-surface-copy';
+import {
+  REMAINING_SURFACE_KEYS,
+  remainingDrafts,
+  remainingEnglish,
+} from '@/lib/creator-surface-remaining-copy';
 
 /** Creator-surface UI strings for locked launch languages. Native polish remains XB-004. */
 export const CREATOR_UI_KEYS = [
@@ -163,6 +168,7 @@ export const CREATOR_UI_KEYS = [
   'creator.auth.magicUnconfigured',
   ...CRITICAL_CREATION_KEYS,
   ...SURFACE_CREATION_KEYS,
+  ...REMAINING_SURFACE_KEYS,
 ] as const;
 
 /** Locale release status for creator UI catalogs. Non-en stays draft until XB-004. */
@@ -380,7 +386,12 @@ const enCore = {
     'Magic links need Supabase to be configured. Password sign-in is available when this host has a session secret.',
 };
 
-const en: Catalog = { ...enCore, ...criticalEnglish, ...surfaceEnglish };
+const en: Catalog = {
+  ...enCore,
+  ...criticalEnglish,
+  ...surfaceEnglish,
+  ...remainingEnglish,
+};
 
 /** Draft translations — status remains draft until XB-004 native review. */
 const drafts: Record<Exclude<LaunchLanguage, 'en'>, Partial<Catalog>> = {
@@ -961,6 +972,7 @@ function catalogFor(language: LaunchLanguage): Catalog {
     ...authDrafts[language],
     ...criticalDrafts[language],
     ...surfaceDrafts[language],
+    ...remainingDrafts[language],
   };
 }
 

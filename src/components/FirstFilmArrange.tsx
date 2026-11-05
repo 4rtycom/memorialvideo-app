@@ -2,14 +2,18 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import type { LaunchLanguage } from '@memorialvideo/contracts';
 import { Button } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
 
 export function FirstFilmArrange({
   canArrange,
   alreadyReady,
+  locale = 'en',
 }: {
   canArrange: boolean;
   alreadyReady: boolean;
+  locale?: LaunchLanguage;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -18,7 +22,7 @@ export function FirstFilmArrange({
   if (alreadyReady) {
     return (
       <Button href="/film" className="btn-block">
-        ▶  Watch the film
+        {creatorT(locale, 'creator.creating.watchFilm')}
       </Button>
     );
   }
@@ -31,8 +35,8 @@ export function FirstFilmArrange({
         const body = (await response.json().catch(() => ({}))) as { error?: string };
         setError(
           body.error === 'need_more_memories'
-            ? 'Add a few more ready memories first.'
-            : 'We could not advance the film. Please try again.',
+            ? creatorT(locale, 'creator.creating.errorNeedMore')
+            : creatorT(locale, 'creator.creating.errorAdvance'),
         );
         return;
       }
@@ -43,7 +47,11 @@ export function FirstFilmArrange({
   return (
     <div className="flex flex-col gap-2">
       <Button onClick={arrange} disabled={!canArrange || pending} className={pending ? 'opacity-70' : ''}>
-        {pending ? 'Arranging…' : canArrange ? 'Arrange the first film  ↗' : 'Add more memories first'}
+        {pending
+          ? creatorT(locale, 'creator.creating.arranging')
+          : canArrange
+            ? creatorT(locale, 'creator.creating.arrangeCta')
+            : creatorT(locale, 'creator.creating.needMore')}
       </Button>
       {error ? (
         <p className="text-[12px] text-red-700 m-0" role="alert">

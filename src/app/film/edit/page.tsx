@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { AppShell } from '@/components/AppShell';
 import { ErrorRecovery } from '@/components/ErrorRecovery';
 import { GuidedEditor } from '@/components/GuidedEditor';
@@ -11,7 +12,6 @@ import { shellProject } from '@/lib/tribute-view';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { parseTimelineContract } from '@memorialvideo/contracts';
-import Link from 'next/link';
 
 export default async function EditPage() {
   const tribute = await loadActiveTribute();
@@ -25,23 +25,20 @@ export default async function EditPage() {
       title={shell.title}
       ownerInitial={shell.ownerInitial}
       locale={locale}
-      footerTitle="No complicated timeline needed."
+      footerTitle={creatorT(locale, 'creator.edit.footerTitle')}
       footerBody=""
     >
-      <Eyebrow>MAKE THE FILM FEEL LIKE THEM</Eyebrow>
-      <Hero>Make a little change. Keep the magic.</Hero>
-      <Lede>
-        Choose a story moment below. Music uses the same Music Director as the Music page — three
-        songs and speech pauses, without technical mix jargon.
-      </Lede>
+      <Eyebrow>{creatorT(locale, 'creator.edit.eyebrow')}</Eyebrow>
+      <Hero>{creatorT(locale, 'creator.edit.hero')}</Hero>
+      <Lede>{creatorT(locale, 'creator.edit.lede')}</Lede>
 
       {!tribute ? (
         <ErrorRecovery
-          label="EMPTY WORKSPACE"
-          title="No tribute open yet"
-          body="Begin setup to create a private workspace before Guided editing."
+          label={creatorT(locale, 'creator.edit.emptyLabel')}
+          title={creatorT(locale, 'creator.edit.emptyTitle')}
+          body={creatorT(locale, 'creator.edit.emptyBody')}
           primaryHref="/setup"
-          primaryLabel="Begin setup  ↗"
+          primaryLabel={creatorT(locale, 'creator.common.beginSetup')}
           tone="success"
         />
       ) : timeline ? (
@@ -70,13 +67,13 @@ export default async function EditPage() {
         </>
       ) : (
         <ErrorRecovery
-          label="RESUMABLE PROCESSING"
-          title="Film not arranged yet"
-          body="Your memories are safe. Arrange the first film so Guided can edit your story."
+          label={creatorT(locale, 'creator.edit.processingLabel')}
+          title={creatorT(locale, 'creator.edit.processingTitle')}
+          body={creatorT(locale, 'creator.edit.processingBody')}
           primaryHref="/film/creating"
-          primaryLabel="Arrange first film  ↗"
+          primaryLabel={creatorT(locale, 'creator.edit.arrangeCta')}
           secondaryHref="/memories"
-          secondaryLabel="Add memories"
+          secondaryLabel={creatorT(locale, 'creator.edit.addMemories')}
         />
       )}
     </AppShell>
