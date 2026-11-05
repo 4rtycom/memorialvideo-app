@@ -52,6 +52,8 @@ export async function GET() {
     remotionOptIn: encoder.remotionOptIn,
     persistence: persistence.kind,
     persistenceWritable: persistence.writable,
+    /** Use GET /api/persistence/probe for a real write→read→delete ack (MV-AUD-002). */
+    persistenceProbePath: '/api/persistence/probe',
     blockers: {
       xb005_stripe: !stripeConfigured,
       xb012_docker_supabase:

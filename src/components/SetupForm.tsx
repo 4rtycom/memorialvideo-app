@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { Button, Card, Eyebrow, Hero, Lede } from '@/components/ui';
+import { reportShellSave } from '@/lib/shell-save-status';
 
 export function SetupForm() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export function SetupForm() {
     event.preventDefault();
     setError(null);
     startTransition(async () => {
+      reportShellSave('saving');
       const response = await fetch('/api/tributes', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -37,6 +39,7 @@ export function SetupForm() {
         } catch {
           code = undefined;
         }
+        reportShellSave('failed');
         setError(
           code === 'persistence_unavailable'
             ? 'Saving is temporarily unavailable on this host. Please try again later.'
@@ -46,6 +49,7 @@ export function SetupForm() {
         );
         return;
       }
+      reportShellSave('saved');
       router.push('/workspace');
       router.refresh();
     });

@@ -6,6 +6,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { LaunchLanguage } from '@memorialvideo/contracts';
 import { BrandWordmark } from '@/components/BrandWordmark';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
+import { SaveStatus } from '@/components/SaveStatus';
 import { creatorNavLabels, creatorT } from '@/lib/creator-ui-messages';
 import { navItems } from '@/lib/copy';
 
@@ -79,7 +80,7 @@ export function AppShell({
           <div className="topbar-title">{title}</div>
           <div className="topbar-meta">
             <LocaleSwitcher locale={locale} label={creatorT(locale, 'creator.locale.label')} />
-            <span>✓  {creatorT(locale, 'creator.saved')}</span>
+            <SaveStatus locale={locale} />
             <Link href="/account" className="avatar" aria-label="Account">
               {ownerInitial}
             </Link>
