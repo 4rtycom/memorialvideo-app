@@ -48,6 +48,67 @@ a { color: inherit; text-decoration: none; }
 
 button { font: inherit; cursor: pointer; }
 
+/* Gate B a11y — skip link, visible focus, calm reduced-motion */
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: -3.5rem;
+  z-index: 40;
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.skip-link:focus {
+  top: 0.75rem;
+  outline: 2px solid rgba(173, 136, 100, 0.65);
+  outline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(173, 136, 100, 0.65);
+  outline-offset: 3px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.primary-nav-mobile {
+  display: none;
+  gap: 6px;
+  padding: 10px 16px 12px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.primary-nav-mobile .nav-item {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  min-height: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .btn:hover {
+    transform: none;
+  }
+}
+
 .serif { font-family: var(--font-cormorant), Georgia, serif; }
 
 .app-shell {
@@ -297,7 +358,10 @@ button { font: inherit; cursor: pointer; }
   color: var(--ink);
 }
 
-.field:focus { outline: 2px solid rgba(173,136,100,0.35); }
+.field:focus-visible {
+  outline: 2px solid rgba(173, 136, 100, 0.65);
+  outline-offset: 2px;
+}
 
 .textarea {
   min-height: 106px;
@@ -483,9 +547,23 @@ button { font: inherit; cursor: pointer; }
   width: 6rem;
 }
 
+.guest-main {
+  outline: none;
+}
+
+.content:focus {
+  outline: none;
+}
+
+.content:focus-visible {
+  outline: 2px solid rgba(173, 136, 100, 0.45);
+  outline-offset: -2px;
+}
+
 @media (max-width: 980px) {
   .app-shell { grid-template-columns: 1fr; }
   .sidebar { display: none; }
+  .primary-nav-mobile { display: flex; }
   .content { padding: 28px 20px 40px; }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   .topbar { padding: 0 20px; }

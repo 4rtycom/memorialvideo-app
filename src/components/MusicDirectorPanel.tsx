@@ -340,15 +340,41 @@ export function MusicDirectorPanel({
         <h2 className="serif text-[33px] m-0 mb-2">{creatorT(locale, 'creator.music.directorTitle')}</h2>
         <p className="text-[color:var(--muted)] mb-4">{creatorT(locale, 'creator.music.directorIntro')}</p>
 
-        <div className="grid gap-3 mb-5 sm:grid-cols-3" role="tablist" aria-label="Song moments">
+        <div
+          className="grid gap-3 mb-5 sm:grid-cols-3"
+          role="tablist"
+          aria-label="Song moments"
+          onKeyDown={(event) => {
+            if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft' && event.key !== 'Home' && event.key !== 'End') {
+              return;
+            }
+            event.preventDefault();
+            const ids = plan.slots.map((slot) => slot.id);
+            const index = ids.indexOf(activeSlot);
+            let next = index;
+            if (event.key === 'ArrowRight') next = (index + 1) % ids.length;
+            if (event.key === 'ArrowLeft') next = (index - 1 + ids.length) % ids.length;
+            if (event.key === 'Home') next = 0;
+            if (event.key === 'End') next = ids.length - 1;
+            const nextId = ids[next];
+            if (nextId) {
+              setActiveSlot(nextId);
+              const tab = document.getElementById(`music-tab-${nextId}`);
+              tab?.focus();
+            }
+          }}
+        >
           {plan.slots.map((slot) => {
             const selected = slot.id === activeSlot;
             return (
               <button
                 key={slot.id}
+                id={`music-tab-${slot.id}`}
                 type="button"
                 role="tab"
                 aria-selected={selected}
+                aria-controls={`music-panel-${slot.id}`}
+                tabIndex={selected ? 0 : -1}
                 className={`rounded-[9px] min-h-[96px] px-4 py-3 text-left border-0 ${
                   selected ? 'bg-[color:var(--cinema-soft)]' : 'bg-[color:var(--bg)]'
                 }`}
@@ -367,7 +393,13 @@ export function MusicDirectorPanel({
         </div>
 
         {active ? (
-          <div className="grid gap-4 mb-5" data-testid={`music-slot-${active.id}`}>
+          <div
+            className="grid gap-4 mb-5"
+            role="tabpanel"
+            id={`music-panel-${active.id}`}
+            aria-labelledby={`music-tab-${active.id}`}
+            data-testid={`music-slot-${active.id}`}
+          >
             <div className="grid gap-3 md:grid-cols-2">
               <label className="text-[13px] text-[color:var(--muted)]">
                 {creatorT(locale, 'creator.music.songTitle')}

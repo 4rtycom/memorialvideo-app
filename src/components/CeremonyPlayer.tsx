@@ -210,7 +210,32 @@ export function CeremonyPlayer({
   );
 
   const controls = (
-    <div data-testid="ceremony-operator-controls">
+    <div
+      data-testid="ceremony-operator-controls"
+      onKeyDown={(event) => {
+        const target = event.target as HTMLElement | null;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+          return;
+        }
+        const onControl = Boolean(target?.closest('button, a, [role="button"]'));
+        // Space activates the focused control natively — only steal it off-control.
+        if ((event.key === ' ' && !onControl) || event.key === 'k' || event.key === 'K') {
+          event.preventDefault();
+          if (hold.active || !playing) resumeFilm();
+          else pauseForSpeech(true);
+          return;
+        }
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          seekRelative(-10);
+          return;
+        }
+        if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          seekRelative(10);
+        }
+      }}
+    >
       <p className="text-[11px] font-bold tracking-[0.08em] text-[color:var(--accent)] m-0 mb-2">
         OPERATOR
       </p>
@@ -220,17 +245,25 @@ export function CeremonyPlayer({
           ? `${speechCues.length} speech pause${speechCues.length === 1 ? '' : 's'} marked — the film holds automatically; resume when the room is ready.`
           : 'Add speech pauses under Music & words, or pause manually for live words.'}
       </p>
+      <p className="sr-only">
+        Keyboard: Space or K pauses or resumes, Left and Right arrows seek ten seconds.
+      </p>
       <div className="flex flex-wrap gap-3 mb-4">
-        <Button type="button" variant={hold.active || !playing ? 'primary' : 'secondary'} onClick={() => pauseForSpeech(true)}>
+        <Button
+          type="button"
+          variant={hold.active || !playing ? 'primary' : 'secondary'}
+          onClick={() => pauseForSpeech(true)}
+          aria-keyshortcuts="Space K"
+        >
           Pause for speech
         </Button>
-        <Button type="button" variant={playing ? 'primary' : 'secondary'} onClick={resumeFilm}>
+        <Button type="button" variant={playing ? 'primary' : 'secondary'} onClick={resumeFilm} aria-keyshortcuts="Space K">
           Resume film
         </Button>
-        <Button type="button" variant="ghost" onClick={() => seekRelative(-10)}>
+        <Button type="button" variant="ghost" onClick={() => seekRelative(-10)} aria-keyshortcuts="ArrowLeft">
           Back 10s
         </Button>
-        <Button type="button" variant="ghost" onClick={() => seekRelative(10)}>
+        <Button type="button" variant="ghost" onClick={() => seekRelative(10)} aria-keyshortcuts="ArrowRight">
           Skip 10s
         </Button>
         <Button
