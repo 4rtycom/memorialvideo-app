@@ -3,8 +3,16 @@ import {
   buildCeremonyPackManifest,
   canBuildCeremonyPack,
   ceremonyChecklistText,
+  ceremonyCueSheetText,
   memorialPackPolicy,
+  type CeremonyCueSheetChapter,
 } from '@memorialvideo/domain';
+import {
+  formatTimelineClock,
+  parseTimelineContract,
+  sceneStartFrame,
+  totalDurationFrames,
+} from '@memorialvideo/contracts';
 import { evaluateCreatorReadiness } from './readiness-local';
 import { resolveReadyFinalAbsolutePath } from './render';
 import { entitlementView, type Tribute } from './store';
@@ -73,6 +81,56 @@ export async function planCeremonyPackWithReadiness(tribute: Tribute | null): Pr
   return { ...base, readinessBlocking: 0 };
 }
 
+function cueSheetChaptersFromTribute(tribute: Tribute): {
+  chapters: CeremonyCueSheetChapter[];
+  totalLabel: string | null;
+} {
+  if (!tribute.timeline) {
+    return { chapters: [], totalLabel: null };
+  }
+  const timeline = parseTimelineContract(tribute.timeline);
+  const totalLabel = formatTimelineClock(totalDurationFrames(timeline), timeline.fps);
+  const chapterScenes = timeline.scenes.filter((scene) => scene.type === 'chapter');
+  if (chapterScenes.length === 0) {
+    return {
+      chapters: [{ title: 'Full film', startLabel: '0:00' }],
+      totalLabel,
+    };
+  }
+  const chapters: CeremonyCueSheetChapter[] = chapterScenes.map((scene) => {
+    const start = sceneStartFrame(timeline, scene.id);
+    return {
+      title: scene.type === 'chapter' ? scene.title : 'Moment',
+      startLabel: formatTimelineClock(start, timeline.fps),
+    };
+  });
+  return { chapters, totalLabel };
+}
+
+export function buildOwnerCeremonyCueSheet(tribute: Tribute | null): {
+  ok: true;
+  fileName: string;
+  text: string;
+} | { ok: false; reason: 'no_tribute' } {
+  if (!tribute) {
+    return { ok: false, reason: 'no_tribute' };
+  }
+  const manifest = buildCeremonyPackManifest(tribute.publicId);
+  const { chapters, totalLabel } = cueSheetChaptersFromTribute(tribute);
+  return {
+    ok: true,
+    fileName: manifest.cueSheetFileName,
+    text: ceremonyCueSheetText({
+      publicId: tribute.publicId,
+      displayName: tribute.displayName,
+      chapters,
+      totalLabel,
+      // Honest: browser operator pause/resume exists; ZIP remains static MP4.
+      interactivePlayerReady: false,
+    }),
+  };
+}
+
 /**
  * Prompt 18 / MV-067 — owner playback checklist without Memorial Pack or READY MP4.
  * Full Ceremony Pack ZIP remains gated separately.
@@ -84,10 +142,16 @@ export function buildOwnerCeremonyChecklist(
     return { ok: false, reason: 'no_tribute' };
   }
   const manifest = buildCeremonyPackManifest(tribute.publicId);
+  const cue = buildOwnerCeremonyCueSheet(tribute);
+  const checklist = ceremonyChecklistText(tribute.publicId);
+  const combined =
+    cue.ok
+      ? `${checklist}\n---\n\n${cue.text}`
+      : checklist;
   return {
     ok: true,
     fileName: manifest.checklistFileName,
-    text: ceremonyChecklistText(tribute.publicId),
+    text: combined,
   };
 }
 
@@ -104,7 +168,12 @@ export async function buildCeremonyPackZip(
   }
   const manifest = buildCeremonyPackManifest(tribute.publicId);
   const mp4 = await readFile(absolute);
-  const checklist = new TextEncoder().encode(ceremonyChecklistText(tribute.publicId));
+  const checklistBundle = buildOwnerCeremonyChecklist(tribute);
+  const cueSheet = buildOwnerCeremonyCueSheet(tribute);
+  const checklist = new TextEncoder().encode(
+    checklistBundle.ok ? checklistBundle.text : ceremonyChecklistText(tribute.publicId),
+  );
+  const cue = new TextEncoder().encode(cueSheet.ok ? cueSheet.text : '');
   const manifestJson = new TextEncoder().encode(`${JSON.stringify(manifest, null, 2)}\n`);
   const meta = new TextEncoder().encode(
     `${JSON.stringify(
@@ -117,6 +186,8 @@ export async function buildCeremonyPackZip(
         timelineVersion: tribute.timelineVersion,
         ceremonyChecklist: tribute.ceremonyChecklist,
         packedAt: new Date().toISOString(),
+        includesCueSheet: true,
+        interactiveCeremonyPlayerInZip: false,
       },
       null,
       2,
@@ -125,6 +196,7 @@ export async function buildCeremonyPackZip(
   const bytes = buildStoreZip([
     { name: manifest.videoFileName, data: new Uint8Array(mp4) },
     { name: manifest.checklistFileName, data: checklist },
+    { name: manifest.cueSheetFileName, data: cue },
     { name: 'manifest.json', data: manifestJson },
     { name: 'tribute-metadata.json', data: meta },
   ]);

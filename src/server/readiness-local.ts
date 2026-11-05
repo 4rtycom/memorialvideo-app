@@ -109,7 +109,32 @@ export async function evaluateCreatorReadiness(tribute: Tribute): Promise<{
   };
 }
 
+function isCheckedEvidence(state: CeremonyReadinessReport['findings'][number]['evidenceState']): boolean {
+  return state === 'observed' || state === 'composed';
+}
+
+function isNotCheckedEvidence(
+  state: CeremonyReadinessReport['findings'][number]['evidenceState'],
+): boolean {
+  return state === 'deferred' || state === 'unavailable';
+}
+
 export function summarizeReadiness(report: CeremonyReadinessReport) {
+  const findings = report.findings.map((f: CeremonyReadinessReport['findings'][number]) => ({
+    id: f.id,
+    code: f.code,
+    severity: f.severity,
+    status: f.status,
+    labelKey: f.labelKey,
+    detail: f.detail,
+    evidenceState: f.evidenceState,
+    /** Family UX: checked = we ran this check; not_checked = we did not claim a pass. */
+    checkState: (isNotCheckedEvidence(f.evidenceState)
+      ? 'not_checked'
+      : 'checked') as 'checked' | 'not_checked',
+  }));
+  const checked = findings.filter((f) => f.checkState === 'checked');
+  const notChecked = findings.filter((f) => f.checkState === 'not_checked');
   return {
     reportId: report.id,
     provenance: report.provenance,
@@ -122,14 +147,10 @@ export function summarizeReadiness(report: CeremonyReadinessReport) {
       (f: CeremonyReadinessReport['findings'][number]) =>
         f.severity === 'warning' && f.status === 'open',
     ).length,
-    findings: report.findings.map((f: CeremonyReadinessReport['findings'][number]) => ({
-      id: f.id,
-      code: f.code,
-      severity: f.severity,
-      status: f.status,
-      labelKey: f.labelKey,
-      detail: f.detail,
-      evidenceState: f.evidenceState,
-    })),
+    checkedCount: checked.length,
+    notCheckedCount: notChecked.length,
+    /** Never treat deferred/unavailable as a complete green pass. */
+    allChecksComplete: notChecked.length === 0 && report.activeBlockingCount === 0,
+    findings,
   };
 }

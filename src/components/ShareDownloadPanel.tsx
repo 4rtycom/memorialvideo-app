@@ -30,6 +30,25 @@ type CeremonyPackPlan = {
   reason: string;
 };
 
+function familyDownloadReason(reason: string): string {
+  switch (reason) {
+    case 'ready':
+      return 'Verified 1080p film is ready to download.';
+    case 'memorial_pack_required':
+      return 'Unlock Memorial Pack to download the ceremony film.';
+    case 'final_ready_required':
+      return 'Finish a verified final film before downloading.';
+    case 'readiness_blocking':
+      return 'Clear blocking readiness items before the venue pack unlocks.';
+    case 'no_timeline':
+      return 'Create the first film before downloading.';
+    default:
+      return reason.includes('TimelineContract') || reason.includes('AudioMix')
+        ? 'The film is not ready to download yet.'
+        : reason;
+  }
+}
+
 export function ShareDownloadPanel({
   entitlementActive,
   download,
@@ -64,7 +83,7 @@ export function ShareDownloadPanel({
           body.error === 'no_entitlement'
             ? 'Memorial Pack is required for private viewing links.'
             : body.error === 'no_timeline'
-              ? 'Publish a first film (TimelineContract) before sharing a private screening.'
+              ? 'Publish a first film before sharing a private screening.'
               : 'Could not create a private link.',
         );
         return;
@@ -77,7 +96,11 @@ export function ShareDownloadPanel({
         note: string;
       };
       setActionUrl(body.actionUrl);
-      setNote(body.note);
+      setNote(
+        body.note.includes('TimelineContract')
+          ? 'Private screening link created. The verified 1080p download unlocks after a ready final film.'
+          : body.note,
+      );
       setShares((prev) => [
         {
           id: body.shareId,
@@ -138,14 +161,31 @@ export function ShareDownloadPanel({
           />
         ) : (
           <div className="bg-[color:var(--primary)] text-white rounded-[8px] px-5 py-5">
-            <div className="serif text-[37px] leading-none">A life beautifully lived</div>
+            <div className="serif text-[37px] leading-none">Ready for the service</div>
           </div>
         )}
         <p className="text-[14px] text-[color:var(--muted)] mt-5 mb-5">
-          Film ready · Widescreen 16:9 · 1080p when verified
+          Venue pack · Widescreen 16:9 · 1080p when verified
         </p>
+        <div className="mb-5">
+          <h3 className="serif text-[23px] m-0 mb-2">{creatorT(locale, 'creator.share.ceremonyPack')}</h3>
+          <p className="text-[13px] text-[color:var(--muted)] mb-3">
+            {ceremonyPack.canBuild
+              ? creatorT(locale, 'creator.share.ceremonyPackReady')
+              : creatorT(locale, 'creator.share.ceremonyPackBlocked')}
+          </p>
+          {ceremonyPack.canBuild ? (
+            <a className="btn btn-primary btn-block" href="/api/ceremony-pack">
+              {creatorT(locale, 'creator.share.ceremonyPackDownload')}  ↓
+            </a>
+          ) : (
+            <Button className="btn-block opacity-60" disabled>
+              {creatorT(locale, 'creator.share.ceremonyPackDownload')}  ↓
+            </Button>
+          )}
+        </div>
         {download.canDownloadMp4 ? (
-          <a className="btn btn-primary btn-block" href="/api/renders/download">
+          <a className="btn btn-secondary btn-block" href="/api/renders/download">
             ↓  {creatorT(locale, 'creator.share.downloadMp4')}
           </a>
         ) : (
@@ -153,7 +193,9 @@ export function ShareDownloadPanel({
             ↓  {creatorT(locale, 'creator.share.downloadMp4')}
           </Button>
         )}
-        <p className="text-[12px] text-[color:var(--muted)] mt-3 mb-0">{download.reason}</p>
+        <p className="text-[12px] text-[color:var(--muted)] mt-3 mb-0">
+          {familyDownloadReason(download.reason)}
+        </p>
         {download.staleFinal ? (
           <p
             className="text-[13px] text-[color:var(--accent)] mt-2 mb-0"
@@ -168,23 +210,6 @@ export function ShareDownloadPanel({
             <a href="/api/renders/export-metadata">{creatorT(locale, 'creator.share.metadataExport')}</a>
           </p>
         ) : null}
-        <div className="border-t border-[color:var(--border)] mt-5 pt-5">
-          <h3 className="serif text-[23px] m-0 mb-2">{creatorT(locale, 'creator.share.ceremonyPack')}</h3>
-          <p className="text-[13px] text-[color:var(--muted)] mb-3">
-            {ceremonyPack.canBuild
-              ? creatorT(locale, 'creator.share.ceremonyPackReady')
-              : creatorT(locale, 'creator.share.ceremonyPackBlocked')}
-          </p>
-          {ceremonyPack.canBuild ? (
-            <a className="btn btn-secondary btn-block" href="/api/ceremony-pack">
-              {creatorT(locale, 'creator.share.ceremonyPackDownload')}  ↓
-            </a>
-          ) : (
-            <Button className="btn-block opacity-60" disabled>
-              {creatorT(locale, 'creator.share.ceremonyPackDownload')}  ↓
-            </Button>
-          )}
-        </div>
       </div>
       <div className="card !p-7">
         <h2 className="serif text-[34px] m-0 mb-3">{creatorT(locale, 'creator.share.privateTitle')}</h2>
@@ -228,11 +253,12 @@ export function ShareDownloadPanel({
           </ul>
         ) : null}
         <div className="border-t border-[color:var(--border)] pt-5">
-          <h3 className="serif text-[23px] m-0 mb-4">Before the ceremony</h3>
+          <h3 className="serif text-[23px] m-0 mb-4">Venue handoff</h3>
           <ul className="list-none p-0 m-0 grid gap-2 text-[14px] text-[color:var(--muted)]">
-            <li>✓  Private link for family screening</li>
-            <li>✓  Test playback with the venue</li>
-            <li>✓  Confirm the soundtrack is cleared for use</li>
+            <li>○  Download the Ceremony Pack to the venue computer</li>
+            <li>○  Print or save the cue sheet running order</li>
+            <li>○  Rehearse pause and resume for live speeches</li>
+            <li>○  Private family link is optional and secondary</li>
           </ul>
         </div>
       </div>

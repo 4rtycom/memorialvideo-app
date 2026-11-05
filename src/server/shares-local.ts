@@ -52,7 +52,7 @@ export async function createPrivateViewShare(publicId: string): Promise<
   if (
     !canCreateFinalViewShare({
       allowsPrivatePlayback: entitlement.allowsPrivatePlayback,
-      // Local interim: published TimelineContract stands in until verified final render exists.
+      // Local interim: published film stands in until verified final render exists.
       hasReadyFinal: hasTimeline,
     })
   ) {
@@ -86,8 +86,8 @@ export async function createPrivateViewShare(publicId: string): Promise<
       scope: share.scope,
     },
     note: readyFinal
-      ? 'Private viewing link created. Verified MP4 download is also available from Share.'
-      : 'Private TimelineContract screening — verified 1080p MP4 download unlocks after a READY final render.',
+      ? 'Private viewing link created. The verified 1080p download is also available from Ready for the service.'
+      : 'Private screening link created. The verified 1080p download unlocks after a ready final film.',
   };
 }
 

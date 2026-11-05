@@ -1,6 +1,7 @@
 import { DEFAULT_FPS, formatTimelineClock, secondsToFrames } from '@memorialvideo/contracts';
 import { AppShell } from '@/components/AppShell';
 import { CeremonyChecklistPanel } from '@/components/CeremonyChecklistPanel';
+import { CeremonyOperatorPlayer } from '@/components/CeremonyOperatorPlayer';
 import { CeremonyReadinessPanel } from '@/components/CeremonyReadinessPanel';
 import { ErrorRecovery } from '@/components/ErrorRecovery';
 import { MemorialPackPanel, type PackRecommendationView } from '@/components/MemorialPackPanel';
@@ -10,7 +11,7 @@ import { Button, Eyebrow, Hero, Lede } from '@/components/ui';
 import { creatorT } from '@/lib/creator-ui-messages';
 import { shellProject } from '@/lib/tribute-view';
 import { planCeremonyPackWithReadiness } from '@/server/ceremony-pack-local';
-import { isLocalCreatorEnv } from '@/server/env';
+import { creatorEnv, isLocalCreatorEnv } from '@/server/env';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { syncConsumerPackForFilmDuration } from '@/server/pack-duration-local';
 import { planDownloadFromJobs, summarizeRenderJobs } from '@/server/render';
@@ -18,6 +19,7 @@ import { loadActiveTribute } from '@/server/session';
 import { summarizeShareList } from '@/server/share-list';
 import { entitlementView } from '@/server/store';
 import { isStripeMemorialPackConfigured } from '@/server/stripe-checkout';
+import { parseTimelineContract } from '@memorialvideo/contracts';
 
 export default async function SharePage() {
   const active = await loadActiveTribute();
@@ -33,8 +35,10 @@ export default async function SharePage() {
   const shares = tribute ? summarizeShareList(tribute) : [];
   const jobs = tribute ? summarizeRenderJobs(tribute) : [];
   const watchPath = tribute
-    ? `Create a private link for ${tribute.displayName}`
+    ? `Private link for ${tribute.displayName}`
     : 'Create a tribute to share a private screening';
+  const timeline = tribute?.timeline ? parseTimelineContract(tribute.timeline) : null;
+  const origin = creatorEnv().NEXT_PUBLIC_APP_URL;
   const packRecommendation: PackRecommendationView | null = synced
     ? {
         selectedPlanId: synced.view.recommendation.selectedPlanId,
@@ -64,7 +68,7 @@ export default async function SharePage() {
       title={shell.title}
       ownerInitial={shell.ownerInitial}
       locale={locale}
-      footerTitle="A beautiful film, made together."
+      footerTitle="A beautiful film, ready for the service."
       footerBody=""
     >
       <Eyebrow>{creatorT(locale, 'creator.share.eyebrow')}</Eyebrow>
@@ -73,8 +77,7 @@ export default async function SharePage() {
 
       {tribute ? (
         <>
-          <RenderJobPanel initialJobs={jobs} />
-          <CeremonyReadinessPanel />
+          <CeremonyReadinessPanel locale={locale} />
           <ShareDownloadPanel
             entitlementActive={entitlement.active}
             download={download}
@@ -86,6 +89,7 @@ export default async function SharePage() {
           <div className="card !p-7 mt-5">
             <CeremonyChecklistPanel initial={tribute.ceremonyChecklist} locale={locale} />
           </div>
+          <CeremonyOperatorPlayer timeline={timeline} origin={origin} />
           <MemorialPackPanel
             active={entitlement.active}
             localFulfillAllowed={localFulfillAllowed}
@@ -94,12 +98,15 @@ export default async function SharePage() {
             locale={locale}
             packRecommendation={packRecommendation}
           />
+          <div className="mt-5">
+            <RenderJobPanel initialJobs={jobs} />
+          </div>
         </>
       ) : (
         <ErrorRecovery
           label="EMPTY WORKSPACE"
           title="Create a tribute first"
-          body="Then unlock Memorial Pack for download and private sharing."
+          body="Then prepare the venue pack and take the film to the funeral service."
           primaryHref="/setup"
           primaryLabel="Begin setup  ↗"
           secondaryHref="/workspace"
@@ -110,7 +117,7 @@ export default async function SharePage() {
       {!tribute ? null : !entitlement.active ? (
         <p className="text-[13px] text-[color:var(--muted)] mt-4">
           <Button href="/share" variant="ghost">
-            Refresh after local Memorial Pack
+            Refresh after Memorial Pack
           </Button>
         </p>
       ) : null}

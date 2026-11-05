@@ -61,7 +61,7 @@ export default async function EditPage() {
         <ErrorRecovery
           label="RESUMABLE PROCESSING"
           title="Film not arranged yet"
-          body="Your memories are safe. Arrange the first film so Guided can edit your film."
+          body="Your memories are safe. Arrange the first film so Guided can edit your story."
           primaryHref="/film/creating"
           primaryLabel="Arrange first film  ↗"
           secondaryHref="/memories"

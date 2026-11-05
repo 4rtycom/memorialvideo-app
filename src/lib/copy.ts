@@ -14,8 +14,8 @@ export const navItems = [
   { href: "/contributors", label: "Contributors", icon: "♧" },
   { href: "/life-story", label: "Life story", icon: "◈" },
   { href: "/film", label: "The film", icon: "▷" },
-  { href: "/music", label: "Music & moments", icon: "♫" },
-  { href: "/share", label: "Share & download", icon: "↓" },
+  { href: "/music", label: "Music & words", icon: "♫" },
+  { href: "/share", label: "Ready for the service", icon: "↓" },
 ] as const;
 
 export const memories = [
