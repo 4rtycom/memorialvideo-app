@@ -4,12 +4,13 @@ import { BrandWordmark } from '@/components/BrandWordmark';
 import { mobileHomeCopy, shellProject } from '@/lib/tribute-view';
 import { loadActiveTribute } from '@/server/session';
 
+/** Aligns with family primary nav (§4); Invite lives inside Memories. */
 const tabs = [
-  ['/', '⌂', 'Home'],
+  ['/', '⌂', 'Overview'],
   ['/memories', '▦', 'Memories'],
-  ['/film', '▷', 'Film'],
-  ['/contributors', '♧', 'Invite'],
-  ['/share', '↓', 'Share'],
+  ['/music', '♫', 'Music'],
+  ['/film', '▷', 'Your Film'],
+  ['/share', '↓', 'Service'],
 ] as const;
 
 export default async function MobileHomePage() {

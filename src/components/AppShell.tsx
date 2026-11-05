@@ -8,14 +8,12 @@ import { BrandWordmark } from '@/components/BrandWordmark';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { SaveStatus } from '@/components/SaveStatus';
 import { creatorNavLabels, creatorT } from '@/lib/creator-ui-messages';
-import { navItems } from '@/lib/copy';
-
-function navActive(pathname: string, href: string): boolean {
-  if (href === '/') {
-    return pathname === '/' || pathname === '/setup' || pathname === '/workspace';
-  }
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
+import {
+  ADVANCED_OPTIONAL,
+  FAMILY_PRIMARY_NAV,
+  familyPrimaryForPath,
+  isAdvancedPath,
+} from '@/lib/family-nav';
 
 function NavLinks({
   pathname,
@@ -26,10 +24,11 @@ function NavLinks({
   labels: Record<string, string>;
   className: string;
 }) {
+  const activePrimary = familyPrimaryForPath(pathname);
   return (
     <>
-      {navItems.map((item) => {
-        const active = navActive(pathname, item.href);
+      {FAMILY_PRIMARY_NAV.map((item) => {
+        const active = activePrimary === item.href;
         return (
           <Link
             key={item.href}
@@ -84,6 +83,7 @@ export function AppShell({
   }, [localeProp]);
 
   const labels = creatorNavLabels(locale);
+  const advancedOpen = isAdvancedPath(pathname);
 
   return (
     <div className={`app-shell ${cinema ? 'cinema-mode' : ''}`}>
@@ -98,6 +98,30 @@ export function AppShell({
         <nav className="nav-list" aria-label={creatorT(locale, 'creator.a11y.navPrimary')}>
           <NavLinks pathname={pathname} labels={labels} className="nav-item" />
         </nav>
+        <details className="nav-advanced" open={advancedOpen || undefined}>
+          <summary className="nav-advanced-summary">
+            {creatorT(locale, 'creator.nav.advanced')}
+          </summary>
+          <nav className="nav-advanced-list" aria-label={creatorT(locale, 'creator.nav.advanced')}>
+            {ADVANCED_OPTIONAL.map((item) => {
+              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const labelKey =
+                item.href === '/film/studio'
+                  ? ('creator.nav.advancedStudio' as const)
+                  : ('creator.nav.enhance' as const);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`nav-item nav-item-nested ${active ? 'active' : ''}`}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  <span>{creatorT(locale, labelKey)}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </details>
         <div className="sidebar-foot">
           <h3>{footerTitle}</h3>
           <p>{footerBody}</p>

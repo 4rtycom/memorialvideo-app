@@ -243,7 +243,7 @@ export function CeremonyPlayer({
       <p className="text-[color:var(--muted)] text-[14px] mb-4">
         {speechCues.length > 0
           ? `${speechCues.length} speech pause${speechCues.length === 1 ? '' : 's'} marked — the film holds automatically; resume when the room is ready.`
-          : 'Add speech pauses under Music & words, or pause manually for live words.'}
+          : 'Add speech pauses under Music & Moments, or pause manually for live words.'}
       </p>
       <p className="sr-only">
         Keyboard: Space or K pauses or resumes, Left and Right arrows seek ten seconds.

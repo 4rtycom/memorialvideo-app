@@ -1,5 +1,6 @@
 import { AddMemoryControl } from '@/components/AddMemoryControl';
 import { AppShell } from '@/components/AppShell';
+import { InvitePanel } from '@/components/InvitePanel';
 import { MemoriesPoller } from '@/components/MemoriesPoller';
 import { MemoryLibraryFilters } from '@/components/MemoryLibraryFilters';
 import { PeopleReviewPanel } from '@/components/PeopleReviewPanel';
@@ -8,9 +9,11 @@ import type { CreatorLibraryCard } from '@/lib/library-filters';
 import { creatorT } from '@/lib/creator-ui-messages';
 import { shellProject } from '@/lib/tribute-view';
 import { memoryView } from '@/server/ingest';
+import { listOwnerInvites } from '@/server/invites';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { hasInFlightIngest } from '@/server/store';
+import Link from 'next/link';
 
 export default async function MemoriesPage() {
   const tribute = await loadActiveTribute();
@@ -18,6 +21,7 @@ export default async function MemoriesPage() {
   const shell = shellProject(tribute);
   const live = tribute?.memories ?? [];
   const inFlight = tribute ? hasInFlightIngest(tribute) : false;
+  const listed = tribute ? await listOwnerInvites(tribute.publicId) : null;
   const cards: CreatorLibraryCard[] = live.map((m) => {
     const view = memoryView({ ingestStatus: m.ingestStatus, failureCode: m.failureCode });
     return {
@@ -79,6 +83,38 @@ export default async function MemoriesPage() {
       ) : (
         <MemoryLibraryFilters cards={cards} />
       )}
+
+      <section className="mt-10" data-testid="memories-invite-family" aria-labelledby="memories-invite-heading">
+        <h2 id="memories-invite-heading" className="serif text-[28px] m-0 mb-2">
+          {creatorT(locale, 'creator.nav.inviteFamily')}
+        </h2>
+        <p className="text-[color:var(--muted)] m-0 mb-5">
+          {creatorT(locale, 'creator.contributors.lede')}
+        </p>
+        {tribute && listed ? (
+          <>
+            <InvitePanel
+              initialInvites={listed.invites}
+              initialProgress={listed.progress}
+              initialCollectionStatus={listed.collectionStatus}
+              previewName={tribute.displayName}
+              locale={locale}
+            />
+            <p className="mt-5 mb-0">
+              <Link className="btn btn-secondary" href="/contributors/review">
+                {creatorT(locale, 'creator.nav.reviewContributions')}
+              </Link>
+            </p>
+          </>
+        ) : (
+          <Card soft className="!p-7">
+            <p className="text-[color:var(--muted)] m-0 mb-4">
+              {creatorT(locale, 'creator.contributors.openBody')}
+            </p>
+            <Button href="/setup">{creatorT(locale, 'creator.common.beginSetup')}</Button>
+          </Card>
+        )}
+      </section>
 
       {tribute ? <PeopleReviewPanel /> : null}
     </AppShell>
