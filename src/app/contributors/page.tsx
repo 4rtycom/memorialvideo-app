@@ -1,6 +1,7 @@
 import { AppShell } from '@/components/AppShell';
 import { CollaborationInboxPanel } from '@/components/CollaborationInboxPanel';
 import { InvitePanel } from '@/components/InvitePanel';
+import { MoreControlDisclosure } from '@/components/MoreControlDisclosure';
 import { Button, Eyebrow, Hero, Lede } from '@/components/ui';
 import { creatorT } from '@/lib/creator-ui-messages';
 import { shellProject } from '@/lib/tribute-view';
@@ -54,7 +55,11 @@ export default async function ContributorsPage() {
         {creatorT(locale, 'creator.contributors.review')}
       </Button>
 
-      {tribute ? <CollaborationInboxPanel /> : null}
+      {tribute ? (
+        <MoreControlDisclosure locale={locale} className="mt-8">
+          <CollaborationInboxPanel />
+        </MoreControlDisclosure>
+      ) : null}
     </AppShell>
   );
 }
