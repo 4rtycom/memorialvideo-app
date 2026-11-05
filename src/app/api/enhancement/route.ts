@@ -4,13 +4,26 @@ import { allowRequest } from '@/server/rate-limit';
 import { loadActiveTribute } from '@/server/session';
 import {
   advanceEnhancementOnce,
+  advanceEnhancementUntilSettled,
   applyEnhancementToFilm,
   getTribute,
+  rejectEnhancementRequest,
   requestLocalEnhancement,
+  revertEnhancementFromFilm,
   updateTribute,
 } from '@/server/store';
 
 export const runtime = 'nodejs';
+
+const CAPABILITY = {
+  generative: false,
+  localPixelOps: true,
+  videoPostProcessing: false,
+  faceSynthesis: false,
+} as const;
+
+const CAPABILITY_NOTE =
+  'Local deterministic pixel correction only. Generative restoration, face synthesis, and video post-processing are not available and not COMPLETE.';
 
 export async function GET() {
   const active = await loadActiveTribute();
@@ -24,10 +37,12 @@ export async function GET() {
   return NextResponse.json({
     consentLocal: tribute.enhancementConsentLocal,
     requests: tribute.enhancementRequests,
-    generative: false,
-    note: 'Local consent only. Generative reconstruction / face synthesis is not available and not COMPLETE.',
+    ...CAPABILITY,
+    note: CAPABILITY_NOTE,
   });
 }
+
+const requestIdSchema = z.string().regex(/^enh_[a-zA-Z0-9]+$/);
 
 const postSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('consent'), granted: z.boolean() }),
@@ -35,7 +50,15 @@ const postSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('advance') }),
   z.object({
     action: z.literal('use_in_film'),
-    requestId: z.string().regex(/^enh_[a-zA-Z0-9]+$/),
+    requestId: requestIdSchema,
+  }),
+  z.object({
+    action: z.literal('revert_film'),
+    requestId: requestIdSchema,
+  }),
+  z.object({
+    action: z.literal('reject'),
+    requestId: requestIdSchema,
   }),
 ]);
 
@@ -64,7 +87,8 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({
       consentLocal: next?.enhancementConsentLocal ?? false,
-      generative: false,
+      ...CAPABILITY,
+      note: CAPABILITY_NOTE,
     });
   }
 
@@ -72,9 +96,21 @@ export async function POST(request: Request) {
     const result = await requestLocalEnhancement(active.publicId, parsed.data.memoryId);
     if (!result.ok) {
       const status = result.reason === 'no_consent' ? 403 : 404;
-      return NextResponse.json({ error: result.reason }, { status });
+      return NextResponse.json(
+        { error: result.reason, ...CAPABILITY, note: CAPABILITY_NOTE },
+        { status },
+      );
     }
-    return NextResponse.json({ request: result.request, generative: false }, { status: 201 });
+    // Settle locally so families see before/after without a developer "advance job" control.
+    const settled = await advanceEnhancementUntilSettled(active.publicId, result.request.id);
+    return NextResponse.json(
+      {
+        request: settled.request ?? result.request,
+        ...CAPABILITY,
+        note: settled.note || CAPABILITY_NOTE,
+      },
+      { status: 201 },
+    );
   }
 
   if (parsed.data.action === 'use_in_film') {
@@ -86,7 +122,10 @@ export async function POST(request: Request) {
           : result.reason === 'no_timeline'
             ? 409
             : 404;
-      return NextResponse.json({ error: result.reason, generative: false }, { status });
+      return NextResponse.json(
+        { error: result.reason, ...CAPABILITY, note: CAPABILITY_NOTE },
+        { status },
+      );
     }
     return NextResponse.json({
       ok: true,
@@ -94,15 +133,52 @@ export async function POST(request: Request) {
       scenesUpdated: result.scenesUpdated,
       filmSrc: result.filmSrc,
       timelineVersion: result.tribute.timelineVersion,
-      generative: false,
+      ...CAPABILITY,
       note: 'Local pixel-ops variant bound into the film. Generative Finish / reconstruction is not COMPLETE.',
+    });
+  }
+
+  if (parsed.data.action === 'revert_film') {
+    const result = await revertEnhancementFromFilm(active.publicId, parsed.data.requestId);
+    if (!result.ok) {
+      const status =
+        result.reason === 'not_bound' || result.reason === 'no_timeline' ? 409 : 404;
+      return NextResponse.json(
+        { error: result.reason, ...CAPABILITY, note: CAPABILITY_NOTE },
+        { status },
+      );
+    }
+    return NextResponse.json({
+      ok: true,
+      request: result.request,
+      scenesUpdated: result.scenesUpdated,
+      timelineVersion: result.tribute.timelineVersion,
+      ...CAPABILITY,
+      note: 'Original photograph restored in the film. Local improvement remains available to compare.',
+    });
+  }
+
+  if (parsed.data.action === 'reject') {
+    const result = await rejectEnhancementRequest(active.publicId, parsed.data.requestId);
+    if (!result.ok) {
+      return NextResponse.json(
+        { error: result.reason, ...CAPABILITY, note: CAPABILITY_NOTE },
+        { status: 404 },
+      );
+    }
+    return NextResponse.json({
+      ok: true,
+      request: result.request,
+      filmReverted: result.filmReverted,
+      ...CAPABILITY,
+      note: 'Improvement discarded. Original kept. Generative reconstruction was not offered.',
     });
   }
 
   const advanced = await advanceEnhancementOnce(active.publicId);
   return NextResponse.json({
     advanced: advanced.advanced,
-    note: advanced.note,
-    generative: false,
+    ...CAPABILITY,
+    note: advanced.note || CAPABILITY_NOTE,
   });
 }

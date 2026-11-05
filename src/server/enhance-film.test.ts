@@ -146,6 +146,67 @@ describe('creator enhance → film bind + encode-safe resolve', () => {
     expect(fixture === null || fixture.includes('fixtures')).toBe(true);
   });
 
+  it(
+    'reverts film bind to the original and rejects without generative offer',
+    async () => {
+      const { publicId, memoryId } = await tributeWithReadyFilm();
+      const store = await import('./store');
+      const encode = await import('./local-encode');
+
+      await store.updateTribute(publicId, { enhancementConsentLocal: true });
+      const requested = await store.requestLocalEnhancement(publicId, memoryId);
+      expect(requested.ok).toBe(true);
+      if (!requested.ok) return;
+
+      const settled = await store.advanceEnhancementUntilSettled(publicId, requested.request.id);
+      expect(settled.request?.status).toBe('ready_local');
+      if (settled.request?.status !== 'ready_local') return;
+
+      const applied = await store.applyEnhancementToFilm(publicId, settled.request.id);
+      expect(applied.ok).toBe(true);
+      if (!applied.ok) return;
+      expect(applied.request.approvedForFilm).toBe(true);
+
+      const reverted = await store.revertEnhancementFromFilm(publicId, settled.request.id);
+      expect(reverted.ok).toBe(true);
+      if (!reverted.ok) return;
+      expect(reverted.scenesUpdated).toBeGreaterThanOrEqual(1);
+      expect(reverted.request.approvedForFilm).toBe(false);
+
+      const afterRevert = await store.getTribute(publicId);
+      const scene = afterRevert?.timeline?.scenes.find(
+        (s) => (s.type === 'image' || s.type === 'video') && s.asset.assetId === memoryId,
+      );
+      expect(scene && (scene.type === 'image' || scene.type === 'video')).toBe(true);
+      if (!scene || (scene.type !== 'image' && scene.type !== 'video')) return;
+      expect(scene.asset.src).toBe('/fixtures/memory-a.png');
+      expect(scene.asset.enhancementVariantId).toBeUndefined();
+      expect(scene.asset.src).not.toBe(encode.enhancementVariantPublicPath(settled.request.id));
+
+      // Re-bind then discard — reject must restore original and never claim generative.
+      const rebound = await store.applyEnhancementToFilm(publicId, settled.request.id);
+      expect(rebound.ok).toBe(true);
+      const rejected = await store.rejectEnhancementRequest(publicId, settled.request.id);
+      expect(rejected.ok).toBe(true);
+      if (!rejected.ok) return;
+      expect(rejected.filmReverted).toBe(true);
+      expect(rejected.request.status).toBe('rejected');
+      expect(rejected.request.note.toLowerCase()).toContain('original');
+      expect(rejected.request.note.toLowerCase()).not.toMatch(/generative.*(ready|complete|available)/);
+
+      const afterReject = await store.getTribute(publicId);
+      const finalScene = afterReject?.timeline?.scenes.find(
+        (s) => (s.type === 'image' || s.type === 'video') && s.asset.assetId === memoryId,
+      );
+      expect(finalScene && (finalScene.type === 'image' || finalScene.type === 'video')).toBe(true);
+      if (!finalScene || (finalScene.type !== 'image' && finalScene.type !== 'video')) return;
+      expect(finalScene.asset.src).toBe('/fixtures/memory-a.png');
+      const memory = afterReject?.memories.find((m) => m.id === memoryId);
+      expect(memory?.imagePath).toBe('/fixtures/memory-a.png');
+    },
+    60_000,
+  );
+
   it('refuses use_in_film when not ready or timeline lacks the asset', async () => {
     const store = await import('./store');
     const created = await store.createTribute({ displayName: 'No Film Yet' });
