@@ -48,6 +48,7 @@ export * from './email-send';
 export * from './email-links';
 export * from './music-catalog';
 export * from './ceremony-music';
+export * from './music-director';
 export * from './render-currency';
 export * from './render-provider';
 export * from './family-activity';

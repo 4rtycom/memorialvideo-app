@@ -1,8 +1,8 @@
 import { AppShell } from '@/components/AppShell';
 import { ErrorRecovery } from '@/components/ErrorRecovery';
-import { GuidedAudioPanel } from '@/components/GuidedAudioPanel';
 import { GuidedEditor } from '@/components/GuidedEditor';
 import { GuidedVariantsPanel } from '@/components/GuidedVariantsPanel';
+import { MusicDirectorPanel } from '@/components/MusicDirectorPanel';
 import { Eyebrow, Hero, Lede } from '@/components/ui';
 import { shellProject } from '@/lib/tribute-view';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
@@ -27,8 +27,8 @@ export default async function EditPage() {
       <Eyebrow>MAKE THE FILM FEEL LIKE THEM</Eyebrow>
       <Hero>Make a little change. Keep the magic.</Hero>
       <Lede>
-        Choose a story moment below. Changes write to the same TimelineContract used in cinema and
-        Studio — with versioned autosave.
+        Choose a story moment below. Music uses the same Music Director as the Music page — three
+        songs and speech pauses, without technical mix jargon.
       </Lede>
 
       {!tribute ? (
@@ -49,14 +49,19 @@ export default async function EditPage() {
             canUndo={Boolean(tribute.timelinePrevious)}
             locale={locale}
           />
-          <GuidedAudioPanel locale={locale} />
+          <MusicDirectorPanel
+            locale={locale}
+            compact
+            openingTitle={tribute.openingTitle}
+            displayName={tribute.displayName}
+          />
           <GuidedVariantsPanel />
         </>
       ) : (
         <ErrorRecovery
           label="RESUMABLE PROCESSING"
           title="Film not arranged yet"
-          body="Your memories are safe. Arrange the first film so Guided can edit a real TimelineContract."
+          body="Your memories are safe. Arrange the first film so Guided can edit your film."
           primaryHref="/film/creating"
           primaryLabel="Arrange first film  ↗"
           secondaryHref="/memories"
