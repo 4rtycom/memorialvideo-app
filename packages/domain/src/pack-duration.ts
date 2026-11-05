@@ -47,7 +47,11 @@ export type PackDurationRecommendation = {
   previousPlanId: ProposedPlanId | null;
   /** True when film exceeds Forever Legacy’s 40-minute marketing allowance (still top tier). */
   exceedsTopTierAllowance: boolean;
-  checkoutBlock: 'stripe_not_wired';
+  /**
+   * Pack duration rules never invent a charge block.
+   * Missing Stripe secrets are reported by the checkout route as stripe_not_configured.
+   */
+  checkoutBlock: null;
 };
 
 function planTier(id: ProposedPlanId): number {
@@ -100,8 +104,7 @@ export function nextConsumerPack(planId: ProposedPlanId): ProposedPlanId | null 
 
 /**
  * Resolve the pack to present/select for a finished film.
- * Auto-moves upward when duration crosses 10:00 or 20:00; never silently charges
- * (checkout stays stripe_not_wired until paid SKUs exist).
+ * Auto-moves upward when duration crosses 10:00 or 20:00; never silently charges.
  */
 export function resolvePackForFilmDuration(input: {
   filmDurationSeconds: number;
@@ -152,7 +155,7 @@ export function resolvePackForFilmDuration(input: {
     autoUpgraded,
     previousPlanId,
     exceedsTopTierAllowance: filmDurationSeconds > topCapSeconds,
-    checkoutBlock: 'stripe_not_wired',
+    checkoutBlock: null,
   };
 }
 

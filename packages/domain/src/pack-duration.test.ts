@@ -49,7 +49,7 @@ describe('pack duration upgrade thresholds', () => {
     expect(result.autoUpgraded).toBe(true);
     expect(result.previousPlanId).toBe('memorial-tribute');
     expect(result.reason).toBe('over_ten_minutes');
-    expect(result.checkoutBlock).toBe('stripe_not_wired');
+    expect(result.checkoutBlock).toBeNull();
   });
 
   it('auto-moves from Tribute to Forever Legacy when duration crosses 20 minutes', () => {

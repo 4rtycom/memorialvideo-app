@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseStripeCommerceEvent, planStripeCheckoutSession, stripeCheckoutConfigured } from './stripe-commerce';
+import {
+  parseStripeCommerceEvent,
+  planStripeCheckoutSession,
+  stripeCheckoutConfigured,
+  stripeConsumerPackCheckoutConfigured,
+} from './stripe-commerce';
 
 describe('stripe commerce mapping', () => {
   it('plans a Memorial Pack Checkout Session without PII', () => {
@@ -8,6 +13,7 @@ describe('stripe commerce mapping', () => {
       orderId: 'ord_abcdef12',
       packageKey: 'ceremony',
       projectPublicId: 'mv_opaque_project',
+      consumerPackId: 'life-story',
       priceId: 'price_test_memorial',
       successUrl: 'https://example.test/success',
       cancelUrl: 'https://example.test/cancel',
@@ -19,6 +25,7 @@ describe('stripe commerce mapping', () => {
       order_id: 'ord_abcdef12',
       package_key: 'ceremony',
       project_public_id: 'mv_opaque_project',
+      consumer_pack_id: 'life-story',
     });
     expect(JSON.stringify(session)).not.toMatch(/email|@|sk_live|whsec_/);
   });
@@ -75,6 +82,31 @@ describe('stripe commerce mapping', () => {
         secretKey: 'sk_test_xxxxxxxxxx',
         webhookSecret: 'whsec_xxxxxxxxxx',
         priceId: undefined,
+      }),
+    ).toBe(false);
+  });
+
+  it('requires all three consumer pack Price IDs before checkout is configured', () => {
+    expect(
+      stripeConsumerPackCheckoutConfigured({
+        secretKey: 'sk_test_xxxxxxxxxx',
+        webhookSecret: 'whsec_xxxxxxxxxx',
+        priceIds: {
+          'memorial-tribute': 'price_tribute',
+          'life-story': 'price_life',
+          'forever-legacy': 'price_legacy',
+        },
+      }),
+    ).toBe(true);
+    expect(
+      stripeConsumerPackCheckoutConfigured({
+        secretKey: 'sk_test_xxxxxxxxxx',
+        webhookSecret: 'whsec_xxxxxxxxxx',
+        priceIds: {
+          'memorial-tribute': 'price_tribute',
+          'life-story': 'price_life',
+          'forever-legacy': undefined,
+        },
       }),
     ).toBe(false);
   });

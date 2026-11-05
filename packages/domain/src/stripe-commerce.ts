@@ -5,6 +5,7 @@
 
 import type { PackageKey } from '@memorialvideo/contracts';
 
+import type { ProposedPlanId } from './proposed-pricing';
 import type { CommerceEventType } from './refund';
 
 export type StripeCheckoutSessionPlan = {
@@ -17,6 +18,7 @@ export type StripeCheckoutSessionPlan = {
     order_id: string;
     package_key: PackageKey;
     project_public_id: string;
+    consumer_pack_id: ProposedPlanId;
   };
   /** Stripe Dashboard tracking label; suffix should be random. */
   integration_identifier: string;
@@ -26,6 +28,7 @@ export function planStripeCheckoutSession(input: {
   orderId: string;
   packageKey: PackageKey;
   projectPublicId: string;
+  consumerPackId: ProposedPlanId;
   priceId: string;
   successUrl: string;
   cancelUrl: string;
@@ -41,6 +44,7 @@ export function planStripeCheckoutSession(input: {
       order_id: input.orderId,
       package_key: input.packageKey,
       project_public_id: input.projectPublicId,
+      consumer_pack_id: input.consumerPackId,
     },
     integration_identifier: `memorial-pack-${input.integrationSuffix.slice(0, 8)}`,
   };
@@ -54,10 +58,22 @@ export type ParsedStripeCommerceEvent =
       orderId: string;
       projectPublicId: string | null;
       packageKey: string | null;
+      consumerPackId: ProposedPlanId | null;
       paymentStatus: string | null;
       sessionId: string | null;
     }
   | { ok: false; reason: 'invalid' | 'ignored' };
+
+function parseConsumerPackId(value: unknown): ProposedPlanId | null {
+  if (
+    value === 'memorial-tribute' ||
+    value === 'life-story' ||
+    value === 'forever-legacy'
+  ) {
+    return value;
+  }
+  return null;
+}
 
 /** Map Stripe event JSON → commerce domain event (no signature check here). */
 export function parseStripeCommerceEvent(body: unknown): ParsedStripeCommerceEvent {
@@ -90,6 +106,10 @@ export function parseStripeCommerceEvent(body: unknown): ParsedStripeCommerceEve
     (typeof metadata.package_key === 'string' && metadata.package_key) ||
     (typeof metadata.packageKey === 'string' && metadata.packageKey) ||
     null;
+  const consumerPackId =
+    parseConsumerPackId(metadata.consumer_pack_id) ||
+    parseConsumerPackId(metadata.consumerPackId) ||
+    null;
   const paymentStatus = typeof object.payment_status === 'string' ? object.payment_status : null;
   const sessionId = typeof object.id === 'string' ? object.id : null;
 
@@ -108,6 +128,7 @@ export function parseStripeCommerceEvent(body: unknown): ParsedStripeCommerceEve
       orderId,
       projectPublicId,
       packageKey,
+      consumerPackId,
       paymentStatus,
       sessionId,
     };
@@ -123,6 +144,7 @@ export function parseStripeCommerceEvent(body: unknown): ParsedStripeCommerceEve
       orderId,
       projectPublicId,
       packageKey,
+      consumerPackId,
       paymentStatus,
       sessionId,
     };
@@ -142,6 +164,7 @@ export function parseStripeCommerceEvent(body: unknown): ParsedStripeCommerceEve
       orderId: refundOrder,
       projectPublicId,
       packageKey,
+      consumerPackId,
       paymentStatus,
       sessionId,
     };
@@ -158,11 +181,16 @@ export function parseStripeCommerceEvent(body: unknown): ParsedStripeCommerceEve
       orderId: disputeOrder,
       projectPublicId,
       packageKey,
+      consumerPackId,
       paymentStatus,
       sessionId,
     };
   }
   return { ok: false, reason: 'ignored' };
+}
+
+export function isValidStripePriceId(priceId: string | undefined): boolean {
+  return Boolean(priceId && priceId.startsWith('price_') && priceId.length >= 8);
 }
 
 export function stripeCheckoutConfigured(input: {
@@ -175,7 +203,23 @@ export function stripeCheckoutConfigured(input: {
       input.secretKey.length >= 10 &&
       input.webhookSecret &&
       input.webhookSecret.length >= 10 &&
-      input.priceId &&
-      input.priceId.startsWith('price_'),
+      isValidStripePriceId(input.priceId),
+  );
+}
+
+/** Consumer packs require secret + webhook + all three Price IDs. */
+export function stripeConsumerPackCheckoutConfigured(input: {
+  secretKey: string | undefined;
+  webhookSecret: string | undefined;
+  priceIds: Partial<Record<ProposedPlanId, string | undefined>>;
+}): boolean {
+  return Boolean(
+    input.secretKey &&
+      input.secretKey.length >= 10 &&
+      input.webhookSecret &&
+      input.webhookSecret.length >= 10 &&
+      isValidStripePriceId(input.priceIds['memorial-tribute']) &&
+      isValidStripePriceId(input.priceIds['life-story']) &&
+      isValidStripePriceId(input.priceIds['forever-legacy']),
   );
 }

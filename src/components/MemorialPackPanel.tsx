@@ -22,7 +22,7 @@ export type PackRecommendationView = {
   filmDurationSeconds: number;
   filmClock: string;
   exceedsTopTierAllowance: boolean;
-  checkoutBlock: 'stripe_not_wired';
+  checkoutBlock: null | 'stripe_not_configured';
   plans: Array<{
     id: ProposedPlanId;
     displayName: string;
@@ -67,7 +67,6 @@ export function MemorialPackPanel({
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
-  const [stripeNotWired, setStripeNotWired] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<ProposedPlanId>(
     packRecommendation?.selectedPlanId ?? 'memorial-tribute',
   );
@@ -78,9 +77,6 @@ export function MemorialPackPanel({
       ? 'local_fake'
       : 'unavailable';
 
-  /** Approved consumer packs stay unwired — never offer a silent charge path. */
-  const consumerPackCheckoutBlocked = Boolean(packRecommendation);
-
   const explanation = packRecommendation ? upgradeExplanation(locale, packRecommendation) : null;
   const selectedPlan =
     packRecommendation?.plans.find((plan) => plan.id === selectedPlanId) ??
@@ -90,7 +86,6 @@ export function MemorialPackPanel({
     setError(null);
     setMessage(null);
     setUnavailable(false);
-    setStripeNotWired(false);
     startTransition(async () => {
       const response = await fetch('/api/checkout/local-fulfill', {
         method: 'POST',
@@ -109,7 +104,6 @@ export function MemorialPackPanel({
   function selectPlan(planId: ProposedPlanId) {
     setError(null);
     setMessage(null);
-    setStripeNotWired(false);
     startTransition(async () => {
       const response = await fetch('/api/checkout/select-pack', {
         method: 'POST',
@@ -137,7 +131,6 @@ export function MemorialPackPanel({
     setError(null);
     setMessage(null);
     setUnavailable(false);
-    setStripeNotWired(false);
     startTransition(async () => {
       const origin = window.location.origin;
       const response = await fetch('/api/checkout', {
@@ -157,11 +150,8 @@ export function MemorialPackPanel({
         checkoutUrl?: string;
         mode?: string;
         useLocalFulfill?: boolean;
+        requiredEnv?: string[];
       };
-      if (response.status === 503 && body.error === 'stripe_not_wired') {
-        setStripeNotWired(true);
-        return;
-      }
       if (response.status === 503 || body.error === 'stripe_not_configured') {
         setUnavailable(true);
         return;
@@ -249,7 +239,7 @@ export function MemorialPackPanel({
         </div>
       ) : null}
 
-      {mode === 'stripe' && !consumerPackCheckoutBlocked ? (
+      {mode === 'stripe' ? (
         <Button
           onClick={startStripeCheckout}
           variant="secondary"
@@ -257,7 +247,7 @@ export function MemorialPackPanel({
         >
           {pending
             ? '…'
-            : `${creatorT(locale, 'creator.pack.buyStripe')} · ${selectedPlan?.displayName ?? 'Memorial Pack'}  ↗`}
+            : `${creatorT(locale, 'creator.pack.buyStripe')} · ${selectedPlan?.displayName ?? 'Memorial Pack'} · €${selectedPlan?.amountEur ?? '—'}  ↗`}
         </Button>
       ) : null}
 
@@ -269,13 +259,6 @@ export function MemorialPackPanel({
         >
           {pending ? '…' : `${creatorT(locale, 'creator.pack.activateLocal')}  ↗`}
         </Button>
-      ) : null}
-
-      {(mode === 'stripe' && consumerPackCheckoutBlocked) || stripeNotWired ? (
-        <ErrorState
-          title={creatorT(locale, 'creator.pack.stripeNotWired')}
-          body={creatorT(locale, 'creator.pack.stripeNotWiredBody')}
-        />
       ) : null}
 
       {mode === 'unavailable' || unavailable ? (

@@ -51,7 +51,7 @@ export type ConsumerPackView = {
 
 /**
  * Resolve pack recommendation and persist auto-upgrade when duration crosses
- * 10:00 or 20:00. Never charges — checkout remains stripe_not_wired.
+ * 10:00 or 20:00. Never charges — payment starts only via /api/checkout.
  */
 export async function syncConsumerPackForFilmDuration(
   publicId: string,
