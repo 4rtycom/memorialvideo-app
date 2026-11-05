@@ -8,7 +8,6 @@ import { shellProject } from '@/lib/tribute-view';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { parseTimelineContract } from '@memorialvideo/contracts';
-import Link from 'next/link';
 
 export default async function StudioPage() {
   const tribute = await loadActiveTribute();
@@ -22,30 +21,20 @@ export default async function StudioPage() {
       title={shell.title}
       ownerInitial={shell.ownerInitial}
       locale={locale}
-      footerTitle="A beautiful film, made together."
+      footerTitle={creatorT(locale, 'creator.studio.footerTitle')}
       footerBody=""
     >
-      <Eyebrow>ADVANCED TOOLS, WHEN YOU WANT THEM</Eyebrow>
-      <Hero>Your film. Your creative control.</Hero>
-      <Lede>
-        Optional Advanced Studio for operators who want precise control. Families can stay on guided
-        editing — aspect, length, order and transitions share the same film.
-      </Lede>
-      <p className="text-[13px] text-[color:var(--muted)] mb-6">
-        <Link href="/film/edit" className="underline-offset-2 hover:underline">
-          {creatorT(locale, 'creator.film.edit')}
-        </Link>
-        {' · '}
-        {creatorT(locale, 'creator.moreControl')}
-      </p>
+      <Eyebrow>{creatorT(locale, 'creator.studio.eyebrow')}</Eyebrow>
+      <Hero>{creatorT(locale, 'creator.studio.hero')}</Hero>
+      <Lede>{creatorT(locale, 'creator.studio.lede')}</Lede>
 
       {!tribute ? (
         <ErrorRecovery
-          label="EMPTY WORKSPACE"
-          title="No tribute open yet"
-          body="Begin setup before opening Studio."
+          label={creatorT(locale, 'creator.studio.emptyLabel')}
+          title={creatorT(locale, 'creator.studio.emptyTitle')}
+          body={creatorT(locale, 'creator.studio.emptyBody')}
           primaryHref="/setup"
-          primaryLabel="Begin setup  ↗"
+          primaryLabel={creatorT(locale, 'creator.common.beginSetup')}
           tone="success"
         />
       ) : timeline ? (
@@ -60,13 +49,13 @@ export default async function StudioPage() {
         </>
       ) : (
         <ErrorRecovery
-          label="RESUMABLE PROCESSING"
-          title="Studio needs a TimelineContract"
-          body="Arrange the first film, then return here for precise control."
+          label={creatorT(locale, 'creator.studio.processingLabel')}
+          title={creatorT(locale, 'creator.studio.processingTitle')}
+          body={creatorT(locale, 'creator.studio.processingBody')}
           primaryHref="/film/creating"
-          primaryLabel="Arrange first film  ↗"
+          primaryLabel={creatorT(locale, 'creator.studio.arrangeCta')}
           secondaryHref="/film/edit"
-          secondaryLabel="Try Guided first"
+          secondaryLabel={creatorT(locale, 'creator.studio.tryGuided')}
         />
       )}
     </AppShell>

@@ -1,12 +1,15 @@
 import { AppShell } from '@/components/AppShell';
 import { ContributorReviewList } from '@/components/ContributorReviewList';
 import { Card, Eyebrow, Hero, Lede } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
 import { shellProject } from '@/lib/tribute-view';
 import { memoryView } from '@/server/ingest';
+import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 
 export default async function ReviewPage() {
   const tribute = await loadActiveTribute();
+  const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
   const shell = shellProject(tribute);
   const incoming = (tribute?.memories ?? [])
     .filter((m) => m.source === 'contributor')
@@ -29,27 +32,30 @@ export default async function ReviewPage() {
       brand={shell.brand}
       title={shell.title}
       ownerInitial={shell.ownerInitial}
-      footerTitle="Private by default"
-      footerBody="Only invited people can contribute."
+      locale={locale}
+      footerTitle={creatorT(locale, 'creator.common.privateByDefault')}
+      footerBody={creatorT(locale, 'creator.common.onlyInvited')}
     >
-      <Eyebrow>MEMORIES FROM PEOPLE WHO LOVED THEM</Eyebrow>
-      <Hero>New moments have arrived.</Hero>
-      <Lede>Review contributions before adding them to the film.</Lede>
+      <Eyebrow>{creatorT(locale, 'creator.review.eyebrow')}</Eyebrow>
+      <Hero>{creatorT(locale, 'creator.review.hero')}</Hero>
+      <Lede>{creatorT(locale, 'creator.review.lede')}</Lede>
 
       <Card className="!px-6 !py-5 mb-5 flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="font-medium text-[18px]">
-            ✉  {pendingCount} awaiting review · {incoming.length} from contributors
+            {creatorT(locale, 'creator.review.summary')
+              .replace('{pending}', String(pendingCount))
+              .replace('{total}', String(incoming.length))}
           </div>
           <p className="text-[color:var(--muted)] m-0 mt-1">
-            Nothing is added to the film until you approve it.
+            {creatorT(locale, 'creator.review.summaryBody')}
           </p>
         </div>
       </Card>
 
-      <ContributorReviewList items={incoming} />
+      <ContributorReviewList items={incoming} locale={locale} />
       <p className="text-[13px] text-[color:var(--muted)] mt-6">
-        Duplicates and low-quality photographs stay for your review.
+        {creatorT(locale, 'creator.review.duplicatesNote')}
       </p>
     </AppShell>
   );

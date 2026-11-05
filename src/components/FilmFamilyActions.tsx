@@ -43,7 +43,7 @@ export function FilmFamilyActions({
             {creatorT(locale, 'creator.nav.enhance')}
           </Link>
           <Link className="btn btn-secondary" href="/ceremony">
-            Ceremony Player
+            {creatorT(locale, 'creator.film.ceremonyPlayer')}
           </Link>
         </div>
       </MoreControlDisclosure>

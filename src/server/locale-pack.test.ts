@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CRITICAL_CREATION_KEYS } from '../lib/creator-critical-copy';
 import { SURFACE_CREATION_KEYS } from '../lib/creator-surface-copy';
+import { REMAINING_SURFACE_KEYS } from '../lib/creator-surface-remaining-copy';
 import {
   CREATOR_LOCALE_STATUS,
   CREATOR_UI_KEYS,
@@ -38,6 +39,17 @@ describe('creator locale catalogs + ceremony pack zip', () => {
   it('keeps surface journey strings translated in every draft locale', () => {
     for (const language of draftCreatorLocales()) {
       for (const key of SURFACE_CREATION_KEYS) {
+        const value = creatorT(language, key);
+        expect(value.length).toBeGreaterThan(0);
+        expect(value).not.toBe(key);
+        expect(value).not.toBe(creatorT('en', key));
+      }
+    }
+  });
+
+  it('keeps remaining screen strings translated in every draft locale', () => {
+    for (const language of draftCreatorLocales()) {
+      for (const key of REMAINING_SURFACE_KEYS) {
         const value = creatorT(language, key);
         expect(value.length).toBeGreaterThan(0);
         expect(value).not.toBe(key);
