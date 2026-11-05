@@ -26,6 +26,9 @@ const nextConfig: NextConfig = {
     '@esbuild/darwin-arm64',
     '@esbuild/darwin-x64',
     '@esbuild/win32-x64',
+    'heic-convert',
+    'heic-decode',
+    'libheif-js',
   ],
   async headers() {
     return [

@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { proposePlacementForContributorAsset } from '@/server/collaboration-local';
-import { isHeicFilename } from '@/server/ingest';
 import { resolveGuestContext, recordGuestUploadUse } from '@/server/invites';
 import {
   createUploadSession,
@@ -29,7 +28,7 @@ const bodySchema = z.object({
   musicRightsConfirmed: z.boolean().optional(),
 });
 
-/** Guest authorize — requires redeemed invite session cookie (no account). */
+/** Guest authorize — requires redeemed invite session cookie (no account). HEIC accepted (MV-AUD-007). */
 export async function POST(request: Request) {
   if (!allowRequest('creator-contributor-auth', 40)) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
@@ -70,7 +69,7 @@ export async function POST(request: Request) {
     filename: parsed.data.filename,
     contentType: parsed.data.contentType,
     byteSize: parsed.data.byteSize,
-    awaitBytes: !isHeicFilename(parsed.data.filename),
+    awaitBytes: true,
     imagePath: mediaPublicPath(guest.tribute.publicId, assetId),
     rightsConfirmed: audio ? true : undefined,
     source: 'contributor',
@@ -90,17 +89,6 @@ export async function POST(request: Request) {
     publicId: guest.tribute.publicId,
     assetId: memory.id,
   });
-
-  if (memory.failureCode === 'heic') {
-    return NextResponse.json(
-      {
-        assetId: memory.id,
-        mode: 'rejected_heic',
-        note: 'This photo is HEIC. Convert it to JPG or PNG on your phone or computer, then upload again. We keep it listed so nothing is lost — we do not invent a conversion.',
-      },
-      { status: 201 },
-    );
-  }
 
   const session = await createUploadSession({
     tributePublicId: guest.tribute.publicId,

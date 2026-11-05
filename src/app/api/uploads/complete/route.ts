@@ -2,12 +2,14 @@ import { cookies } from 'next/headers';
 import { readFile } from 'node:fs/promises';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { convertHeicBufferToJpeg } from '@/server/heic-convert';
 import { resolveGuestContext } from '@/server/invites';
 import { probeWithFfprobe } from '@/server/local-encode';
 import {
   deleteMediaFile,
   finalizeUploadToMedia,
   mediaFilePath,
+  replaceMediaBytes,
   sniffedMatchesDeclared,
   sniffMediaBytes,
 } from '@/server/media-storage';
@@ -58,13 +60,46 @@ export async function POST(request: Request) {
   }
 
   const absolute = mediaFilePath(finalized.session.tributePublicId, finalized.session.assetId);
-  const storedBytes = await readFile(absolute);
-  const sniffed = sniffMediaBytes(storedBytes);
-  if (!sniffed || !sniffedMatchesDeclared(finalized.contentType, sniffed)) {
+  let storedBytes = await readFile(absolute);
+  let sniffed = sniffMediaBytes(storedBytes);
+  let convertedFromHeic = false;
+  let sha256 = finalized.sha256;
+  let byteSize = finalized.byteSize;
+
+  if (sniffed === 'image/heic') {
+    if (!sniffedMatchesDeclared(finalized.contentType, sniffed)) {
+      await deleteMediaFile(finalized.session.tributePublicId, finalized.session.assetId);
+      await markMemoryRejected(tributePublicId, parsed.data.assetId, 'heic');
+      return NextResponse.json({ error: 'content_mismatch' }, { status: 415 });
+    }
+    const converted = await convertHeicBufferToJpeg(storedBytes);
+    if (!converted.ok) {
+      await deleteMediaFile(finalized.session.tributePublicId, finalized.session.assetId);
+      await markMemoryRejected(tributePublicId, parsed.data.assetId, 'heic');
+      return NextResponse.json(
+        {
+          error: 'heic_convert_failed',
+          note: 'We could not prepare this iPhone photo automatically. Please try again.',
+        },
+        { status: 422 },
+      );
+    }
+    const replaced = await replaceMediaBytes(
+      finalized.session.tributePublicId,
+      finalized.session.assetId,
+      converted.jpeg,
+    );
+    storedBytes = converted.jpeg;
+    sniffed = 'image/jpeg';
+    convertedFromHeic = true;
+    sha256 = replaced.sha256;
+    byteSize = replaced.byteSize;
+  } else if (!sniffed || !sniffedMatchesDeclared(finalized.contentType, sniffed)) {
     await deleteMediaFile(finalized.session.tributePublicId, finalized.session.assetId);
     await markMemoryRejected(tributePublicId, parsed.data.assetId);
     return NextResponse.json({ error: 'content_mismatch' }, { status: 415 });
   }
+
   if (sniffed.startsWith('audio/')) {
     const current = await getTribute(tributePublicId);
     const memory = current?.memories.find((item) => item.id === parsed.data.assetId);
@@ -87,7 +122,7 @@ export async function POST(request: Request) {
     imagePath: finalized.mediaPath,
     contentType: sniffed,
     durationMs,
-    checksumSha256: finalized.sha256,
+    checksumSha256: sha256,
   });
   if (!memory) {
     return NextResponse.json({ error: 'attach_failed' }, { status: 404 });
@@ -98,7 +133,8 @@ export async function POST(request: Request) {
     memory,
     tribute,
     mediaPath: finalized.mediaPath,
-    sha256: finalized.sha256,
-    byteSize: finalized.byteSize,
+    sha256,
+    byteSize,
+    convertedFromHeic,
   });
 }

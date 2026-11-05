@@ -5,6 +5,7 @@ import { useRef, useState, useTransition } from 'react';
 import type { LaunchLanguage } from '@memorialvideo/contracts';
 import { Button } from '@/components/ui';
 import { creatorT } from '@/lib/creator-ui-messages';
+import { prepareUploadFile, isHeicFile } from '@/lib/prepare-upload-file';
 import {
   authorizeLocalUpload,
   completeLocalUpload,
@@ -81,26 +82,26 @@ export function AddMemoryControl({
     setProgress(null);
     startTransition(async () => {
       try {
+        if (isHeicFile(file)) {
+          setProgress(creatorT(locale, 'creator.memories.preparingHeic'));
+        }
+        const prepared = await prepareUploadFile(file);
+        const uploadFile = prepared.file;
         const auth = await authorizeLocalUpload({
           title: file.name.replace(/\.[^.]+$/, '').slice(0, 160) || 'New memory',
-          filename: file.name,
-          contentType: file.type || 'application/octet-stream',
-          byteSize: file.size,
+          filename: uploadFile.name,
+          contentType: uploadFile.type || 'application/octet-stream',
+          byteSize: uploadFile.size,
           year: String(new Date().getFullYear()),
           musicRightsConfirmed: audio ? true : undefined,
         });
-        if (auth.mode === 'rejected_heic') {
-          setInfo(creatorT(locale, 'creator.memories.heic'));
-          router.refresh();
-          return;
-        }
         if (!auth.uploadUrl) {
           setError(creatorT(locale, 'creator.memories.uploadStart'));
           return;
         }
         setProgress(`${creatorT(locale, 'creator.memories.uploading')} 0%`);
         await uploadFileLocalTus({
-          file,
+          file: uploadFile,
           uploadUrl: auth.uploadUrl,
           chunkHintBytes: auth.chunkHintBytes,
           onProgress: (sent, total) => {
@@ -108,16 +109,24 @@ export function AddMemoryControl({
             setProgress(`${creatorT(locale, 'creator.memories.uploading')} ${pct}%`);
           },
         });
-        await completeLocalUpload({
+        const done = await completeLocalUpload({
           uploadId: uploadIdFromUrl(auth.uploadUrl),
           assetId: auth.assetId,
         });
         setProgress(null);
-        setInfo(creatorT(locale, 'creator.memories.uploadDone'));
+        setInfo(
+          done.convertedFromHeic || prepared.convertedFromHeic
+            ? creatorT(locale, 'creator.memories.heicReady')
+            : creatorT(locale, 'creator.memories.uploadDone'),
+        );
         router.refresh();
       } catch {
         setProgress(null);
-        setError(creatorT(locale, 'creator.memories.uploadFailed'));
+        setError(
+          isHeicFile(file)
+            ? creatorT(locale, 'creator.memories.heic')
+            : creatorT(locale, 'creator.memories.uploadFailed'),
+        );
       }
     });
   }
@@ -127,7 +136,7 @@ export function AddMemoryControl({
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/heic,video/mp4,video/quicktime,audio/mpeg,audio/wav,audio/mp4,.mp3,.wav,.m4a,.mov"
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,video/mp4,video/quicktime,audio/mpeg,audio/wav,audio/mp4,.mp3,.wav,.m4a,.mov"
         className="sr-only"
         onChange={onFileChange}
       />

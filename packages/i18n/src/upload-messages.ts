@@ -6,14 +6,14 @@ export const uploadEn = {
   'upload.ready': 'Ready',
   'upload.needsAttention': 'Needs a closer look',
   'upload.heicUnsupported':
-    'HEIC photographs are not supported yet. Export as JPEG or PNG and try again.',
+    'We could not prepare this iPhone photo. Please try again, or choose a JPG or PNG.',
   'upload.rejected': 'This file could not be accepted. Try another photograph or clip.',
   'upload.failed': 'Preparation failed. You can retry this memory.',
   'library.filter.processing': 'Still preparing',
   'library.ingest.processing': 'Still preparing this memory',
   'library.ingest.needsAttention': 'Needs attention before it can enter the film',
   'contribute.heicUnsupported':
-    'HEIC photographs are not supported yet. Export as JPEG or PNG and try again.',
+    'We prepare iPhone photos for you. If preparation fails, try again or choose JPG/PNG.',
   'contribute.processing': 'Preparing your upload…',
 } as const;
 
@@ -23,14 +23,14 @@ export const uploadNl = {
   'upload.ready': 'Gereed',
   'upload.needsAttention': 'Even nader bekijken',
   'upload.heicUnsupported':
-    'HEIC-foto’s worden nog niet ondersteund. Exporteer als JPEG of PNG en probeer opnieuw.',
+    'We konden deze iPhone-foto niet voorbereiden. Probeer opnieuw, of kies een JPG of PNG.',
   'upload.rejected': 'Dit bestand kon niet worden geaccepteerd. Probeer een andere foto of clip.',
   'upload.failed': 'Voorbereiden mislukt. U kunt deze herinnering opnieuw proberen.',
   'library.filter.processing': 'Nog in voorbereiding',
   'library.ingest.processing': 'Deze herinnering wordt nog voorbereid',
   'library.ingest.needsAttention': 'Let op voordat dit in de film kan',
   'contribute.heicUnsupported':
-    'HEIC-foto’s worden nog niet ondersteund. Exporteer als JPEG of PNG en probeer opnieuw.',
+    'Wij bereiden iPhone-foto’s voor u voor. Lukt dat niet, probeer opnieuw of kies JPG/PNG.',
   'contribute.processing': 'Uw upload wordt voorbereid…',
 } as const;
 
@@ -40,14 +40,14 @@ export const uploadDe = {
   'upload.ready': 'Bereit',
   'upload.needsAttention': 'Bitte genauer prüfen',
   'upload.heicUnsupported':
-    'HEIC-Fotos werden noch nicht unterstützt. Als JPEG oder PNG exportieren und erneut versuchen.',
+    'Dieses iPhone-Foto konnte nicht vorbereitet werden. Bitte erneut versuchen oder JPG/PNG wählen.',
   'upload.rejected': 'Diese Datei konnte nicht angenommen werden. Bitte anderes Foto oder Clip versuchen.',
   'upload.failed': 'Vorbereitung fehlgeschlagen. Sie können diese Erinnerung erneut versuchen.',
   'library.filter.processing': 'Noch in Vorbereitung',
   'library.ingest.processing': 'Diese Erinnerung wird noch vorbereitet',
   'library.ingest.needsAttention': 'Prüfung nötig, bevor sie in den Film kann',
   'contribute.heicUnsupported':
-    'HEIC-Fotos werden noch nicht unterstützt. Als JPEG oder PNG exportieren und erneut versuchen.',
+    'Wir bereiten iPhone-Fotos für Sie vor. Bei Fehlern erneut versuchen oder JPG/PNG wählen.',
   'contribute.processing': 'Ihr Upload wird vorbereitet…',
 } as const;
 
@@ -57,14 +57,14 @@ export const uploadFr = {
   'upload.ready': 'Prêt',
   'upload.needsAttention': 'À regarder de plus près',
   'upload.heicUnsupported':
-    'Les photos HEIC ne sont pas encore prises en charge. Exportez en JPEG ou PNG puis réessayez.',
+    'Nous n’avons pas pu préparer cette photo iPhone. Réessayez, ou choisissez un JPG ou PNG.',
   'upload.rejected': 'Ce fichier n’a pas pu être accepté. Essayez une autre photo ou un autre clip.',
   'upload.failed': 'La préparation a échoué. Vous pouvez réessayer ce souvenir.',
   'library.filter.processing': 'Encore en préparation',
   'library.ingest.processing': 'Ce souvenir est encore en préparation',
   'library.ingest.needsAttention': 'À vérifier avant d’entrer dans le film',
   'contribute.heicUnsupported':
-    'Les photos HEIC ne sont pas encore prises en charge. Exportez en JPEG ou PNG puis réessayez.',
+    'Nous préparons les photos iPhone pour vous. En cas d’échec, réessayez ou choisissez JPG/PNG.',
   'contribute.processing': 'Préparation de votre envoi…',
 } as const;
 
@@ -74,14 +74,14 @@ export const uploadEs = {
   'upload.ready': 'Listo',
   'upload.needsAttention': 'Necesita una mirada más atenta',
   'upload.heicUnsupported':
-    'Las fotos HEIC aún no son compatibles. Exporte como JPEG o PNG e inténtelo de nuevo.',
+    'No pudimos preparar esta foto de iPhone. Inténtelo de nuevo, o elija JPG o PNG.',
   'upload.rejected': 'No se pudo aceptar este archivo. Pruebe otra foto o clip.',
   'upload.failed': 'La preparación falló. Puede reintentar este recuerdo.',
   'library.filter.processing': 'Aún preparándose',
   'library.ingest.processing': 'Este recuerdo aún se está preparando',
   'library.ingest.needsAttention': 'Revisar antes de que entre en el vídeo',
   'contribute.heicUnsupported':
-    'Las fotos HEIC aún no son compatibles. Exporte como JPEG o PNG e inténtelo de nuevo.',
+    'Preparamos las fotos de iPhone por usted. Si falla, inténtelo de nuevo o elija JPG/PNG.',
   'contribute.processing': 'Preparando su carga…',
 } as const;
 
@@ -91,14 +91,14 @@ export const uploadPt = {
   'upload.ready': 'Pronto',
   'upload.needsAttention': 'Precisa de uma atenção mais cuidada',
   'upload.heicUnsupported':
-    'Fotografias HEIC ainda não são suportadas. Exporte como JPEG ou PNG e tente novamente.',
+    'Não conseguimos preparar esta foto de iPhone. Tente de novo, ou escolha JPG ou PNG.',
   'upload.rejected': 'Este ficheiro não pôde ser aceite. Tente outra fotografia ou clipe.',
   'upload.failed': 'A preparação falhou. Pode tentar novamente esta memória.',
   'library.filter.processing': 'Ainda a preparar',
   'library.ingest.processing': 'Esta memória ainda está a ser preparada',
   'library.ingest.needsAttention': 'Rever antes de entrar no vídeo',
   'contribute.heicUnsupported':
-    'Fotografias HEIC ainda não são suportadas. Exporte como JPEG ou PNG e tente novamente.',
+    'Preparamos fotos de iPhone por si. Se falhar, tente de novo ou escolha JPG/PNG.',
   'contribute.processing': 'A preparar o seu envio…',
 } as const;
 
@@ -108,14 +108,14 @@ export const uploadIt = {
   'upload.ready': 'Pronto',
   'upload.needsAttention': 'Da riguardare con cura',
   'upload.heicUnsupported':
-    'Le foto HEIC non sono ancora supportate. Esporta come JPEG o PNG e riprova.',
+    'Non siamo riusciti a preparare questa foto iPhone. Riprova, oppure scegli JPG o PNG.',
   'upload.rejected': 'Questo file non può essere accettato. Prova un’altra foto o clip.',
   'upload.failed': 'Preparazione non riuscita. Puoi riprovare questo ricordo.',
   'library.filter.processing': 'Ancora in preparazione',
   'library.ingest.processing': 'Questo ricordo è ancora in preparazione',
   'library.ingest.needsAttention': 'Da controllare prima di entrare nel film',
   'contribute.heicUnsupported':
-    'Le foto HEIC non sono ancora supportate. Esporta come JPEG o PNG e riprova.',
+    'Prepariamo le foto iPhone per te. Se fallisce, riprova o scegli JPG/PNG.',
   'contribute.processing': 'Preparazione del caricamento…',
 } as const;
 
@@ -125,13 +125,13 @@ export const uploadPl = {
   'upload.ready': 'Gotowe',
   'upload.needsAttention': 'Wymaga bliższego spojrzenia',
   'upload.heicUnsupported':
-    'Zdjęcia HEIC nie są jeszcze obsługiwane. Wyeksportuj jako JPEG lub PNG i spróbuj ponownie.',
+    'Nie udało się przygotować tego zdjęcia z iPhone’a. Spróbuj ponownie albo wybierz JPG lub PNG.',
   'upload.rejected': 'Tego pliku nie można przyjąć. Spróbuj innego zdjęcia lub klipu.',
   'upload.failed': 'Przygotowanie nie powiodło się. Możesz spróbować ponownie.',
   'library.filter.processing': 'Jeszcze w przygotowaniu',
   'library.ingest.processing': 'To wspomnienie jest jeszcze przygotowywane',
   'library.ingest.needsAttention': 'Do sprawdzenia przed wejściem do filmu',
   'contribute.heicUnsupported':
-    'Zdjęcia HEIC nie są jeszcze obsługiwane. Wyeksportuj jako JPEG lub PNG i spróbuj ponownie.',
+    'Przygotowujemy zdjęcia z iPhone’a za Ciebie. Jeśli się nie uda, spróbuj ponownie lub wybierz JPG/PNG.',
   'contribute.processing': 'Przygotowywanie przesyłania…',
 } as const;

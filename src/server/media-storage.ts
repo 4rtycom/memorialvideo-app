@@ -195,6 +195,46 @@ function ascii(bytes: Uint8Array, start: number, length: number): string {
   return String.fromCharCode(...bytes.subarray(start, start + length));
 }
 
+/** ISOBMFF brands that identify HEIC/HEIF stills (not AVIF, not MP4 video). */
+const HEIC_FTYP_BRANDS = new Set([
+  'heic',
+  'heix',
+  'hevc',
+  'hevx',
+  'heim',
+  'heis',
+  'hevm',
+  'hevs',
+  'mif1',
+  'msf1',
+]);
+
+function ftypBrands(bytes: Uint8Array): string[] {
+  if (bytes.length < 12 || ascii(bytes, 4, 4) !== 'ftyp') {
+    return [];
+  }
+  const boxSize = (bytes[0]! << 24) | (bytes[1]! << 16) | (bytes[2]! << 8) | bytes[3]!;
+  const end = Math.min(bytes.length, Number.isFinite(boxSize) && boxSize >= 16 ? boxSize : 64);
+  const brands: string[] = [ascii(bytes, 8, 4)];
+  for (let offset = 16; offset + 4 <= end; offset += 4) {
+    brands.push(ascii(bytes, offset, 4));
+  }
+  return brands;
+}
+
+function isHeicFtyp(bytes: Uint8Array): boolean {
+  const brands = ftypBrands(bytes);
+  if (brands.length === 0) return false;
+  // Prefer explicit HEIC codecs; mif1 alone is shared with AVIF.
+  if (brands.some((brand) => brand === 'heic' || brand === 'heix' || brand === 'hevc' || brand === 'hevx' || brand === 'heim' || brand === 'heis' || brand === 'hevm' || brand === 'hevs')) {
+    return true;
+  }
+  if (brands.some((brand) => brand === 'avif' || brand === 'avis')) {
+    return false;
+  }
+  return brands.some((brand) => HEIC_FTYP_BRANDS.has(brand));
+}
+
 /** Content type from magic bytes. Null when the file is not a supported photo, video, or song. */
 export function sniffMediaBytes(bytes: Uint8Array): string | null {
   if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
@@ -222,9 +262,17 @@ export function sniffMediaBytes(bytes: Uint8Array): string | null {
     return 'audio/mpeg';
   }
   if (bytes.length >= 12 && ascii(bytes, 4, 4) === 'ftyp') {
+    if (isHeicFtyp(bytes)) {
+      return 'image/heic';
+    }
     const brand = ascii(bytes, 8, 4);
     if (brand === 'M4A ' || brand === 'M4B ' || brand === 'M4P ') {
       return 'audio/mp4';
+    }
+    // AVIF is not a launch still format — reject rather than mislabel as video.
+    const brands = ftypBrands(bytes);
+    if (brands.some((item) => item === 'avif' || item === 'avis')) {
+      return null;
     }
     return 'video/mp4';
   }
@@ -245,6 +293,9 @@ export function sniffedMatchesDeclared(declared: string, sniffed: string): boole
   if (sniffed === 'image/webp') {
     return normalized === 'image/webp';
   }
+  if (sniffed === 'image/heic') {
+    return normalized === 'image/heic' || normalized === 'image/heif';
+  }
   if (sniffed === 'audio/wav') {
     return normalized.includes('wav');
   }
@@ -260,6 +311,21 @@ export function sniffedMatchesDeclared(declared: string, sniffed: string): boole
     );
   }
   return false;
+}
+
+/** Overwrite a finalized media object (used after HEIC→JPEG conversion). */
+export async function replaceMediaBytes(
+  tributePublicId: string,
+  assetId: string,
+  bytes: Buffer,
+): Promise<{ sha256: string; byteSize: number }> {
+  await mkdir(mediaDir(tributePublicId), { recursive: true });
+  const dest = mediaFilePath(tributePublicId, assetId);
+  const sha256 = createHash('sha256').update(bytes).digest('hex');
+  const tmp = `${dest}.${process.pid}.tmp`;
+  await writeFile(tmp, bytes);
+  await rename(tmp, dest);
+  return { sha256, byteSize: bytes.byteLength };
 }
 
 export function isAudioUpload(contentType: string, filename: string): boolean {

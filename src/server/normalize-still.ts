@@ -27,7 +27,7 @@ export type NormalizeStillResult =
 /**
  * Orient + downscale a still into a durable JPEG beside the original bytes.
  * Does not mutate the original upload; returns the normalized path when successful.
- * HEIC is not converted here — callers must leave those in needs_attention.
+ * HEIC should already be JPEG by the time normalize runs (upload complete converts).
  */
 export async function normalizeStillWithFfmpeg(input: {
   sourceAbsolute: string;

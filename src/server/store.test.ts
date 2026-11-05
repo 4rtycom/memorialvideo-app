@@ -61,24 +61,18 @@ describe('creator local store', () => {
     expect(store.hasInFlightIngest((await store.getTribute(created.publicId))!)).toBe(false);
   });
 
-  it('rejects HEIC with honest needs_attention and no retry path', async () => {
+  it('accepts HEIC into pending upload so conversion can run (MV-AUD-007)', async () => {
     const store = await import('./store');
-    const ingest = await import('./ingest');
     const created = await store.createTribute({ displayName: 'Heic Person' });
     const memory = await store.addMemory(created.publicId, {
       title: 'Phone photo',
       filename: 'IMG_001.HEIC',
-      imagePath: '/fixtures/memory-a.png',
+      contentType: 'image/heic',
+      awaitBytes: true,
+      imagePath: '/api/media/pending/heic',
     });
-    expect(memory?.ingestStatus).toBe('REJECTED');
-    expect(memory?.failureCode).toBe('heic');
-    const view = ingest.memoryView({
-      ingestStatus: memory!.ingestStatus,
-      failureCode: memory!.failureCode,
-    });
-    expect(view.uiStatus).toBe('needs_attention');
-    const retry = await store.retryFailedMemory(created.publicId, memory!.id);
-    expect(retry).toBeNull();
+    expect(memory?.ingestStatus).toBe('PENDING_UPLOAD');
+    expect(memory?.failureCode ?? null).toBeNull();
   });
 
   it('grants Memorial Pack only via local_fake when APP_ENV=local', async () => {

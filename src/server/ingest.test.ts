@@ -23,10 +23,10 @@ describe('creator ingest helpers', () => {
     expect(nextIngestStatus('READY')).toBeNull();
   });
 
-  it('labels HEIC needs_attention honestly', () => {
+  it('labels HEIC preparation failure honestly without asking for on-device convert', () => {
     const view = memoryView({ ingestStatus: 'REJECTED', failureCode: 'heic' });
     expect(view.uiStatus).toBe('needs_attention');
-    expect(view.label).toContain('HEIC');
-    expect(view.label).toContain('JPG');
+    expect(view.label.toLowerCase()).toContain('iphone');
+    expect(view.label.toLowerCase()).not.toContain('convert to jpg');
   });
 });
