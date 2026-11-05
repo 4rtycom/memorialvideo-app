@@ -168,7 +168,7 @@ export function GuestContribute() {
 
   if (phase === 'redeeming') {
     return (
-      <main className="px-6 pt-16 text-center">
+      <main id="main" className="guest-main px-6 pt-16 text-center" tabIndex={-1}>
         <p className="eyebrow">OPENING INVITATION</p>
         <h1 className="serif text-[40px] leading-[1.05] m-0">{creatorT(locale, 'creator.guest.oneMoment')}</h1>
       </main>
@@ -177,7 +177,7 @@ export function GuestContribute() {
 
   if (phase === 'error') {
     return (
-      <main className="px-6 pt-16 text-center">
+      <main id="main" className="guest-main px-6 pt-16 text-center" tabIndex={-1}>
         <p className="eyebrow">INVITATION</p>
         <h1 className="serif text-[40px] leading-[1.05] m-0 mb-4">{creatorT(locale, 'creator.guest.unable')}</h1>
         <div className="max-w-md mx-auto mb-8 text-left">
@@ -206,7 +206,7 @@ export function GuestContribute() {
 
   if (phase === 'thanks') {
     return (
-      <main className="px-6 pt-16 text-center">
+      <main id="main" className="guest-main px-6 pt-16 text-center" tabIndex={-1}>
         <p className="eyebrow">THANK YOU</p>
         <h1 className="serif text-[46px] leading-[1.05] m-0 mb-5">{creatorT(locale, 'creator.guest.received')}</h1>
         <p className="text-[color:var(--muted)] mb-10">{creatorT(locale, 'creator.guest.review')}</p>
@@ -222,7 +222,7 @@ export function GuestContribute() {
   }
 
   return (
-    <main className="px-6 pt-8">
+    <main id="main" className="guest-main px-6 pt-8" tabIndex={-1}>
       <div className="relative h-[220px] rounded-[10px] overflow-hidden mb-6">
         <Image src="/fixtures/guest-portrait.png" alt="" fill className="object-cover" sizes="342px" priority />
         <div className="absolute inset-x-0 bottom-0 bg-[color:var(--primary)] text-white px-5 py-4">

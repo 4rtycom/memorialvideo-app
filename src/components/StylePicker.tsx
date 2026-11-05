@@ -49,6 +49,7 @@ export function StylePicker({
               type="button"
               disabled={pending}
               className="text-left"
+              aria-pressed={selected}
               onClick={() => choose(id)}
             >
               <Card

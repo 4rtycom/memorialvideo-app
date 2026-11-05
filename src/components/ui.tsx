@@ -21,6 +21,8 @@ export function Button({
   type = 'button',
   onClick,
   disabled,
+  'aria-keyshortcuts': ariaKeyshortcuts,
+  'aria-label': ariaLabel,
 }: {
   children: ReactNode;
   href?: string;
@@ -29,17 +31,26 @@ export function Button({
   type?: ButtonHTMLAttributes<HTMLButtonElement>['type'];
   onClick?: ButtonHTMLAttributes<HTMLButtonElement>['onClick'];
   disabled?: boolean;
+  'aria-keyshortcuts'?: string;
+  'aria-label'?: string;
 }) {
   const cls = `btn btn-${variant} ${className}`;
   if (href) {
     return (
-      <Link className={cls} href={href}>
+      <Link className={cls} href={href} aria-label={ariaLabel}>
         {children}
       </Link>
     );
   }
   return (
-    <button type={type} className={cls} onClick={onClick} disabled={disabled}>
+    <button
+      type={type}
+      className={cls}
+      onClick={onClick}
+      disabled={disabled}
+      aria-keyshortcuts={ariaKeyshortcuts}
+      aria-label={ariaLabel}
+    >
       {children}
     </button>
   );

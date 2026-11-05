@@ -204,7 +204,32 @@ export function MemorialPackPanel({
               {explanation}
             </p>
           ) : null}
-          <div className="grid gap-2" role="radiogroup" aria-label={creatorT(locale, 'creator.pack.chooseTitle')}>
+          <div
+            className="grid gap-2"
+            role="radiogroup"
+            aria-label={creatorT(locale, 'creator.pack.chooseTitle')}
+            onKeyDown={(event) => {
+              if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp' && event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') {
+                return;
+              }
+              const required = packRecommendation.requiredPlanId;
+              const requiredIndex = packRecommendation.plans.findIndex((p) => p.id === required);
+              const enabled = packRecommendation.plans.filter(
+                (plan) => packRecommendation.plans.findIndex((p) => p.id === plan.id) >= requiredIndex,
+              );
+              if (enabled.length === 0) return;
+              const index = Math.max(
+                0,
+                enabled.findIndex((plan) => plan.id === selectedPlanId),
+              );
+              const delta = event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1;
+              const next = enabled[(index + delta + enabled.length) % enabled.length];
+              if (!next) return;
+              event.preventDefault();
+              selectPlan(next.id);
+              document.getElementById(`pack-plan-${next.id}`)?.focus();
+            }}
+          >
             {packRecommendation.plans.map((plan) => {
               const required = packRecommendation.requiredPlanId;
               const requiredIndex = packRecommendation.plans.findIndex((p) => p.id === required);
@@ -214,9 +239,11 @@ export function MemorialPackPanel({
               return (
                 <button
                   key={plan.id}
+                  id={`pack-plan-${plan.id}`}
                   type="button"
                   role="radio"
                   aria-checked={selected}
+                  tabIndex={selected ? 0 : -1}
                   disabled={pending || tooLow}
                   onClick={() => selectPlan(plan.id)}
                   className={`text-left rounded-[10px] border px-4 py-3 transition ${
