@@ -54,6 +54,17 @@ export default async function SharePage() {
         ),
         exceedsTopTierAllowance: synced.view.recommendation.exceedsTopTierAllowance,
         checkoutBlock: synced.view.recommendation.checkoutBlock ?? null,
+        drivingSource: synced.view.projection.drivingSource,
+        songCount: synced.view.projection.songCount,
+        usedSongDurationEstimate: synced.view.projection.usedSongDurationEstimate,
+        visualClock: formatTimelineClock(
+          secondsToFrames(synced.view.projection.visualDurationSeconds, DEFAULT_FPS),
+          DEFAULT_FPS,
+        ),
+        musicClock: formatTimelineClock(
+          secondsToFrames(synced.view.projection.musicDurationSeconds, DEFAULT_FPS),
+          DEFAULT_FPS,
+        ),
         plans: synced.view.plans.map((plan) => ({
           id: plan.id,
           displayName: plan.displayName,

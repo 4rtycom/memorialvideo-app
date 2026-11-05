@@ -9,6 +9,12 @@ import type {
   MusicDirectorSlotId,
   MusicSourceState,
 } from '@memorialvideo/contracts';
+import { DEFAULT_FPS, formatTimelineClock, secondsToFrames } from '@memorialvideo/contracts';
+import {
+  PACK_FILM_MINUTE_CAPS,
+  projectFilmDurationSeconds,
+  requiredConsumerPackForDurationSeconds,
+} from '@memorialvideo/domain';
 import { Button, Card, ErrorState } from '@/components/ui';
 import { creatorT } from '@/lib/creator-ui-messages';
 
@@ -20,6 +26,7 @@ type CatalogTrack = {
   licenseStatus: string;
   previewUrl?: string;
   momentTags?: string[];
+  durationMs?: number;
 };
 
 type LoadBody = {
@@ -50,6 +57,7 @@ function emptySong() {
     linkUrl: null as string | null,
     linkPlatform: null as MusicDirectorSlot['song']['linkPlatform'],
     catalogTrackKey: null as string | null,
+    durationMs: null as number | null,
     notes: '',
   };
 }
@@ -189,6 +197,7 @@ export function MusicDirectorPanel({
         linkUrl: null,
         linkPlatform: null,
         catalogTrackKey: track.trackId,
+        durationMs: track.durationMs ?? null,
         notes: '',
       },
       sourceState: 'audio_available',
@@ -289,6 +298,31 @@ export function MusicDirectorPanel({
 
   const active = plan?.slots.find((slot) => slot.id === activeSlot) ?? null;
 
+  const projection = useMemo(() => {
+    if (!plan) return null;
+    return projectFilmDurationSeconds({
+      visualDurationSeconds: 0,
+      musicDirectorPlan: plan,
+    });
+  }, [plan]);
+
+  const projectionClock = projection
+    ? formatTimelineClock(
+        secondsToFrames(projection.projectedDurationSeconds, DEFAULT_FPS),
+        DEFAULT_FPS,
+      )
+    : null;
+  const requiredPackId = projection
+    ? requiredConsumerPackForDurationSeconds(projection.projectedDurationSeconds)
+    : 'memorial-tribute';
+  const requiredPackMinutes = PACK_FILM_MINUTE_CAPS[requiredPackId];
+  const requiredPackLabel =
+    requiredPackId === 'life-story'
+      ? 'Life Story'
+      : requiredPackId === 'forever-legacy'
+        ? 'Forever Legacy'
+        : 'Memorial Tribute';
+
   if (loadState === 'loading' && !plan) {
     return (
       <Card className="!p-7" data-testid="music-director-panel">
@@ -339,6 +373,28 @@ export function MusicDirectorPanel({
       <Card className="!p-7">
         <h2 className="serif text-[33px] m-0 mb-2">{creatorT(locale, 'creator.music.directorTitle')}</h2>
         <p className="text-[color:var(--muted)] mb-4">{creatorT(locale, 'creator.music.directorIntro')}</p>
+
+        {projection && projection.songCount > 0 && projectionClock ? (
+          <div
+            className="mb-5 rounded-[9px] bg-[color:var(--cinema-soft)] px-4 py-3"
+            data-testid="music-projected-length"
+            role="status"
+          >
+            <p className="text-[15px] m-0 mb-1">
+              {creatorT(locale, 'creator.music.projectedLength').replace('{clock}', projectionClock)}
+            </p>
+            <p className="text-[13px] text-[color:var(--muted)] m-0">
+              {requiredPackId === 'memorial-tribute'
+                ? creatorT(locale, 'creator.music.projectedOk')
+                : creatorT(locale, 'creator.music.projectedUpgrade')
+                    .replace('{pack}', requiredPackLabel)
+                    .replace('{minutes}', String(requiredPackMinutes))}
+              {projection.usedSongDurationEstimate
+                ? ` ${creatorT(locale, 'creator.pack.projectedEstimateNote')}`
+                : ''}
+            </p>
+          </div>
+        ) : null}
 
         <div
           className="grid gap-3 mb-5 sm:grid-cols-3"
@@ -408,7 +464,12 @@ export function MusicDirectorPanel({
                   value={active.song.title}
                   onChange={(e) =>
                     updateSlot(active.id, {
-                      song: { ...active.song, title: e.target.value, catalogTrackKey: null },
+                      song: {
+                        ...active.song,
+                        title: e.target.value,
+                        catalogTrackKey: null,
+                        durationMs: null,
+                      },
                     })
                   }
                   maxLength={160}
@@ -421,7 +482,12 @@ export function MusicDirectorPanel({
                   value={active.song.artist}
                   onChange={(e) =>
                     updateSlot(active.id, {
-                      song: { ...active.song, artist: e.target.value, catalogTrackKey: null },
+                      song: {
+                        ...active.song,
+                        artist: e.target.value,
+                        catalogTrackKey: null,
+                        durationMs: null,
+                      },
                     })
                   }
                   maxLength={160}
@@ -443,6 +509,7 @@ export function MusicDirectorPanel({
                       linkUrl,
                       linkPlatform: linkUrl ? detectPlatform(linkUrl) : null,
                       catalogTrackKey: null,
+                      durationMs: null,
                     },
                   });
                 }}

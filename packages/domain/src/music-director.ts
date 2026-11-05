@@ -37,6 +37,7 @@ export function defaultMusicDirectorSlots(): MusicDirectorSlot[] {
       linkUrl: null,
       linkPlatform: null,
       catalogTrackKey: null,
+      durationMs: null,
       notes: '',
     },
   }));
@@ -57,6 +58,7 @@ export function defaultMusicDirectorPlan(partial?: {
         linkUrl: null,
         linkPlatform: null,
         catalogTrackKey: track.trackId,
+        durationMs: track.durationMs,
         notes: '',
       };
       memories.sourceState = inferSourceState(memories.song, {
@@ -243,6 +245,7 @@ export function ceremonyPlanToMusicDirector(input: {
       linkUrl: null as string | null,
       linkPlatform: null as MusicLinkPlatform | null,
       catalogTrackKey: track.trackId,
+      durationMs: track.durationMs as number | null,
       notes: '',
     };
     return {

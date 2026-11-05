@@ -32,6 +32,7 @@ describe('music director (MV-AUD-003)', () => {
         linkUrl: 'https://open.spotify.com/track/xyz',
         linkPlatform: 'spotify',
         catalogTrackKey: null,
+        durationMs: null,
         notes: '',
       }),
     ).toBe('song_identified');
@@ -45,6 +46,7 @@ describe('music director (MV-AUD-003)', () => {
         linkUrl: null,
         linkPlatform: null,
         catalogTrackKey: 'still-water',
+        durationMs: 45_000,
         notes: '',
       }),
     ).toBe('audio_available');
@@ -61,6 +63,7 @@ describe('music director (MV-AUD-003)', () => {
       linkUrl: null,
       linkPlatform: null,
       catalogTrackKey: 'quiet-hope',
+      durationMs: 45_000,
       notes: '',
     };
     opening.sourceState = 'audio_available';
@@ -71,6 +74,7 @@ describe('music director (MV-AUD-003)', () => {
       linkUrl: null,
       linkPlatform: null,
       catalogTrackKey: 'gentle-rise',
+      durationMs: 45_000,
       notes: '',
     };
     farewell.sourceState = 'audio_available';
@@ -92,6 +96,7 @@ describe('music director (MV-AUD-003)', () => {
       linkUrl: 'https://music.apple.com/us/song/bridge',
       linkPlatform: 'apple_music',
       catalogTrackKey: null,
+      durationMs: null,
       notes: '',
     };
     memories.sourceState = 'song_identified';
@@ -103,6 +108,7 @@ describe('music director (MV-AUD-003)', () => {
       linkUrl: null,
       linkPlatform: null,
       catalogTrackKey: null,
+      durationMs: null,
       notes: 'Organist',
     };
 

@@ -1,13 +1,16 @@
 import {
   framesToSeconds,
+  parseMusicDirectorPlan,
   parseTimelineContract,
   totalDurationFrames,
   type TimelineContract,
 } from '@memorialvideo/contracts';
 import {
   orderedConsumerPacks,
+  projectFilmDurationSeconds,
   resolvePackForFilmDuration,
   type PackDurationRecommendation,
+  type ProjectedFilmLength,
   type ProposedPlanId,
 } from '@memorialvideo/domain';
 
@@ -34,24 +37,50 @@ export function filmDurationSecondsFromTribute(tribute: Tribute | null): number 
   }
 }
 
+export function projectedFilmLengthForTribute(tribute: Tribute | null): ProjectedFilmLength {
+  const visualDurationSeconds = filmDurationSecondsFromTribute(tribute);
+  let musicDirectorPlan = null;
+  if (tribute?.musicDirectorPlan) {
+    try {
+      musicDirectorPlan = parseMusicDirectorPlan(tribute.musicDirectorPlan);
+    } catch {
+      musicDirectorPlan = null;
+    }
+  }
+  return projectFilmDurationSeconds({
+    visualDurationSeconds,
+    musicDirectorPlan,
+  });
+}
+
+/**
+ * Duration used for pack floors: max(visual timeline, full favourite-song sum).
+ * Three identified songs without known lengths use the cherished-song estimate
+ * so families see Life Story before purchase instead of a surprise at checkout.
+ */
+export function packDurationSecondsFromTribute(tribute: Tribute | null): number {
+  return projectedFilmLengthForTribute(tribute).projectedDurationSeconds;
+}
+
 export function recommendPackForTribute(tribute: Tribute | null): PackDurationRecommendation | null {
   if (!tribute) {
     return null;
   }
   return resolvePackForFilmDuration({
-    filmDurationSeconds: filmDurationSecondsFromTribute(tribute),
+    filmDurationSeconds: packDurationSecondsFromTribute(tribute),
     selectedPlanId: tribute.selectedConsumerPackId,
   });
 }
 
 export type ConsumerPackView = {
   recommendation: PackDurationRecommendation;
+  projection: ProjectedFilmLength;
   plans: ReturnType<typeof orderedConsumerPacks>;
 };
 
 /**
- * Resolve pack recommendation and persist auto-upgrade when duration crosses
- * 10:00 or 20:00. Never charges — payment starts only via /api/checkout.
+ * Resolve pack recommendation and persist auto-upgrade when projected duration
+ * crosses 10:00 or 20:00. Never charges — payment starts only via /api/checkout.
  */
 export async function syncConsumerPackForFilmDuration(
   publicId: string,
@@ -60,8 +89,9 @@ export async function syncConsumerPackForFilmDuration(
   if (!tribute) {
     return null;
   }
+  const projection = projectedFilmLengthForTribute(tribute);
   const recommendation = resolvePackForFilmDuration({
-    filmDurationSeconds: filmDurationSecondsFromTribute(tribute),
+    filmDurationSeconds: projection.projectedDurationSeconds,
     selectedPlanId: tribute.selectedConsumerPackId,
   });
   const plans = orderedConsumerPacks();
@@ -75,13 +105,13 @@ export async function syncConsumerPackForFilmDuration(
     }
     return {
       tribute: updated,
-      view: { recommendation, plans },
+      view: { recommendation, projection, plans },
     };
   }
 
   return {
     tribute,
-    view: { recommendation, plans },
+    view: { recommendation, projection, plans },
   };
 }
 
@@ -93,9 +123,10 @@ export async function selectConsumerPack(
   if (!tribute) {
     return null;
   }
+  const projection = projectedFilmLengthForTribute(tribute);
   // Duration floor still applies — cannot select below the required tier.
   const recommendation = resolvePackForFilmDuration({
-    filmDurationSeconds: filmDurationSecondsFromTribute(tribute),
+    filmDurationSeconds: projection.projectedDurationSeconds,
     selectedPlanId: planId,
   });
   const updated = await updateTribute(publicId, {
@@ -106,6 +137,6 @@ export async function selectConsumerPack(
   }
   return {
     tribute: updated,
-    view: { recommendation, plans: orderedConsumerPacks() },
+    view: { recommendation, projection, plans: orderedConsumerPacks() },
   };
 }

@@ -9,6 +9,7 @@ import {
   catalogTrackById,
   ceremonyMusicLicenseStatuses,
   defaultCeremonyMusicPlan,
+  expandTimelineForCeremonyMusic,
   proposeCeremonyMusicMix,
   suggestedTributeTrack,
   withCeremonyMusicOnTimeline,
@@ -54,21 +55,25 @@ function resolveTracks(plan: CeremonyMusicPlan) {
   return tracks;
 }
 
-/** Pure: attach AudioMixContract + legacy music bed onto a TimelineContract. */
+/**
+ * Pure: expand the film so each song fits in full, then attach AudioMixContract.
+ * Never silently shortens a cherished song (MV-AUD-011).
+ */
 export function applyCeremonyMusicToTimeline(
   timeline: TimelineContract,
   plan: CeremonyMusicPlan,
 ): TimelineContract {
   const tracks = resolveTracks(plan);
+  const expanded = expandTimelineForCeremonyMusic({ timeline, plan, tracks });
   const mix = proposeCeremonyMusicMix({
-    timeline,
+    timeline: expanded,
     plan,
     tracks,
     previewSrcForTrack,
   });
   return parseTimelineContract(
     withCeremonyMusicOnTimeline({
-      timeline,
+      timeline: expanded,
       plan,
       mix,
       tracks,

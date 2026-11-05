@@ -104,4 +104,42 @@ describe('pack-duration-local', () => {
     expect(synced?.view.recommendation.reason).toBe('over_twenty_minutes');
     expect(synced?.tribute.selectedConsumerPackId).toBe('forever-legacy');
   });
+
+  it('upgrades from three favourite songs before purchase even when the photo film is short', async () => {
+    const store = await import('./store');
+    const pack = await import('./pack-duration-local');
+    const { defaultMusicDirectorPlan, withInferredSourceStates } = await import(
+      '@memorialvideo/domain'
+    );
+    const created = await store.createTribute({ displayName: 'Three Songs Person' });
+    await store.updateTribute(created.publicId, {
+      selectedConsumerPackId: 'memorial-tribute',
+    });
+    const saved = await store.saveTimeline(created.publicId, timelineForSeconds(3 * 60), {
+      expectedVersion: 0,
+    });
+    expect(saved.ok).toBe(true);
+
+    const plan = withInferredSourceStates(defaultMusicDirectorPlan());
+    for (const slot of plan.slots) {
+      slot.song = {
+        title: `${slot.label} song`,
+        artist: 'Family',
+        linkUrl: null,
+        linkPlatform: null,
+        catalogTrackKey: null,
+        durationMs: null,
+        notes: '',
+      };
+      slot.sourceState = 'song_identified';
+    }
+    await store.updateTribute(created.publicId, { musicDirectorPlan: plan });
+
+    const synced = await pack.syncConsumerPackForFilmDuration(created.publicId);
+    expect(synced?.view.projection.drivingSource).toBe('music');
+    expect(synced?.view.projection.songCount).toBe(3);
+    expect(synced?.view.recommendation.selectedPlanId).toBe('life-story');
+    expect(synced?.view.recommendation.reason).toBe('over_ten_minutes');
+    expect(synced?.tribute.selectedConsumerPackId).toBe('life-story');
+  });
 });
