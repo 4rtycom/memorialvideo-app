@@ -160,7 +160,7 @@ const enCore = {
   'creator.share.eyebrow': 'READY FOR THE SERVICE',
   'creator.share.hero': 'Take the film to the venue.',
   'creator.share.lede':
-    'Check readiness, download the venue pack with cue sheet, rehearse pause and resume, then optionally share a private family screening.',
+    'Check readiness, download the venue pack with offline Ceremony Player, rehearse speech pauses, then optionally share a private family screening.',
   'creator.share.downloadMp4': 'Download film (1080p)',
   'creator.share.privateTitle': 'Optional private viewing',
   'creator.share.privateBody':
@@ -171,7 +171,7 @@ const enCore = {
   'creator.share.revoke': 'Revoke',
   'creator.share.ceremonyPack': 'Venue Ceremony Pack',
   'creator.share.ceremonyPackReady':
-    'Includes the verified 1080p film, venue checklist, and printed cue sheet for the ceremony computer.',
+    'Includes the verified 1080p film, offline Ceremony Player (pause for speech), venue checklist, and printed cue sheet.',
   'creator.share.ceremonyPackBlocked':
     'The venue pack unlocks after Memorial Pack is active and a verified final film is ready.',
   'creator.share.ceremonyPackDownload': 'Download venue pack',

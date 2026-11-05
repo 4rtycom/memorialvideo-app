@@ -22,10 +22,16 @@ export function RemotionCinemaPlayer({
   timeline,
   origin,
   playerRef,
+  showControls = true,
+  showMeta = true,
+  className = 'player mb-5',
 }: {
   timeline: TimelineContract | null;
   origin: string;
   playerRef?: RefObject<PlayerRef | null>;
+  showControls?: boolean;
+  showMeta?: boolean;
+  className?: string;
 }) {
   const playerTimeline = useMemo(() => {
     if (!timeline) return null;
@@ -34,7 +40,7 @@ export function RemotionCinemaPlayer({
 
   if (!playerTimeline) {
     return (
-      <div className="player mb-5">
+      <div className={className}>
         <div className="relative aspect-[1006/412] bg-[color:var(--cinema)] flex items-center justify-center text-white px-6 text-center">
           Arrange the first film to open the screening room.
         </div>
@@ -43,16 +49,19 @@ export function RemotionCinemaPlayer({
   }
 
   return (
-    <div className="player mb-5">
+    <div className={className}>
       <Inner
         timeline={playerTimeline}
         durationInFrames={totalDurationFrames(playerTimeline)}
         playerRef={playerRef}
+        showControls={showControls}
       />
-      <div className="bg-[color:var(--cinema)] px-5 py-3 text-white/80 text-[12px]">
-        Your film · {playerTimeline.width}×{playerTimeline.height}
-        {playerTimeline.watermark ? ' · draft preview' : ''}
-      </div>
+      {showMeta ? (
+        <div className="bg-[color:var(--cinema)] px-5 py-3 text-white/80 text-[12px]">
+          Your film · {playerTimeline.width}×{playerTimeline.height}
+          {playerTimeline.watermark ? ' · draft preview' : ''}
+        </div>
+      ) : null}
     </div>
   );
 }

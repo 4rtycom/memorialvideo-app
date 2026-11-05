@@ -257,7 +257,8 @@ export function ShareDownloadPanel({
           <ul className="list-none p-0 m-0 grid gap-2 text-[14px] text-[color:var(--muted)]">
             <li>○  Download the Ceremony Pack to the venue computer</li>
             <li>○  Print or save the cue sheet running order</li>
-            <li>○  Rehearse pause and resume for live speeches</li>
+            <li>○  Open ceremony-player.html (or in-app Ceremony Player) for live speech holds</li>
+            <li>○  Rehearse pause and resume before the service</li>
             <li>○  Private family link is optional and secondary</li>
           </ul>
         </div>

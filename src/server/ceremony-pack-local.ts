@@ -1,16 +1,20 @@
 import { readFile } from 'node:fs/promises';
 import {
   buildCeremonyPackManifest,
+  buildCeremonyRunningOrder,
   canBuildCeremonyPack,
   ceremonyChecklistText,
   ceremonyCueSheetText,
+  ceremonyOfflinePlayerHtml,
+  ceremonyRunningOrderForCueSheet,
+  CEREMONY_OFFLINE_PLAYER_FILE,
   memorialPackPolicy,
   type CeremonyCueSheetChapter,
 } from '@memorialvideo/domain';
 import {
   formatTimelineClock,
+  framesToSeconds,
   parseTimelineContract,
-  sceneStartFrame,
   totalDurationFrames,
 } from '@memorialvideo/contracts';
 import { evaluateCreatorReadiness } from './readiness-local';
@@ -84,27 +88,31 @@ export async function planCeremonyPackWithReadiness(tribute: Tribute | null): Pr
 function cueSheetChaptersFromTribute(tribute: Tribute): {
   chapters: CeremonyCueSheetChapter[];
   totalLabel: string | null;
+  offlineCues: Array<{ title: string; startLabel: string; startSeconds: number }>;
 } {
   if (!tribute.timeline) {
-    return { chapters: [], totalLabel: null };
+    return { chapters: [], totalLabel: null, offlineCues: [] };
   }
   const timeline = parseTimelineContract(tribute.timeline);
   const totalLabel = formatTimelineClock(totalDurationFrames(timeline), timeline.fps);
-  const chapterScenes = timeline.scenes.filter((scene) => scene.type === 'chapter');
-  if (chapterScenes.length === 0) {
+  const order = buildCeremonyRunningOrder({
+    timeline,
+    speechPauses: tribute.musicDirectorPlan?.speechPauses ?? [],
+  });
+  if (order.length === 0) {
     return {
       chapters: [{ title: 'Full film', startLabel: '0:00' }],
       totalLabel,
+      offlineCues: [{ title: 'Full film', startLabel: '0:00', startSeconds: 0 }],
     };
   }
-  const chapters: CeremonyCueSheetChapter[] = chapterScenes.map((scene) => {
-    const start = sceneStartFrame(timeline, scene.id);
-    return {
-      title: scene.type === 'chapter' ? scene.title : 'Moment',
-      startLabel: formatTimelineClock(start, timeline.fps),
-    };
-  });
-  return { chapters, totalLabel };
+  const chapters = ceremonyRunningOrderForCueSheet(order);
+  const offlineCues = order.map((item) => ({
+    title: item.kind === 'speech_pause' ? `Live words — ${item.title}` : item.title,
+    startLabel: item.startLabel,
+    startSeconds: framesToSeconds(item.startFrame, timeline.fps),
+  }));
+  return { chapters, totalLabel, offlineCues };
 }
 
 export function buildOwnerCeremonyCueSheet(tribute: Tribute | null): {
@@ -125,8 +133,8 @@ export function buildOwnerCeremonyCueSheet(tribute: Tribute | null): {
       displayName: tribute.displayName,
       chapters,
       totalLabel,
-      // Honest: browser operator pause/resume exists; ZIP remains static MP4.
-      interactivePlayerReady: false,
+      interactivePlayerReady: true,
+      interactivePlayerFileName: CEREMONY_OFFLINE_PLAYER_FILE,
     }),
   };
 }
@@ -170,10 +178,17 @@ export async function buildCeremonyPackZip(
   const mp4 = await readFile(absolute);
   const checklistBundle = buildOwnerCeremonyChecklist(tribute);
   const cueSheet = buildOwnerCeremonyCueSheet(tribute);
+  const { offlineCues } = cueSheetChaptersFromTribute(tribute);
+  const offlineHtml = ceremonyOfflinePlayerHtml({
+    videoFileName: manifest.videoFileName,
+    displayName: tribute.displayName,
+    cues: offlineCues,
+  });
   const checklist = new TextEncoder().encode(
     checklistBundle.ok ? checklistBundle.text : ceremonyChecklistText(tribute.publicId),
   );
   const cue = new TextEncoder().encode(cueSheet.ok ? cueSheet.text : '');
+  const player = new TextEncoder().encode(offlineHtml);
   const manifestJson = new TextEncoder().encode(`${JSON.stringify(manifest, null, 2)}\n`);
   const meta = new TextEncoder().encode(
     `${JSON.stringify(
@@ -187,7 +202,9 @@ export async function buildCeremonyPackZip(
         ceremonyChecklist: tribute.ceremonyChecklist,
         packedAt: new Date().toISOString(),
         includesCueSheet: true,
-        interactiveCeremonyPlayerInZip: false,
+        interactiveCeremonyPlayerInZip: true,
+        interactiveCeremonyPlayerFile: CEREMONY_OFFLINE_PLAYER_FILE,
+        speechPauseCount: tribute.musicDirectorPlan?.speechPauses?.filter((p) => p.enabled).length ?? 0,
       },
       null,
       2,
@@ -195,6 +212,7 @@ export async function buildCeremonyPackZip(
   );
   const bytes = buildStoreZip([
     { name: manifest.videoFileName, data: new Uint8Array(mp4) },
+    { name: CEREMONY_OFFLINE_PLAYER_FILE, data: player },
     { name: manifest.checklistFileName, data: checklist },
     { name: manifest.cueSheetFileName, data: cue },
     { name: 'manifest.json', data: manifestJson },

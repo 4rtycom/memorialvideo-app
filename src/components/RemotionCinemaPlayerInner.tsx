@@ -9,10 +9,13 @@ export function RemotionCinemaPlayerInner({
   timeline,
   durationInFrames,
   playerRef,
+  showControls = true,
 }: {
   timeline: TimelineContract;
   durationInFrames: number;
   playerRef?: RefObject<PlayerRef | null>;
+  /** Ceremony operator mode hides Remotion chrome — operator panel owns transport. */
+  showControls?: boolean;
 }) {
   return (
     <Player
@@ -28,7 +31,7 @@ export function RemotionCinemaPlayerInner({
         aspectRatio: `${timeline.width} / ${timeline.height}`,
         background: '#101b21',
       }}
-      controls
+      controls={showControls}
       autoPlay={false}
       acknowledgeRemotionLicense
       errorFallback={() => (
