@@ -3,6 +3,7 @@ export * from './tokens';
 export * from './entitlement';
 export * from './proposed-pricing';
 export * from './pack-duration';
+export * from './projected-film-length';
 export * from './checkout';
 export * from './project';
 export * from './ingest';

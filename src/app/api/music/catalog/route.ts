@@ -29,6 +29,7 @@ export async function GET() {
       mood: track.moodTags.join(', '),
       licenseStatus: track.licenseStatus,
       momentTags: track.momentTags,
+      durationMs: track.durationMs,
       licensedForPreview: track.licensedForPreview,
       licensedForDownload: track.licensedForDownload,
       previewUrl: `/api/music/preview?trackId=${encodeURIComponent(track.trackId)}`,

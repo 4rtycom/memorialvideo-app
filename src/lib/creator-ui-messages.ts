@@ -68,10 +68,21 @@ export const CREATOR_UI_KEYS = [
   'creator.pack.localOnlyNote',
   'creator.pack.chooseTitle',
   'creator.pack.filmLength',
+  'creator.pack.projectedLength',
+  'creator.pack.projectedFromFilm',
+  'creator.pack.projectedFromSongs',
+  'creator.pack.projectedEstimateNote',
+  'creator.pack.noSilentShorten',
+  'creator.pack.tooShortForFilm',
   'creator.pack.allowance',
   'creator.pack.upToMinutes',
   'creator.pack.upgradeOver10',
   'creator.pack.upgradeOver20',
+  'creator.pack.upgradeSongsOver10',
+  'creator.pack.upgradeSongsOver20',
+  'creator.music.projectedLength',
+  'creator.music.projectedUpgrade',
+  'creator.music.projectedOk',
   'creator.music.opening',
   'creator.music.openingHint',
   'creator.music.soundtrack',
@@ -250,12 +261,29 @@ const enCore = {
     'Local fake fulfill only — not live paid COMPLETE. Configure Stripe (XB-005) for Checkout Session + webhook.',
   'creator.pack.chooseTitle': 'Choose your memorial pack',
   'creator.pack.filmLength': 'Finished film length',
+  'creator.pack.projectedLength': 'Projected film length',
+  'creator.pack.projectedFromFilm': 'Based on your current film arrangement.',
+  'creator.pack.projectedFromSongs':
+    'Based on your {count} favourite songs playing in full — we never shorten a cherished song to fit a shorter pack.',
+  'creator.pack.projectedEstimateNote':
+    'Song lengths are estimated at about 3½ minutes each until you set an exact length.',
+  'creator.pack.noSilentShorten':
+    'Choose a pack that covers the full length. Songs are never trimmed quietly at checkout.',
+  'creator.pack.tooShortForFilm': 'Too short for this film',
   'creator.pack.allowance': 'Pack allowance',
   'creator.pack.upToMinutes': 'Up to {minutes} minutes',
   'creator.pack.upgradeOver10':
     'Your film is longer than 10 minutes, so we moved you to the next pack (Life Story).',
   'creator.pack.upgradeOver20':
     'Your film is longer than 20 minutes, so we moved you to Forever Legacy.',
+  'creator.pack.upgradeSongsOver10':
+    'Your three favourite songs run longer than 10 minutes together, so Life Story is required before purchase.',
+  'creator.pack.upgradeSongsOver20':
+    'Your favourite songs run longer than 20 minutes together, so Forever Legacy is required before purchase.',
+  'creator.music.projectedLength': 'Projected film length with these songs: {clock}',
+  'creator.music.projectedUpgrade':
+    'This needs the {pack} pack (up to {minutes} minutes). You’ll confirm the upgrade before purchase — songs stay full length.',
+  'creator.music.projectedOk': 'This fits the Memorial Tribute pack (up to 10 minutes).',
   'creator.music.opening': 'Opening words',
   'creator.music.openingHint': 'Shown at the start of the film.',
   'creator.music.soundtrack': 'Your three songs',

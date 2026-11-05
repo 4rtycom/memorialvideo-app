@@ -32,6 +32,11 @@ export const musicSongReferenceSchema = z.object({
   linkPlatform: z.enum(MUSIC_LINK_PLATFORMS).nullable().default(null),
   /** Synthetic/dev catalog id when chosen from the in-app catalog. */
   catalogTrackKey: z.string().min(1).max(80).nullable().default(null),
+  /**
+   * Known or family-entered song length in ms.
+   * Used for pack projection — never invent a silent trim from a missing value.
+   */
+  durationMs: z.number().int().positive().max(60 * 60 * 1000).nullable().default(null),
   notes: z.string().trim().max(280).default(''),
 });
 export type MusicSongReference = z.infer<typeof musicSongReferenceSchema>;
@@ -47,6 +52,7 @@ export const musicDirectorSlotSchema = z.object({
     linkUrl: null,
     linkPlatform: null,
     catalogTrackKey: null,
+    durationMs: null,
     notes: '',
   }),
 });

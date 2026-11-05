@@ -35,6 +35,7 @@ describe('music director local (MV-AUD-003)', () => {
       linkUrl: 'https://open.spotify.com/track/example',
       linkPlatform: 'spotify',
       catalogTrackKey: null,
+      durationMs: null,
       notes: '',
     };
     memories.sourceState = 'song_identified';
@@ -78,6 +79,7 @@ describe('music director local (MV-AUD-003)', () => {
       linkUrl: null,
       linkPlatform: null,
       catalogTrackKey: 'still-water',
+      durationMs: 45_000,
       notes: '',
     };
     memories.sourceState = 'audio_available';
@@ -89,6 +91,7 @@ describe('music director local (MV-AUD-003)', () => {
       linkUrl: null,
       linkPlatform: null,
       catalogTrackKey: null,
+      durationMs: null,
       notes: 'Organ',
     };
     const farewell = plan.slots.find((slot) => slot.id === 'farewell')!;
@@ -98,6 +101,7 @@ describe('music director local (MV-AUD-003)', () => {
       linkUrl: null,
       linkPlatform: null,
       catalogTrackKey: 'gentle-rise',
+      durationMs: 45_000,
       notes: '',
     };
     farewell.sourceState = 'audio_available';

@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  ceremonyMusicShorteningRisks,
   defaultCeremonyMusicPlan,
+  expandTimelineForCeremonyMusic,
   proposeCeremonyMusicMix,
   resolveMomentFrameRanges,
+  songDurationFrames,
   withCeremonyMusicOnTimeline,
 } from './ceremony-music';
 import { buildInitialTimeline } from './sequence';
 import { BETA_MUSIC_CATALOG, suggestedTributeTrack } from './music-catalog';
+import { totalDurationFrames } from '@memorialvideo/contracts';
 
 describe('ceremony music', () => {
   const timeline = buildInitialTimeline({
@@ -40,14 +44,20 @@ describe('ceremony music', () => {
 
   it('proposes a single tribute clip by default', () => {
     const plan = defaultCeremonyMusicPlan(suggestedTributeTrack().trackId);
-    const mix = proposeCeremonyMusicMix({
+    const expanded = expandTimelineForCeremonyMusic({
       timeline,
+      plan,
+      tracks: BETA_MUSIC_CATALOG,
+    });
+    const mix = proposeCeremonyMusicMix({
+      timeline: expanded,
       plan,
       tracks: BETA_MUSIC_CATALOG,
       previewSrcForTrack: (trackKey) => `/api/music/preview?trackKey=${trackKey}`,
     });
     const musicTrack = mix.tracks.find((track) => track.kind === 'music');
     expect(musicTrack?.clips).toHaveLength(1);
+    expect(musicTrack?.clips?.[0]?.durationFrames).toBe(songDurationFrames(45_000, expanded.fps));
     expect(musicTrack?.rights?.source).toBe('catalog_licensed');
   });
 
@@ -61,16 +71,25 @@ describe('ceremony music', () => {
         closing: { trackKey: 'gentle-rise' },
       },
     };
-    const mix = proposeCeremonyMusicMix({
+    const expanded = expandTimelineForCeremonyMusic({
       timeline,
+      plan,
+      tracks: BETA_MUSIC_CATALOG,
+    });
+    const mix = proposeCeremonyMusicMix({
+      timeline: expanded,
       plan,
       tracks: BETA_MUSIC_CATALOG,
       previewSrcForTrack: (trackKey) => `/api/music/preview?trackKey=${trackKey}`,
     });
     const clips = mix.tracks.find((track) => track.kind === 'music')?.clips ?? [];
     expect(clips.length).toBeGreaterThanOrEqual(3);
+    const trackFrames = songDurationFrames(45_000, expanded.fps);
+    for (const clip of clips) {
+      expect(clip.durationFrames).toBe(trackFrames);
+    }
     const merged = withCeremonyMusicOnTimeline({
-      timeline,
+      timeline: expanded,
       plan,
       mix,
       tracks: BETA_MUSIC_CATALOG,
@@ -78,5 +97,47 @@ describe('ceremony music', () => {
     });
     expect(merged.music?.trackId).toBe('still-water');
     expect(merged.audio?.tracks.some((track) => track.kind === 'music')).toBe(true);
+  });
+
+  it('never silently shortens songs — expands the film instead (MV-AUD-011)', () => {
+    const plan = {
+      mode: 'moments' as const,
+      slots: {
+        opening: { trackKey: 'quiet-hope', venueHandled: false },
+        tribute: { trackKey: 'still-water' },
+        reflection: { trackKey: null },
+        closing: { trackKey: 'gentle-rise' },
+      },
+    };
+    expect(
+      ceremonyMusicShorteningRisks({
+        timeline,
+        plan,
+        tracks: BETA_MUSIC_CATALOG,
+      }).length,
+    ).toBeGreaterThan(0);
+
+    const expanded = expandTimelineForCeremonyMusic({
+      timeline,
+      plan,
+      tracks: BETA_MUSIC_CATALOG,
+    });
+    expect(totalDurationFrames(expanded)).toBeGreaterThan(totalDurationFrames(timeline));
+    expect(
+      ceremonyMusicShorteningRisks({
+        timeline: expanded,
+        plan,
+        tracks: BETA_MUSIC_CATALOG,
+      }),
+    ).toEqual([]);
+
+    expect(() =>
+      proposeCeremonyMusicMix({
+        timeline,
+        plan,
+        tracks: BETA_MUSIC_CATALOG,
+        previewSrcForTrack: (trackKey) => `/api/music/preview?trackKey=${trackKey}`,
+      }),
+    ).toThrow(/music_would_shorten_song/);
   });
 });

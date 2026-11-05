@@ -23,6 +23,12 @@ export type PackRecommendationView = {
   filmClock: string;
   exceedsTopTierAllowance: boolean;
   checkoutBlock: null | 'stripe_not_configured';
+  /** What drives the projected length shown before purchase. */
+  drivingSource?: 'visual' | 'music' | 'equal' | 'none';
+  songCount?: number;
+  usedSongDurationEstimate?: boolean;
+  visualClock?: string;
+  musicClock?: string;
   plans: Array<{
     id: ProposedPlanId;
     displayName: string;
@@ -37,6 +43,20 @@ function upgradeExplanation(
 ): string | null {
   if (!recommendation.autoUpgraded) {
     return null;
+  }
+  if (
+    recommendation.drivingSource === 'music' &&
+    (recommendation.songCount ?? 0) >= 2 &&
+    recommendation.reason === 'over_ten_minutes'
+  ) {
+    return creatorT(locale, 'creator.pack.upgradeSongsOver10');
+  }
+  if (
+    recommendation.drivingSource === 'music' &&
+    (recommendation.songCount ?? 0) >= 2 &&
+    recommendation.reason === 'over_twenty_minutes'
+  ) {
+    return creatorT(locale, 'creator.pack.upgradeSongsOver20');
   }
   if (recommendation.reason === 'over_twenty_minutes') {
     return creatorT(locale, 'creator.pack.upgradeOver20');
@@ -181,7 +201,7 @@ export function MemorialPackPanel({
         <p className="text-[14px] text-[color:var(--muted)] m-0">{creatorT(locale, 'creator.pack.active')}</p>
         {packRecommendation ? (
           <p className="text-[13px] text-[color:var(--muted)] mt-2 mb-0">
-            {creatorT(locale, 'creator.pack.filmLength')}: {packRecommendation.filmClock} ·{' '}
+            {creatorT(locale, 'creator.pack.projectedLength')}: {packRecommendation.filmClock} ·{' '}
             {creatorT(locale, 'creator.pack.allowance')}: {selectedPlan?.filmMinutes ?? '—'} min
           </p>
         ) : null}
@@ -196,14 +216,29 @@ export function MemorialPackPanel({
 
       {packRecommendation ? (
         <div className="mb-4">
+          <p className="text-[15px] m-0 mb-1" data-testid="pack-projected-length">
+            {creatorT(locale, 'creator.pack.projectedLength')}:{' '}
+            <strong className="font-medium">{packRecommendation.filmClock}</strong>
+          </p>
           <p className="text-[13px] text-[color:var(--muted)] m-0 mb-3">
-            {creatorT(locale, 'creator.pack.filmLength')}: {packRecommendation.filmClock}
+            {packRecommendation.drivingSource === 'music'
+              ? creatorT(locale, 'creator.pack.projectedFromSongs').replace(
+                  '{count}',
+                  String(packRecommendation.songCount ?? 0),
+                )
+              : creatorT(locale, 'creator.pack.projectedFromFilm')}
+            {packRecommendation.usedSongDurationEstimate
+              ? ` ${creatorT(locale, 'creator.pack.projectedEstimateNote')}`
+              : ''}
           </p>
           {explanation ? (
-            <p className="text-[14px] m-0 mb-3" role="status">
+            <p className="text-[14px] m-0 mb-3" role="status" data-testid="pack-upgrade-explanation">
               {explanation}
             </p>
           ) : null}
+          <p className="text-[13px] text-[color:var(--muted)] m-0 mb-3">
+            {creatorT(locale, 'creator.pack.noSilentShorten')}
+          </p>
           <div
             className="grid gap-2"
             role="radiogroup"
@@ -258,6 +293,7 @@ export function MemorialPackPanel({
                   </div>
                   <p className="text-[13px] text-[color:var(--muted)] m-0 mt-1">
                     {creatorT(locale, 'creator.pack.upToMinutes').replace('{minutes}', String(plan.filmMinutes))}
+                    {tooLow ? ` · ${creatorT(locale, 'creator.pack.tooShortForFilm')}` : ''}
                   </p>
                 </button>
               );

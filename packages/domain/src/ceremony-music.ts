@@ -5,12 +5,15 @@ import {
   parseAudioMixContract,
   sceneStartFrames,
   totalDurationFrames,
+  VIDEO_MAX_FRAMES,
+  TIMELINE_MAX_FRAMES,
   type AudioMixContract,
   type AudioRightsDeclaration,
   type CeremonyMusicMoment,
   type CeremonyMusicPlan,
   type MixAudioTrack,
   type TimelineContract,
+  type TimelineScene,
 } from '@memorialvideo/contracts';
 
 import type { CatalogTrackMeta } from './music-catalog';
@@ -19,6 +22,182 @@ export type MomentFrameRange = {
   startFrame: number;
   endFrame: number;
 };
+
+/** Full song length in frames — never silently clipped to a shorter moment. */
+export function songDurationFrames(trackDurationMs: number, fps = DEFAULT_FPS): number {
+  return Math.max(30, Math.round((trackDurationMs / 1000) * fps));
+}
+
+export type CeremonyMusicShortenRisk = {
+  moment: CeremonyMusicMoment;
+  trackKey: string;
+  trackFrames: number;
+  rangeFrames: number;
+};
+
+/**
+ * Detect whether applying music would trim a song below its full length.
+ * Call after expandTimelineForCeremonyMusic — any remaining risk is a hard error.
+ */
+export function ceremonyMusicShorteningRisks(input: {
+  timeline: TimelineContract;
+  plan: CeremonyMusicPlan;
+  tracks: readonly CatalogTrackMeta[];
+}): CeremonyMusicShortenRisk[] {
+  const byKey = new Map(input.tracks.map((track) => [track.trackId, track]));
+  const ranges = resolveMomentFrameRanges(input.timeline);
+  const total = totalDurationFrames(input.timeline);
+  const risks: CeremonyMusicShortenRisk[] = [];
+
+  for (const slot of activeCeremonyMusicSlots(input.plan)) {
+    const track = byKey.get(slot.trackKey);
+    if (!track) continue;
+    const range =
+      input.plan.mode === 'single'
+        ? { startFrame: 0, endFrame: total }
+        : ranges[slot.moment];
+    if (!range || range.endFrame <= range.startFrame) {
+      risks.push({
+        moment: slot.moment,
+        trackKey: slot.trackKey,
+        trackFrames: songDurationFrames(track.durationMs, input.timeline.fps),
+        rangeFrames: 0,
+      });
+      continue;
+    }
+    const trackFrames = songDurationFrames(track.durationMs, input.timeline.fps);
+    const rangeFrames = range.endFrame - range.startFrame;
+    if (trackFrames > rangeFrames) {
+      risks.push({
+        moment: slot.moment,
+        trackKey: slot.trackKey,
+        trackFrames,
+        rangeFrames,
+      });
+    }
+  }
+  return risks;
+}
+
+function musicHoldScenes(deficitFrames: number, idPrefix: string, title: string): TimelineScene[] {
+  const holds: TimelineScene[] = [];
+  let remaining = Math.max(0, Math.round(deficitFrames));
+  let index = 0;
+  while (remaining > 0) {
+    const durationFrames = Math.min(VIDEO_MAX_FRAMES, remaining);
+    holds.push({
+      id: `${idPrefix}_${index + 1}`,
+      type: 'chapter',
+      title,
+      durationFrames,
+      transitionIn: 'fade',
+      transitionOut: 'fade',
+    });
+    remaining -= durationFrames;
+    index += 1;
+  }
+  return holds;
+}
+
+/**
+ * Grow moment ranges so each assigned song fits in full.
+ * Inserts chapter hold scenes when a single scene cannot absorb the extra time.
+ */
+export function expandTimelineForCeremonyMusic(input: {
+  timeline: TimelineContract;
+  plan: CeremonyMusicPlan;
+  tracks: readonly CatalogTrackMeta[];
+}): TimelineContract {
+  const byKey = new Map(input.tracks.map((track) => [track.trackId, track]));
+  let scenes = [...input.timeline.scenes];
+  const fps = input.timeline.fps;
+
+  const recomputeTimeline = (): TimelineContract => ({
+    ...input.timeline,
+    scenes,
+  });
+
+  for (const slot of activeCeremonyMusicSlots(input.plan)) {
+    const track = byKey.get(slot.trackKey);
+    if (!track) continue;
+    const needed = songDurationFrames(track.durationMs, fps);
+    const timeline = recomputeTimeline();
+    const total = totalDurationFrames(timeline);
+    if (total + needed > TIMELINE_MAX_FRAMES && total < needed) {
+      // Soft guard — shorteningRisks will catch impossible fits.
+    }
+    const ranges = resolveMomentFrameRanges(timeline);
+    const range =
+      input.plan.mode === 'single'
+        ? { startFrame: 0, endFrame: total }
+        : ranges[slot.moment];
+    if (!range) continue;
+    const span = range.endFrame - range.startFrame;
+    if (span >= needed) continue;
+    const deficit = needed - span;
+    if (deficit <= 0) continue;
+
+    const starts = sceneStartFrames(timeline);
+    // Insert holds just before the first scene that starts at/after range.endFrame,
+    // or append when the range reaches the end.
+    let insertAt = scenes.length;
+    for (let i = 0; i < scenes.length; i += 1) {
+      const start = starts[i] ?? 0;
+      if (start >= range.endFrame) {
+        insertAt = i;
+        break;
+      }
+    }
+
+    // Prefer growing a stretchable scene that ends at range.endFrame (intro/outro/chapter/quote/video).
+    const lastInRangeIdx = insertAt - 1;
+    if (lastInRangeIdx >= 0) {
+      const last = scenes[lastInRangeIdx]!;
+      if (last.type !== 'image') {
+        const room = VIDEO_MAX_FRAMES - last.durationFrames;
+        if (room > 0) {
+          const grow = Math.min(room, deficit);
+          scenes = scenes.map((scene, index) =>
+            index === lastInRangeIdx
+              ? { ...scene, durationFrames: scene.durationFrames + grow }
+              : scene,
+          );
+          const stillNeeded = deficit - grow;
+          if (stillNeeded > 0) {
+            const holds = musicHoldScenes(
+              stillNeeded,
+              `music_hold_${slot.moment}`,
+              slot.moment === 'opening'
+                ? 'Opening continues'
+                : slot.moment === 'closing'
+                  ? 'Farewell continues'
+                  : 'Memories continue',
+            );
+            scenes = [...scenes.slice(0, insertAt), ...holds, ...scenes.slice(insertAt)];
+          }
+          continue;
+        }
+      }
+    }
+
+    const holds = musicHoldScenes(
+      deficit,
+      `music_hold_${slot.moment}`,
+      slot.moment === 'opening'
+        ? 'Opening continues'
+        : slot.moment === 'closing'
+          ? 'Farewell continues'
+          : 'Memories continue',
+    );
+    scenes = [...scenes.slice(0, insertAt), ...holds, ...scenes.slice(insertAt)];
+  }
+
+  const next = recomputeTimeline();
+  if (totalDurationFrames(next) > TIMELINE_MAX_FRAMES) {
+    throw new Error('music_would_exceed_timeline_max');
+  }
+  return next;
+}
 
 export function defaultCeremonyMusicPlan(suggestedTributeTrackKey?: string | null): CeremonyMusicPlan {
   return {
@@ -86,12 +265,6 @@ function catalogRights(track: CatalogTrackMeta, declaredAt: string): AudioRights
   };
 }
 
-function clipDurationFrames(range: MomentFrameRange, trackDurationMs: number, fps = DEFAULT_FPS): number {
-  const rangeFrames = Math.max(1, range.endFrame - range.startFrame);
-  const trackFrames = Math.max(30, Math.round((trackDurationMs / 1000) * fps));
-  return Math.min(rangeFrames, trackFrames);
-}
-
 export function activeCeremonyMusicSlots(plan: CeremonyMusicPlan): Array<{
   moment: CeremonyMusicMoment;
   trackKey: string;
@@ -113,12 +286,19 @@ export function activeCeremonyMusicSlots(plan: CeremonyMusicPlan): Array<{
   });
 }
 
+/**
+ * Build the AudioMix for ceremony music.
+ * Songs are never silently shortened — expand the timeline first via
+ * expandTimelineForCeremonyMusic (see applyCeremonyMusicToTimeline).
+ */
 export function proposeCeremonyMusicMix(input: {
   timeline: TimelineContract;
   plan: CeremonyMusicPlan;
   tracks: readonly CatalogTrackMeta[];
   previewSrcForTrack: (trackKey: string) => string;
   declaredAt?: string;
+  /** Explicit opt-in only — family apply path must leave this false/undefined. */
+  allowSongShorten?: boolean;
 }): AudioMixContract {
   const declaredAt = input.declaredAt ?? new Date().toISOString();
   const byKey = new Map(input.tracks.map((track) => [track.trackId, track]));
@@ -126,6 +306,13 @@ export function proposeCeremonyMusicMix(input: {
   const slots = activeCeremonyMusicSlots(input.plan);
   if (slots.length === 0) {
     throw new Error('music_plan_empty');
+  }
+
+  if (!input.allowSongShorten) {
+    const risks = ceremonyMusicShorteningRisks(input);
+    if (risks.length > 0) {
+      throw new Error('music_would_shorten_song');
+    }
   }
 
   const clips: MixAudioTrack['clips'] = [];
@@ -144,11 +331,16 @@ export function proposeCeremonyMusicMix(input: {
     if (!range || range.endFrame <= range.startFrame) {
       continue;
     }
+    const trackFrames = songDurationFrames(track.durationMs, input.timeline.fps);
+    const rangeFrames = range.endFrame - range.startFrame;
+    const durationFrames = input.allowSongShorten
+      ? Math.min(rangeFrames, trackFrames)
+      : trackFrames;
     clips.push({
       id: `clip_music_${slot.moment}_${index + 1}`,
       src: input.previewSrcForTrack(track.trackId),
       startFrame: range.startFrame,
-      durationFrames: clipDurationFrames(range, track.durationMs, input.timeline.fps),
+      durationFrames,
       gainDb: -6,
       fadeInFrames: 15,
       fadeOutFrames: 30,

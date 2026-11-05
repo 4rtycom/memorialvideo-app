@@ -10,14 +10,15 @@ import {
 } from '@memorialvideo/domain';
 
 import { creatorEnv } from '@/server/env';
+import { syncConsumerPackForFilmDuration } from '@/server/pack-duration-local';
 import { allowRequest } from '@/server/rate-limit';
 import { loadActiveTribute } from '@/server/session';
-import { getTribute } from '@/server/store';
 import {
   isStripeMemorialPackConfigured,
   startStripeMemorialPackCheckout,
   STRIPE_REQUIRED_ENV,
 } from '@/server/stripe-checkout';
+import { resolvePackForFilmDuration } from '@memorialvideo/domain';
 
 export const runtime = 'nodejs';
 
@@ -128,11 +129,20 @@ export async function POST(request: Request) {
       return noStore({ error: 'project_required', mode, retryable: false }, 400);
     }
 
-    const tribute = await getTribute(projectPublicId);
-    const consumerPackId = resolveConsumerPackId(
+    // Re-resolve projected film length before charge — never under-sell a song-driven film.
+    const synced = await syncConsumerPackForFilmDuration(projectPublicId);
+    if (!synced) {
+      return noStore({ error: 'project_required', mode, retryable: false }, 400);
+    }
+    const requested = resolveConsumerPackId(
       typeof payload.consumerPackId === 'string' ? payload.consumerPackId : undefined,
-      tribute?.selectedConsumerPackId,
+      synced.tribute.selectedConsumerPackId,
     );
+    const floored = resolvePackForFilmDuration({
+      filmDurationSeconds: synced.view.recommendation.filmDurationSeconds,
+      selectedPlanId: requested,
+    });
+    const consumerPackId = floored.selectedPlanId;
 
     const started = await startStripeMemorialPackCheckout({
       orderId: checkout.orderId,
