@@ -145,5 +145,25 @@ describe('HEIC contribution conversion (MV-AUD-007)', () => {
     expect(media.sniffMediaBytes(stored!.bytes)).toBe('image/jpeg');
     // Served Content-Type must match JPEG bytes (nosniff) — not the original HEIC session type.
     expect(stored!.contentType).toBe('image/jpeg');
+
+    // Retry complete must not overwrite converted JPEG with the original HEIC TUS bin.
+    const again = await complete.POST(
+      new Request('http://127.0.0.1:3002/api/uploads/complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ uploadId, assetId: authBody.assetId }),
+      }),
+    );
+    expect(again.status).toBe(200);
+    const againBody = (await again.json()) as {
+      ok: boolean;
+      memory: { contentType?: string; failureCode?: string | null };
+    };
+    expect(againBody.ok).toBe(true);
+    expect(againBody.memory.contentType).toBe('image/jpeg');
+    expect(againBody.memory.failureCode ?? null).toBeNull();
+    const storedAgain = await media.readMediaFile(tribute.publicId, authBody.assetId);
+    expect(storedAgain?.contentType).toBe('image/jpeg');
+    expect(media.sniffMediaBytes(storedAgain!.bytes)).toBe('image/jpeg');
   });
 });

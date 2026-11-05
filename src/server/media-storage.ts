@@ -137,12 +137,27 @@ export async function finalizeUploadToMedia(uploadId: string): Promise<
   if (session.offset !== session.byteSize) {
     return { ok: false, reason: 'incomplete' };
   }
+  const dest = mediaFilePath(session.tributePublicId, session.assetId);
+  // Idempotent: never recopy the TUS bin over media that may already be HEIC→JPEG converted.
+  if (session.completed) {
+    if (!existsSync(dest)) {
+      return { ok: false, reason: 'media_missing' };
+    }
+    const existing = await readFile(dest);
+    return {
+      ok: true,
+      mediaPath: mediaPublicPath(session.tributePublicId, session.assetId),
+      contentType: session.contentType,
+      byteSize: existing.byteLength,
+      sha256: createHash('sha256').update(existing).digest('hex'),
+      session,
+    };
+  }
   const binStat = await stat(sessionBinPath(uploadId));
   if (binStat.size !== session.byteSize) {
     return { ok: false, reason: 'size_mismatch' };
   }
   await mkdir(mediaDir(session.tributePublicId), { recursive: true });
-  const dest = mediaFilePath(session.tributePublicId, session.assetId);
   const bytes = await readFile(sessionBinPath(uploadId));
   const sha256 = createHash('sha256').update(bytes).digest('hex');
   await writeFile(dest, bytes);

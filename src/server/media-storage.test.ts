@@ -55,6 +55,11 @@ describe('local TUS media storage', () => {
     expect(done.sha256).toHaveLength(64);
     const media = await readMediaFile('mv_abcdef0123456789', 'mem_aaaaaaaaaaaaaaaa');
     expect(media?.bytes.equals(Buffer.from([1, 2, 3, 4, 5, 6, 7, 8]))).toBe(true);
+    // Second finalize is idempotent and must not rewrite media from the TUS bin.
+    const again = await finalizeUploadToMedia(session.uploadId);
+    expect(again.ok).toBe(true);
+    if (!again.ok) return;
+    expect(again.sha256).toBe(done.sha256);
   });
 
   it('sniffs jpeg, png, webp, wav, mp3, heic and mp4 brands', () => {
