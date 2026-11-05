@@ -4,7 +4,7 @@ import { RemotionCinemaPlayer } from '@/components/RemotionCinemaPlayer';
 import { Eyebrow, Hero, Lede } from '@/components/ui';
 import { filmChapters } from '@/lib/copy';
 import { creatorT } from '@/lib/creator-ui-messages';
-import { possessive, shellProject } from '@/lib/tribute-view';
+import { shellProject } from '@/lib/tribute-view';
 import { creatorEnv } from '@/server/env';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
@@ -21,7 +21,7 @@ export default async function FilmPage() {
   const chapters = timeline ? chapterLabels(timeline) : [...filmChapters];
   const clock = timeline ? timelineClock(timeline) : null;
   const heroName = tribute
-    ? `${possessive(tribute.displayName)} beautiful life.`
+    ? creatorT(locale, 'creator.film.heroWithName').replace('{name}', tribute.displayName)
     : creatorT(locale, 'creator.film.heroFallback');
   const origin = creatorEnv().NEXT_PUBLIC_APP_URL;
 

@@ -6,7 +6,7 @@ import { PeopleReviewPanel } from '@/components/PeopleReviewPanel';
 import { Button, Card, Eyebrow, Hero, Lede } from '@/components/ui';
 import type { CreatorLibraryCard } from '@/lib/library-filters';
 import { creatorT } from '@/lib/creator-ui-messages';
-import { possessive, shellProject } from '@/lib/tribute-view';
+import { shellProject } from '@/lib/tribute-view';
 import { memoryView } from '@/server/ingest';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
@@ -48,10 +48,7 @@ export default async function MemoriesPage() {
       <Hero>{creatorT(locale, 'creator.memories.pageHero')}</Hero>
       <Lede>
         {tribute
-          ? creatorT(locale, 'creator.memories.pageLedeWith').replace(
-              '{name}',
-              possessive(tribute.displayName),
-            )
+          ? creatorT(locale, 'creator.memories.pageLedeWith').replace('{name}', tribute.displayName)
           : creatorT(locale, 'creator.memories.pageLedeWithout')}
       </Lede>
 

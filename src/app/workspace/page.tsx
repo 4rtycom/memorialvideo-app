@@ -4,7 +4,7 @@ import { ErrorRecovery } from '@/components/ErrorRecovery';
 import { MembersActivityPanel } from '@/components/MembersActivityPanel';
 import { Button, Card, Eyebrow, Hero, Lede } from '@/components/ui';
 import { creatorT } from '@/lib/creator-ui-messages';
-import { possessive, shellProject } from '@/lib/tribute-view';
+import { shellProject } from '@/lib/tribute-view';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { memoryCount, readyMemoryCount } from '@/server/store';
@@ -29,10 +29,7 @@ export default async function WorkspacePage() {
       <Hero>{creatorT(locale, 'creator.workspace.hero')}</Hero>
       <Lede>
         {tribute
-          ? creatorT(locale, 'creator.workspace.ledeWith').replace(
-              '{name}',
-              possessive(tribute.displayName),
-            )
+          ? creatorT(locale, 'creator.workspace.ledeWith').replace('{name}', tribute.displayName)
           : creatorT(locale, 'creator.workspace.ledeWithout')}
       </Lede>
 

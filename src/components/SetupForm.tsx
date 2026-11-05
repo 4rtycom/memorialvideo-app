@@ -6,6 +6,7 @@ import { useState, useTransition } from 'react';
 import type { LaunchLanguage } from '@memorialvideo/contracts';
 import { Button, Card, Eyebrow, Hero, Lede } from '@/components/ui';
 import { creatorT } from '@/lib/creator-ui-messages';
+import { reportShellSave } from '@/lib/shell-save-status';
 
 export function SetupForm({ locale = 'en' }: { locale?: LaunchLanguage }) {
   const router = useRouter();
@@ -20,17 +21,15 @@ export function SetupForm({ locale = 'en' }: { locale?: LaunchLanguage }) {
     event.preventDefault();
     setError(null);
     startTransition(async () => {
+      reportShellSave('saving');
       const response = await fetch('/api/tributes', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           displayName,
-          bornLabel: bornLabel
-            ? creatorT(locale, 'creator.setup.bornPrefix').replace('{year}', bornLabel)
-            : '',
-          rememberedLabel: rememberedLabel
-            ? creatorT(locale, 'creator.setup.rememberedPrefix').replace('{year}', rememberedLabel)
-            : '',
+          // Persist English prefixes so lifeSpanLabel can strip them to years.
+          bornLabel: bornLabel ? `Born  ·  ${bornLabel}` : '',
+          rememberedLabel: rememberedLabel ? `Remembered  ·  ${rememberedLabel}` : '',
           about,
           ownerInitial: displayName.trim().slice(0, 1) || 'Y',
           locale,
@@ -44,6 +43,7 @@ export function SetupForm({ locale = 'en' }: { locale?: LaunchLanguage }) {
         } catch {
           code = undefined;
         }
+        reportShellSave('failed');
         setError(
           code === 'persistence_unavailable'
             ? creatorT(locale, 'creator.setup.errorPersistence')
@@ -53,6 +53,7 @@ export function SetupForm({ locale = 'en' }: { locale?: LaunchLanguage }) {
         );
         return;
       }
+      reportShellSave('saved');
       router.push('/workspace');
       router.refresh();
     });
