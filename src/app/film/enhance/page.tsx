@@ -15,8 +15,11 @@ export default async function EnhancePage() {
   return (
     <AppShell brand={shell.brand} title={shell.title} ownerInitial={shell.ownerInitial}>
       <Eyebrow>GENTLE PHOTO IMPROVEMENT</Eyebrow>
-      <Hero>Bring older photographs into the light.</Hero>
-      <Lede>Enhancement is optional and reversible. Originals are always kept.</Lede>
+      <Hero>Compare a local improvement with the original.</Hero>
+      <Lede>
+        Optional, reversible, and honest: only measured local correction is offered. Generative
+        restoration stays off. Originals are always kept.
+      </Lede>
 
       {tribute ? (
         <EnhancePanel

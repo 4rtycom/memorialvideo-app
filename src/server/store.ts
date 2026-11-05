@@ -273,6 +273,8 @@ export const activityEventSchema = z.object({
     'placement_confirmed',
     'collaboration_decision',
     'enhancement_film_bound',
+    'enhancement_film_reverted',
+    'enhancement_rejected',
   ]),
   /** Opaque correlation — no emails, tokens, filenames, captions. */
   correlationId: z.string().max(40).optional(),
@@ -2753,6 +2755,251 @@ export async function applyEnhancementToFilm(
     scenesUpdated,
     request: bound,
     filmSrc,
+  };
+}
+
+export type RevertEnhancementFromFilmResult =
+  | {
+      ok: true;
+      tribute: Tribute;
+      scenesUpdated: number;
+      request: Tribute['enhancementRequests'][number];
+    }
+  | {
+      ok: false;
+      reason:
+        | 'not_found'
+        | 'request_not_found'
+        | 'no_timeline'
+        | 'not_bound'
+        | 'memory_not_found';
+    };
+
+/**
+ * Reversible film bind: restore original memory src and clear enhancementVariantId.
+ * Original bytes were never overwritten. Generative restoration stays unavailable.
+ */
+export async function revertEnhancementFromFilm(
+  publicId: string,
+  requestId: string,
+): Promise<RevertEnhancementFromFilmResult> {
+  const store = await readStore();
+  const existing = store.tributes[publicId];
+  if (!existing) {
+    return { ok: false, reason: 'not_found' };
+  }
+  const current = migrateTribute(existing as unknown as Record<string, unknown>);
+  const request = current.enhancementRequests.find((r) => r.id === requestId);
+  if (!request) {
+    return { ok: false, reason: 'request_not_found' };
+  }
+  const timeline = current.timeline as TimelineContract | null;
+  if (!timeline) {
+    return { ok: false, reason: 'no_timeline' };
+  }
+  const memory = current.memories.find((m) => m.id === request.memoryId);
+  if (!memory) {
+    return { ok: false, reason: 'memory_not_found' };
+  }
+
+  let scenesUpdated = 0;
+  const nextScenes = timeline.scenes.map((scene) => {
+    if (scene.type !== 'image' && scene.type !== 'video') {
+      return scene;
+    }
+    const boundToVariant =
+      scene.asset.assetId === request.memoryId &&
+      (scene.asset.enhancementVariantId === request.id ||
+        scene.asset.src.includes(`/api/enhancement/variant/${request.id}`));
+    if (!boundToVariant) {
+      return scene;
+    }
+    scenesUpdated += 1;
+    const { enhancementVariantId: _removed, ...assetRest } = scene.asset;
+    void _removed;
+    return {
+      ...scene,
+      asset: {
+        ...assetRest,
+        src: memory.imagePath,
+      },
+    };
+  });
+  if (scenesUpdated === 0 && !request.approvedForFilm) {
+    return { ok: false, reason: 'not_bound' };
+  }
+
+  let nextTimeline = timeline;
+  if (scenesUpdated > 0) {
+    try {
+      nextTimeline = parseTimelineContract({
+        ...timeline,
+        scenes: nextScenes,
+      });
+    } catch {
+      return { ok: false, reason: 'no_timeline' };
+    }
+  }
+
+  const now = new Date().toISOString();
+  const note =
+    'reverted_from_film — original photograph restored in TimelineContract; local variant kept for compare; generative AI not COMPLETE';
+  const requests = current.enhancementRequests.map((r) =>
+    r.id === request.id
+      ? {
+          ...r,
+          approvedForFilm: false,
+          note,
+          updatedAt: now,
+        }
+      : r,
+  );
+  const next = migrateTribute(
+    tributeSchema.parse({
+      ...current,
+      enhancementRequests: requests,
+      timeline: nextTimeline,
+      timelinePrevious: scenesUpdated > 0 ? timeline : current.timelinePrevious,
+      timelineVersion: scenesUpdated > 0 ? current.timelineVersion + 1 : current.timelineVersion,
+      updatedAt: now,
+      activity: [
+        activityEventSchema.parse({
+          id: `act_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`,
+          code: 'enhancement_film_reverted',
+          correlationId: request.id.slice(0, 16),
+          createdAt: now,
+        }),
+        ...current.activity,
+      ].slice(0, 200),
+    }) as unknown as Record<string, unknown>,
+  );
+  store.tributes[publicId] = next;
+  await writeStore(store);
+  return {
+    ok: true,
+    tribute: next,
+    scenesUpdated,
+    request: next.enhancementRequests.find((r) => r.id === request.id)!,
+  };
+}
+
+export type RejectEnhancementResult =
+  | {
+      ok: true;
+      tribute: Tribute;
+      request: Tribute['enhancementRequests'][number];
+      filmReverted: boolean;
+    }
+  | {
+      ok: false;
+      reason: 'not_found' | 'request_not_found';
+    };
+
+/**
+ * Family rejects a local improvement. If it was bound into the film, restore originals first.
+ * Does not invent generative alternatives.
+ */
+export async function rejectEnhancementRequest(
+  publicId: string,
+  requestId: string,
+): Promise<RejectEnhancementResult> {
+  const store = await readStore();
+  const existing = store.tributes[publicId];
+  if (!existing) {
+    return { ok: false, reason: 'not_found' };
+  }
+  const current = migrateTribute(existing as unknown as Record<string, unknown>);
+  const request = current.enhancementRequests.find((r) => r.id === requestId);
+  if (!request) {
+    return { ok: false, reason: 'request_not_found' };
+  }
+
+  let working = current;
+  let filmReverted = false;
+  if (request.approvedForFilm) {
+    const reverted = await revertEnhancementFromFilm(publicId, requestId);
+    if (reverted.ok) {
+      working = reverted.tribute;
+      filmReverted = true;
+    } else {
+      // Reload after concurrent miss; still allow reject of the preview itself.
+      const reloaded = await getTribute(publicId);
+      if (reloaded) working = reloaded;
+    }
+  }
+
+  const now = new Date().toISOString();
+  const requests = working.enhancementRequests.map((r) =>
+    r.id === requestId
+      ? {
+          ...r,
+          status: 'rejected' as const,
+          approvedForFilm: false,
+          note: 'rejected_by_family — original kept; generative reconstruction not offered',
+          updatedAt: now,
+        }
+      : r,
+  );
+  const next = migrateTribute(
+    tributeSchema.parse({
+      ...working,
+      enhancementRequests: requests,
+      updatedAt: now,
+      activity: [
+        activityEventSchema.parse({
+          id: `act_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`,
+          code: 'enhancement_rejected',
+          correlationId: requestId.slice(0, 16),
+          createdAt: now,
+        }),
+        ...working.activity,
+      ].slice(0, 200),
+    }) as unknown as Record<string, unknown>,
+  );
+  const latest = await readStore();
+  latest.tributes[publicId] = next;
+  await writeStore(latest);
+  return {
+    ok: true,
+    tribute: next,
+    request: next.enhancementRequests.find((r) => r.id === requestId)!,
+    filmReverted,
+  };
+}
+
+/**
+ * Advance queued → processing → ready_local/unavailable without exposing a family "job" control.
+ * Caps steps so a stuck queue cannot loop forever.
+ */
+export async function advanceEnhancementUntilSettled(
+  publicId: string,
+  requestId: string,
+  maxSteps = 4,
+): Promise<{
+  request: Tribute['enhancementRequests'][number] | null;
+  note: string;
+}> {
+  let lastNote = 'idle';
+  for (let step = 0; step < maxSteps; step += 1) {
+    const tribute = await getTribute(publicId);
+    const row = tribute?.enhancementRequests.find((r) => r.id === requestId);
+    if (!row) {
+      return { request: null, note: 'request_not_found' };
+    }
+    if (row.status !== 'queued' && row.status !== 'processing') {
+      return { request: row, note: row.note || lastNote };
+    }
+    const advanced = await advanceEnhancementOnce(publicId);
+    lastNote = advanced.note;
+    if (!advanced.advanced || advanced.advanced.id !== requestId) {
+      // Another job was ahead; keep stepping within the cap.
+      continue;
+    }
+  }
+  const finalTribute = await getTribute(publicId);
+  return {
+    request: finalTribute?.enhancementRequests.find((r) => r.id === requestId) ?? null,
+    note: lastNote,
   };
 }
 
