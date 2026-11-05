@@ -3,7 +3,11 @@
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import type { LaunchLanguage } from '@memorialvideo/contracts';
-import { CREATOR_LAUNCH_LANGUAGES } from '@/lib/creator-ui-messages';
+import {
+  CREATOR_LAUNCH_LANGUAGES,
+  creatorLocaleNeedsNativeReview,
+  creatorT,
+} from '@/lib/creator-ui-messages';
 
 export function LocaleSwitcher({
   locale,
@@ -14,6 +18,7 @@ export function LocaleSwitcher({
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const draft = creatorLocaleNeedsNativeReview(locale);
 
   return (
     <label className="flex items-center gap-2 text-[12px] text-[color:var(--muted)]">
@@ -38,9 +43,15 @@ export function LocaleSwitcher({
         {CREATOR_LAUNCH_LANGUAGES.map((code) => (
           <option key={code} value={code}>
             {code.toUpperCase()}
+            {creatorLocaleNeedsNativeReview(code) ? ' · draft' : ''}
           </option>
         ))}
       </select>
+      {draft ? (
+        <span className="sr-only" data-testid="locale-draft-note">
+          {creatorT(locale, 'creator.locale.draftNote')}
+        </span>
+      ) : null}
     </label>
   );
 }

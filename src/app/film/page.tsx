@@ -3,8 +3,10 @@ import { CeremonyOperatorPlayer } from '@/components/CeremonyOperatorPlayer';
 import { RemotionCinemaPlayer } from '@/components/RemotionCinemaPlayer';
 import { Eyebrow, Hero, Lede } from '@/components/ui';
 import { filmChapters } from '@/lib/copy';
-import { possessive, shellProject } from '@/lib/tribute-view';
+import { creatorT } from '@/lib/creator-ui-messages';
+import { shellProject } from '@/lib/tribute-view';
 import { creatorEnv } from '@/server/env';
+import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { chapterLabels, timelineClock } from '@/server/timeline';
 import { parseTimelineContract } from '@memorialvideo/contracts';
@@ -12,12 +14,15 @@ import Link from 'next/link';
 
 export default async function FilmPage() {
   const tribute = await loadActiveTribute();
+  const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
   const shell = shellProject(tribute);
   const timeline = tribute?.timeline ? parseTimelineContract(tribute.timeline) : null;
   const speechPauses = tribute?.musicDirectorPlan?.speechPauses ?? [];
   const chapters = timeline ? chapterLabels(timeline) : [...filmChapters];
   const clock = timeline ? timelineClock(timeline) : null;
-  const heroName = tribute ? `${possessive(tribute.displayName)} beautiful life.` : 'Their beautiful life.';
+  const heroName = tribute
+    ? creatorT(locale, 'creator.film.heroWithName').replace('{name}', tribute.displayName)
+    : creatorT(locale, 'creator.film.heroFallback');
   const origin = creatorEnv().NEXT_PUBLIC_APP_URL;
 
   return (
@@ -26,20 +31,30 @@ export default async function FilmPage() {
       brand={shell.brand}
       title={shell.title}
       ownerInitial={shell.ownerInitial}
-      footerTitle="No complicated editing needed."
+      locale={locale}
+      footerTitle={creatorT(locale, 'creator.film.footer')}
       footerBody=""
     >
-      <Eyebrow>{timeline ? 'YOUR FILM IS READY' : 'YOUR FILM'}</Eyebrow>
+      <Eyebrow>
+        {timeline
+          ? creatorT(locale, 'creator.film.eyebrowReady')
+          : creatorT(locale, 'creator.film.eyebrow')}
+      </Eyebrow>
       <Hero className="!text-white">{heroName}</Hero>
       <Lede>
         {timeline
-          ? `Private screening · ${clock?.totalLabel ?? ''} · your film`
-          : 'Arrange the first film to open the screening room.'}
+          ? creatorT(locale, 'creator.film.ledeReady').replace(
+              '{clock}',
+              clock?.totalLabel ?? '',
+            )
+          : creatorT(locale, 'creator.film.ledeEmpty')}
       </Lede>
 
       <RemotionCinemaPlayer timeline={timeline} origin={origin} />
 
-      <div className="text-[11px] font-bold text-[color:var(--accent)] mb-3">CHAPTERS</div>
+      <div className="text-[11px] font-bold text-[color:var(--accent)] mb-3">
+        {creatorT(locale, 'creator.film.chapters')}
+      </div>
       <div className="grid gap-3 md:grid-cols-4">
         {chapters.map((c, i) => (
           <div
@@ -66,23 +81,23 @@ export default async function FilmPage() {
       <div className="mt-8 flex flex-wrap gap-3">
         {!timeline ? (
           <Link className="btn btn-secondary" href="/film/creating">
-            Arrange first film
+            {creatorT(locale, 'creator.film.arrange')}
           </Link>
         ) : null}
         <Link className="btn btn-secondary" href="/film/edit">
-          Edit story
+          {creatorT(locale, 'creator.film.edit')}
         </Link>
         <Link className="btn btn-secondary" href="/film/styles">
-          Atmosphere
+          {creatorT(locale, 'creator.film.atmosphere')}
         </Link>
         <Link className="btn btn-secondary" href="/film/studio">
-          Studio
+          {creatorT(locale, 'creator.film.studio')}
         </Link>
         <Link className="btn btn-secondary" href="/ceremony">
           Ceremony Player
         </Link>
         <Link className="btn btn-secondary" href="/share">
-          Ready for the service
+          {creatorT(locale, 'creator.film.share')}
         </Link>
       </div>
     </AppShell>

@@ -1,5 +1,10 @@
 import { LAUNCH_LANGUAGES, type LaunchLanguage } from '@memorialvideo/contracts';
 import { CRITICAL_CREATION_KEYS, criticalDrafts, criticalEnglish } from '@/lib/creator-critical-copy';
+import {
+  SURFACE_CREATION_KEYS,
+  surfaceDrafts,
+  surfaceEnglish,
+} from '@/lib/creator-surface-copy';
 
 /** Creator-surface UI strings for locked launch languages. Native polish remains XB-004. */
 export const CREATOR_UI_KEYS = [
@@ -132,7 +137,33 @@ export const CREATOR_UI_KEYS = [
   'creator.auth.magicFailed',
   'creator.auth.magicUnconfigured',
   ...CRITICAL_CREATION_KEYS,
+  ...SURFACE_CREATION_KEYS,
 ] as const;
+
+/** Locale release status for creator UI catalogs. Non-en stays draft until XB-004. */
+export type CreatorLocaleStatus = 'source' | 'draft_needs_native_review' | 'approved';
+
+export const CREATOR_LOCALE_STATUS: Record<LaunchLanguage, CreatorLocaleStatus> = {
+  en: 'source',
+  nl: 'draft_needs_native_review',
+  de: 'draft_needs_native_review',
+  fr: 'draft_needs_native_review',
+  es: 'draft_needs_native_review',
+  pt: 'draft_needs_native_review',
+  it: 'draft_needs_native_review',
+  pl: 'draft_needs_native_review',
+};
+
+export function draftCreatorLocales(): Exclude<LaunchLanguage, 'en'>[] {
+  return (LAUNCH_LANGUAGES as readonly LaunchLanguage[]).filter(
+    (language): language is Exclude<LaunchLanguage, 'en'> =>
+      CREATOR_LOCALE_STATUS[language] === 'draft_needs_native_review',
+  );
+}
+
+export function creatorLocaleNeedsNativeReview(language: LaunchLanguage): boolean {
+  return CREATOR_LOCALE_STATUS[language] === 'draft_needs_native_review';
+}
 
 export type CreatorUiKey = (typeof CREATOR_UI_KEYS)[number];
 
@@ -292,7 +323,7 @@ const enCore = {
     'Magic links need Supabase to be configured. Password sign-in is available when this host has a session secret.',
 };
 
-const en: Catalog = { ...enCore, ...criticalEnglish };
+const en: Catalog = { ...enCore, ...criticalEnglish, ...surfaceEnglish };
 
 /** Draft translations — status remains draft until XB-004 native review. */
 const drafts: Record<Exclude<LaunchLanguage, 'en'>, Partial<Catalog>> = {
@@ -818,7 +849,13 @@ function catalogFor(language: LaunchLanguage): Catalog {
   if (language === 'en') {
     return en;
   }
-  return { ...en, ...drafts[language], ...authDrafts[language], ...criticalDrafts[language] };
+  return {
+    ...en,
+    ...drafts[language],
+    ...authDrafts[language],
+    ...criticalDrafts[language],
+    ...surfaceDrafts[language],
+  };
 }
 
 export function creatorT(language: LaunchLanguage, key: CreatorUiKey): string {

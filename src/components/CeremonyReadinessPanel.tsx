@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { LaunchLanguage } from '@memorialvideo/contracts';
 import { t, type CommonKey } from '@memorialvideo/i18n';
 import { Button, Card, ErrorState } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
 
 type Finding = {
   id: string;
@@ -78,7 +79,7 @@ export function CeremonyReadinessPanel({ locale = 'en' }: { locale?: LaunchLangu
       {error ? (
         <ErrorState
           title={error === 'unavailable' ? t(locale, 'readiness.failed') : error}
-          body="Your tribute work is still safe."
+          body={creatorT(locale, 'creator.common.workSafe')}
           action={
             <Button variant="secondary" onClick={() => setTick((n) => n + 1)}>
               {t(locale, 'readiness.retry')}

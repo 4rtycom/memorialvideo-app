@@ -731,6 +731,7 @@ export type CreateTributeInput = {
   rememberedLabel?: string;
   about?: string;
   ownerInitial?: string;
+  locale?: Tribute['locale'];
 };
 
 export async function createTribute(input: CreateTributeInput): Promise<Tribute> {
@@ -749,6 +750,7 @@ export async function createTribute(input: CreateTributeInput): Promise<Tribute>
       ownerInitial: (input.ownerInitial?.trim() || 'Y').slice(0, 2).toUpperCase(),
       themeKey: 'timeless',
       firstFilmStage: 'idle',
+      locale: input.locale ?? 'en',
       memories: [],
       invites: [],
       shares: [],

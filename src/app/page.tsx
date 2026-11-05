@@ -1,18 +1,25 @@
 import Image from 'next/image';
 import { AppShell } from '@/components/AppShell';
 import { Button, Card, Eyebrow, Hero, Lede } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
 import { overviewCopy, shellProject } from '@/lib/tribute-view';
+import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 
 export default async function OverviewPage() {
   const tribute = await loadActiveTribute();
+  const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
   const shell = shellProject(tribute);
   const copy = overviewCopy(tribute);
   const poster = tribute?.isFixtureSeed ? '/fixtures/eleanor.png' : '/fixtures/workspace-family.png';
 
   return (
-    <AppShell brand={shell.brand} title={shell.title} ownerInitial={shell.ownerInitial}>
-      <Eyebrow>{tribute ? 'WELCOME BACK' : 'WELCOME'}</Eyebrow>
+    <AppShell brand={shell.brand} title={shell.title} ownerInitial={shell.ownerInitial} locale={locale}>
+      <Eyebrow>
+        {tribute
+          ? creatorT(locale, 'creator.home.welcomeBack')
+          : creatorT(locale, 'creator.home.welcome')}
+      </Eyebrow>
       <Hero>{copy.hero}</Hero>
       <Lede>{copy.lede}</Lede>
 
@@ -30,22 +37,25 @@ export default async function OverviewPage() {
           <p className="font-medium text-[16px] m-0 mb-2">{copy.progressLabel}</p>
           <p className="text-[color:var(--muted)] text-[13px] m-0 mb-6">
             {tribute
-              ? `Updated ${new Date(tribute.updatedAt).toLocaleString()}  ·  Private workspace`
-              : 'Private workspace  ·  Nothing shared publicly'}
+              ? creatorT(locale, 'creator.home.updatedPrivate').replace(
+                  '{when}',
+                  new Date(tribute.updatedAt).toLocaleString(locale),
+                )
+              : creatorT(locale, 'creator.home.privateNothing')}
           </p>
           <div className="flex flex-wrap gap-3">
             {tribute ? (
               <>
-                <Button href="/film">▶  Watch the film</Button>
+                <Button href="/film">{creatorT(locale, 'creator.home.watch')}</Button>
                 <Button href="/workspace" variant="secondary">
-                  Open workspace  ↗
+                  {creatorT(locale, 'creator.home.openWorkspace')}
                 </Button>
               </>
             ) : (
               <>
-                <Button href="/setup">Begin a memorial video  ↗</Button>
+                <Button href="/setup">{creatorT(locale, 'creator.home.begin')}</Button>
                 <Button href="/workspace" variant="secondary">
-                  Open workspace  ↗
+                  {creatorT(locale, 'creator.home.openWorkspace')}
                 </Button>
               </>
             )}
@@ -55,15 +65,17 @@ export default async function OverviewPage() {
 
       <div className="mt-10 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h3 className="serif text-[30px] m-0 mb-2">A gentle next step</h3>
+          <h3 className="serif text-[30px] m-0 mb-2">{creatorT(locale, 'creator.home.nextStep')}</h3>
           <p className="text-[color:var(--muted)] m-0">
             {tribute
-              ? 'Invite another loved one or make your finishing touches.'
-              : 'Start with a name. We’ll keep every detail private and calm.'}
+              ? creatorT(locale, 'creator.home.nextWithTribute')
+              : creatorT(locale, 'creator.home.nextWithout')}
           </p>
         </div>
         <Button href={tribute ? '/memories' : '/setup'} variant="secondary">
-          {tribute ? 'View all memories' : 'Start setup'}
+          {tribute
+            ? creatorT(locale, 'creator.home.viewMemories')
+            : creatorT(locale, 'creator.home.startSetup')}
         </Button>
       </div>
       {shell.person ? <p className="sr-only">{shell.person}</p> : null}

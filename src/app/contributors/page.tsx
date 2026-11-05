@@ -2,12 +2,15 @@ import { AppShell } from '@/components/AppShell';
 import { CollaborationInboxPanel } from '@/components/CollaborationInboxPanel';
 import { InvitePanel } from '@/components/InvitePanel';
 import { Button, Eyebrow, Hero, Lede } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
 import { shellProject } from '@/lib/tribute-view';
 import { listOwnerInvites } from '@/server/invites';
+import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 
 export default async function ContributorsPage() {
   const tribute = await loadActiveTribute();
+  const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
   const shell = shellProject(tribute);
   const listed = tribute ? await listOwnerInvites(tribute.publicId) : null;
 
@@ -16,12 +19,13 @@ export default async function ContributorsPage() {
       brand={shell.brand}
       title={shell.title}
       ownerInitial={shell.ownerInitial}
-      footerTitle="Private by default"
-      footerBody="Only invited people can contribute."
+      locale={locale}
+      footerTitle={creatorT(locale, 'creator.common.privateByDefault')}
+      footerBody={creatorT(locale, 'creator.common.onlyInvited')}
     >
-      <Eyebrow>A STORY BUILT TOGETHER</Eyebrow>
-      <Hero>Some memories live with others.</Hero>
-      <Lede>Invite family and friends to add their photos and videos—no account needed.</Lede>
+      <Eyebrow>{creatorT(locale, 'creator.contributors.eyebrow')}</Eyebrow>
+      <Hero>{creatorT(locale, 'creator.contributors.hero')}</Hero>
+      <Lede>{creatorT(locale, 'creator.contributors.lede')}</Lede>
 
       {tribute && listed ? (
         <InvitePanel
@@ -29,20 +33,25 @@ export default async function ContributorsPage() {
           initialProgress={listed.progress}
           initialCollectionStatus={listed.collectionStatus}
           previewName={tribute.displayName}
+          locale={locale}
         />
       ) : (
         <div className="card !p-8">
-          <h2 className="serif text-[35px] m-0 mb-3">Open a tribute first</h2>
+          <h2 className="serif text-[35px] m-0 mb-3">
+            {creatorT(locale, 'creator.contributors.openFirst')}
+          </h2>
           <p className="text-[color:var(--muted)] mb-6">
-            Create a private tribute workspace, then share a hashed invitation link.
+            {creatorT(locale, 'creator.contributors.openBody')}
           </p>
-          <Button href="/setup">Begin setup  ↗</Button>
+          <Button href="/setup">{creatorT(locale, 'creator.common.beginSetup')}</Button>
         </div>
       )}
 
-      <p className="serif text-[20px] mt-8 mb-4">You decide what becomes part of the film.</p>
+      <p className="serif text-[20px] mt-8 mb-4">
+        {creatorT(locale, 'creator.contributors.decide')}
+      </p>
       <Button href="/contributors/review" variant="secondary">
-        Review incoming memories
+        {creatorT(locale, 'creator.contributors.review')}
       </Button>
 
       {tribute ? <CollaborationInboxPanel /> : null}
