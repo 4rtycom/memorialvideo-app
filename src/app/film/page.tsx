@@ -1,5 +1,6 @@
 import { AppShell } from '@/components/AppShell';
 import { CeremonyOperatorPlayer } from '@/components/CeremonyOperatorPlayer';
+import { FilmFamilyActions } from '@/components/FilmFamilyActions';
 import { RemotionCinemaPlayer } from '@/components/RemotionCinemaPlayer';
 import { Eyebrow, Hero, Lede } from '@/components/ui';
 import { filmChapters } from '@/lib/copy';
@@ -10,7 +11,6 @@ import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { chapterLabels, timelineClock } from '@/server/timeline';
 import { parseTimelineContract } from '@memorialvideo/contracts';
-import Link from 'next/link';
 
 export default async function FilmPage() {
   const tribute = await loadActiveTribute();
@@ -78,28 +78,7 @@ export default async function FilmPage() {
         />
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-3">
-        {!timeline ? (
-          <Link className="btn btn-secondary" href="/film/creating">
-            {creatorT(locale, 'creator.film.arrange')}
-          </Link>
-        ) : null}
-        <Link className="btn btn-secondary" href="/film/edit">
-          {creatorT(locale, 'creator.film.edit')}
-        </Link>
-        <Link className="btn btn-secondary" href="/film/styles">
-          {creatorT(locale, 'creator.film.atmosphere')}
-        </Link>
-        <Link className="btn btn-secondary" href="/film/studio">
-          {creatorT(locale, 'creator.film.studio')}
-        </Link>
-        <Link className="btn btn-secondary" href="/ceremony">
-          Ceremony Player
-        </Link>
-        <Link className="btn btn-secondary" href="/share">
-          {creatorT(locale, 'creator.film.share')}
-        </Link>
-      </div>
+      <FilmFamilyActions locale={locale} hasTimeline={Boolean(timeline)} />
     </AppShell>
   );
 }

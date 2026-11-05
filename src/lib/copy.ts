@@ -8,15 +8,8 @@ export const project = {
   watchPath: "memorialvideo.app/watch/eleanor…",
 } as const;
 
-export const navItems = [
-  { href: "/", label: "Overview", icon: "⌂" },
-  { href: "/memories", label: "Memories", icon: "▦" },
-  { href: "/contributors", label: "Contributors", icon: "♧" },
-  { href: "/life-story", label: "Life story", icon: "◈" },
-  { href: "/film", label: "The film", icon: "▷" },
-  { href: "/music", label: "Music & words", icon: "♫" },
-  { href: "/share", label: "Ready for the service", icon: "↓" },
-] as const;
+/** @deprecated Prefer FAMILY_PRIMARY_NAV from `@/lib/family-nav` (audit §4). */
+export { FAMILY_PRIMARY_NAV as navItems } from '@/lib/family-nav';
 
 export const memories = [
   { id: "b", year: "1948", title: "A little girl with a big smile", status: "✓ Enhanced", image: "/fixtures/memory-b.png" },
