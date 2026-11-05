@@ -52,7 +52,7 @@ export default async function SharePage() {
           DEFAULT_FPS,
         ),
         exceedsTopTierAllowance: synced.view.recommendation.exceedsTopTierAllowance,
-        checkoutBlock: synced.view.recommendation.checkoutBlock,
+        checkoutBlock: synced.view.recommendation.checkoutBlock ?? null,
         plans: synced.view.plans.map((plan) => ({
           id: plan.id,
           displayName: plan.displayName,

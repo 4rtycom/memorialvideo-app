@@ -37,7 +37,7 @@ See `docs/production/` and store `internal/creator-prompt34-progress.md`.
 | Item | Reason |
 | --- | --- |
 | Deploy / Connect Git / memorialvideo-app | XB-011 — other workers / Glenn |
-| Live Stripe Memorial Pack | XB-005 secrets; fake fulfill is local-only |
+| Live Stripe Memorial Pack | Code wired (Gate A / MV-AUD-001); live charge still needs XB-005 secrets + three pack Price IDs — see `docs/STRIPE_CONSUMER_PACKS.md` |
 | Supabase TUS / Docker RLS | XB-012 |
 | Licensed music masters | XB-002 (synthetic `development_only` catalog active) |
 | Native locale review | XB-004 |

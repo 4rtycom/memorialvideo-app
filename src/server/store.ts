@@ -387,7 +387,7 @@ export const tributeSchema = z.object({
   finalRendersUsed: z.number().int().nonnegative().default(0),
   /**
    * Approved commercial pack selection (Memorial Tribute / Life Story / Forever Legacy).
-   * Auto-moved when finished film duration crosses 8:00 or 20:00 — not a PackageKey entitlement.
+   * Auto-moved when finished film duration crosses 10:00 or 20:00 — not a PackageKey entitlement.
    */
   selectedConsumerPackId: z
     .enum(['memorial-tribute', 'life-story', 'forever-legacy'])
@@ -421,6 +421,10 @@ export const checkoutOrderSchema = z.object({
   orderId: z.string().min(8).max(80),
   projectPublicId: z.string().regex(/^mv_[a-f0-9]{16}$/i),
   packageKey: z.literal(MEMORIAL_PACK_PACKAGE_KEY),
+  consumerPackId: z
+    .enum(['memorial-tribute', 'life-story', 'forever-legacy'])
+    .nullable()
+    .default(null),
   status: z.enum(['PENDING', 'PAID', 'FAILED', 'EXPIRED', 'REFUNDED', 'DISPUTED', 'PARTIALLY_REFUNDED']),
   providerCheckoutId: z.string().max(120).nullable().default(null),
   createdAt: z.string().min(10).max(40),
@@ -1757,6 +1761,7 @@ export async function fulfillLocalMemorialPack(publicId: string): Promise<
 export async function createPendingCheckoutOrder(input: {
   orderId: string;
   projectPublicId: string;
+  consumerPackId?: 'memorial-tribute' | 'life-story' | 'forever-legacy' | null;
 }): Promise<
   | { ok: true; order: CheckoutOrder; alreadyPaid: boolean }
   | { ok: false; reason: 'not_found' | 'invalid_package' }
@@ -1775,6 +1780,7 @@ export async function createPendingCheckoutOrder(input: {
     orderId: input.orderId,
     projectPublicId: input.projectPublicId,
     packageKey: MEMORIAL_PACK_PACKAGE_KEY,
+    consumerPackId: input.consumerPackId ?? tribute.selectedConsumerPackId ?? null,
     status: 'PENDING',
     providerCheckoutId: null,
     createdAt: now,
@@ -1813,6 +1819,7 @@ export async function applyStripeCheckoutCommerce(input: {
   orderId: string;
   projectPublicId?: string | null;
   providerCheckoutId?: string | null;
+  consumerPackId?: 'memorial-tribute' | 'life-story' | 'forever-legacy' | null;
 }): Promise<
   | { ok: true; orderStatus: string; duplicate?: boolean }
   | { ok: false; reason: 'not_found' | 'persist_failed' }
@@ -1833,6 +1840,7 @@ export async function applyStripeCheckoutCommerce(input: {
       orderId: input.orderId,
       projectPublicId,
       packageKey: MEMORIAL_PACK_PACKAGE_KEY,
+      consumerPackId: input.consumerPackId ?? null,
       status: 'PENDING',
       providerCheckoutId: input.providerCheckoutId ?? null,
       createdAt: now,
@@ -1849,8 +1857,10 @@ export async function applyStripeCheckoutCommerce(input: {
     orderId: input.orderId,
     processedAt: now,
   });
+  const paidConsumerPackId = input.consumerPackId ?? order.consumerPackId ?? null;
   store.orders[input.orderId] = checkoutOrderSchema.parse({
     ...order,
+    consumerPackId: paidConsumerPackId,
     status: nextStatus,
     providerCheckoutId: input.providerCheckoutId ?? order.providerCheckoutId,
     paidAt: nextStatus === 'PAID' ? now : order.paidAt,
@@ -1866,6 +1876,7 @@ export async function applyStripeCheckoutCommerce(input: {
       store.tributes[order.projectPublicId] = migrateTribute(
         tributeSchema.parse({
           ...tribute,
+          selectedConsumerPackId: paidConsumerPackId ?? tribute.selectedConsumerPackId,
           entitlement: {
             packageKey: MEMORIAL_PACK_PACKAGE_KEY,
             grantedAt: now,
@@ -1880,6 +1891,14 @@ export async function applyStripeCheckoutCommerce(input: {
             }),
             ...tribute.activity,
           ].slice(0, 200),
+          updatedAt: now,
+        }) as unknown as Record<string, unknown>,
+      );
+    } else if (paidConsumerPackId && tribute.selectedConsumerPackId !== paidConsumerPackId) {
+      store.tributes[order.projectPublicId] = migrateTribute(
+        tributeSchema.parse({
+          ...tribute,
+          selectedConsumerPackId: paidConsumerPackId,
           updatedAt: now,
         }) as unknown as Record<string, unknown>,
       );

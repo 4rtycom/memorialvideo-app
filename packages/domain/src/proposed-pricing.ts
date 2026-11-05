@@ -2,8 +2,9 @@
  * Public consumer packs. Glenn corrected these figures on 2026-10-27
  * (10 / 20 / 40 minutes; 120 / 250 / 500 uploads). Earlier 2026-10-25
  * sign-off used 8 / 150–700 and is superseded.
- * They are not PackageKey entitlements. A charge cannot complete while Stripe
- * webhooks are unwired; `purchasable` stays false for that reason.
+ * They are not PackageKey entitlements — paid checkout grants the Memorial Pack
+ * (`ceremony`) entitlement and records the selected consumer pack tier.
+ * Runtime still requires Stripe secrets + per-pack Price IDs (honest XB-005).
  */
 export const PRICING_OWNER_SIGNOFF = {
   date: '2026-10-27',
@@ -23,7 +24,8 @@ export type ProposedPlan = {
   uploadCap: 120 | 250 | 500;
   displayName: string;
   recommended: boolean;
-  purchasable: false;
+  /** Code path supports purchase; live charge still needs Stripe env (XB-005). */
+  purchasable: true;
 };
 
 export const PROPOSED_CONSUMER_PLANS: readonly ProposedPlan[] = [
@@ -34,7 +36,7 @@ export const PROPOSED_CONSUMER_PLANS: readonly ProposedPlan[] = [
     uploadCap: 120,
     displayName: 'Memorial Tribute',
     recommended: false,
-    purchasable: false,
+    purchasable: true,
   },
   {
     id: 'life-story',
@@ -43,7 +45,7 @@ export const PROPOSED_CONSUMER_PLANS: readonly ProposedPlan[] = [
     uploadCap: 250,
     displayName: 'Life Story',
     recommended: true,
-    purchasable: false,
+    purchasable: true,
   },
   {
     id: 'forever-legacy',
@@ -52,7 +54,7 @@ export const PROPOSED_CONSUMER_PLANS: readonly ProposedPlan[] = [
     uploadCap: 500,
     displayName: 'Forever Legacy',
     recommended: false,
-    purchasable: false,
+    purchasable: true,
   },
 ];
 
@@ -60,15 +62,15 @@ export function proposedPlanById(id: string): ProposedPlan | undefined {
   return PROPOSED_CONSUMER_PLANS.find((plan) => plan.id === id);
 }
 
-/** False while a charge cannot be completed. Owner approval does not turn this on. */
+/** True when pack SKUs are modeled as purchasable in domain (runtime Stripe env separate). */
 export function proposedPlansPurchasable(): boolean {
   return PROPOSED_CONSUMER_PLANS.some((plan) => plan.purchasable);
 }
 
-/** Approved public packs stop here until signed Stripe webhooks exist. */
-export function approvedPackCheckoutBlock(packageKey: string): 'stripe_not_wired' | null {
-  if (!proposedPlanById(packageKey)) {
-    return null;
-  }
-  return 'stripe_not_wired';
+/**
+ * Artificial `stripe_not_wired` block removed (MV-AUD-001 / Gate A).
+ * Missing Stripe secrets surface as `stripe_not_configured` at the checkout route.
+ */
+export function approvedPackCheckoutBlock(_packageKey: string): null {
+  return null;
 }

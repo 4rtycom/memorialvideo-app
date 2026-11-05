@@ -21,7 +21,7 @@ function noStore(body: unknown, status = 200) {
 
 /**
  * Persist a commercial pack selection. Duration floors still apply
- * (over 8:00 / over 20:00 auto-move). Never starts a charge.
+ * (over 10:00 / over 20:00 auto-move). Never starts a charge.
  */
 export async function POST(request: Request) {
   if (!allowRequest('creator-select-pack', 20)) {
@@ -57,6 +57,6 @@ export async function POST(request: Request) {
     selectedPlanId: result.tribute.selectedConsumerPackId,
     recommendation: result.view.recommendation,
     checkoutBlock: result.view.recommendation.checkoutBlock,
-    note: 'Selection stored only — consumer pack checkout remains stripe_not_wired.',
+    note: 'Selection stored only — POST /api/checkout to start Stripe Checkout when configured.',
   });
 }

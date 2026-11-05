@@ -14,8 +14,16 @@ export const serverEnvSchema = publicEnvSchema.extend({
   DATABASE_URL: z.string().min(10).optional(),
   STRIPE_SECRET_KEY: z.string().min(10).optional(),
   STRIPE_WEBHOOK_SECRET: z.string().min(10).optional(),
-  /** Stripe Price id for Memorial Pack (ceremony), e.g. price_... */
+  /**
+   * @deprecated Prefer STRIPE_PRICE_MEMORIAL_TRIBUTE. Kept as Tribute fallback.
+   */
   STRIPE_MEMORIAL_PACK_PRICE_ID: z.string().min(8).optional(),
+  /** Stripe Price id — Memorial Tribute €29 / 10 min / 120 uploads */
+  STRIPE_PRICE_MEMORIAL_TRIBUTE: z.string().min(8).optional(),
+  /** Stripe Price id — Life Story €49 / 20 min / 250 uploads */
+  STRIPE_PRICE_LIFE_STORY: z.string().min(8).optional(),
+  /** Stripe Price id — Forever Legacy €79 / 40 min / 500 uploads */
+  STRIPE_PRICE_FOREVER_LEGACY: z.string().min(8).optional(),
   EMAIL_PROVIDER_API_KEY: z.string().min(8).optional(),
   EMAIL_FROM: z.email().optional(),
   MUSIC_CATALOG_ENABLED: z.enum(['true', 'false']).optional(),
@@ -64,6 +72,9 @@ export function parseServerEnv(input: NodeJS.ProcessEnv = process.env): ServerEn
     STRIPE_SECRET_KEY: input.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: input.STRIPE_WEBHOOK_SECRET,
     STRIPE_MEMORIAL_PACK_PRICE_ID: input.STRIPE_MEMORIAL_PACK_PRICE_ID,
+    STRIPE_PRICE_MEMORIAL_TRIBUTE: input.STRIPE_PRICE_MEMORIAL_TRIBUTE,
+    STRIPE_PRICE_LIFE_STORY: input.STRIPE_PRICE_LIFE_STORY,
+    STRIPE_PRICE_FOREVER_LEGACY: input.STRIPE_PRICE_FOREVER_LEGACY,
     EMAIL_PROVIDER_API_KEY: input.EMAIL_PROVIDER_API_KEY,
     EMAIL_FROM: input.EMAIL_FROM,
     MUSIC_CATALOG_ENABLED: input.MUSIC_CATALOG_ENABLED,

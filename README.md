@@ -20,6 +20,7 @@ Or from repo root: `corepack pnpm dev:creator`.
 - Active tribute cookie: `mv_creator_tribute` (httpOnly)
 - Eleanor only via `POST /api/dev/seed-eleanor` when `APP_ENV=local`
 - Memorial Pack local fulfill: `POST /api/checkout/local-fulfill` (`APP_ENV=local` only)
+- Consumer pack Stripe Checkout: `POST /api/checkout` with `consumerPackId` (`memorial-tribute` / `life-story` / `forever-legacy`). Requires Stripe secrets + three Price IDs — see `docs/STRIPE_CONSUMER_PACKS.md`. Without secrets the host stays honest (`stripe_not_configured` / local fake only).
 
 ## Deploy note
 

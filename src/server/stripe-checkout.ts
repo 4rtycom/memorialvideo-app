@@ -5,7 +5,9 @@ import {
   PACKAGE_POLICIES,
   parseStripeCommerceEvent,
   planStripeCheckoutSession,
-  stripeCheckoutConfigured,
+  proposedPlanById,
+  stripeConsumerPackCheckoutConfigured,
+  type ProposedPlanId,
 } from '@memorialvideo/domain';
 
 import { creatorEnv } from './env';
@@ -16,20 +18,39 @@ import {
   getTribute,
 } from './store';
 
+export function consumerPackPriceIds(
+  env: ReturnType<typeof creatorEnv> = creatorEnv(),
+): Record<ProposedPlanId, string | undefined> {
+  return {
+    'memorial-tribute': env.STRIPE_PRICE_MEMORIAL_TRIBUTE ?? env.STRIPE_MEMORIAL_PACK_PRICE_ID,
+    'life-story': env.STRIPE_PRICE_LIFE_STORY,
+    'forever-legacy': env.STRIPE_PRICE_FOREVER_LEGACY,
+  };
+}
+
 export function isStripeMemorialPackConfigured(
   env: ReturnType<typeof creatorEnv> = creatorEnv(),
 ): boolean {
-  return stripeCheckoutConfigured({
+  return stripeConsumerPackCheckoutConfigured({
     secretKey: env.STRIPE_SECRET_KEY,
     webhookSecret: env.STRIPE_WEBHOOK_SECRET,
-    priceId: env.STRIPE_MEMORIAL_PACK_PRICE_ID,
+    priceIds: consumerPackPriceIds(env),
   });
+}
+
+export function stripePriceIdForConsumerPack(
+  planId: ProposedPlanId,
+  env: ReturnType<typeof creatorEnv> = creatorEnv(),
+): string | undefined {
+  return consumerPackPriceIds(env)[planId];
 }
 
 export const STRIPE_REQUIRED_ENV = [
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
-  'STRIPE_MEMORIAL_PACK_PRICE_ID',
+  'STRIPE_PRICE_MEMORIAL_TRIBUTE',
+  'STRIPE_PRICE_LIFE_STORY',
+  'STRIPE_PRICE_FOREVER_LEGACY',
 ] as const;
 
 /**
@@ -80,17 +101,18 @@ function decodeStripeWebhookSecret(secret: string): Buffer {
 }
 
 export type StripeCheckoutStartResult =
-  | { checkoutUrl: string; orderId: string; mode: 'stripe' }
+  | { checkoutUrl: string; orderId: string; mode: 'stripe'; consumerPackId: ProposedPlanId }
   | { error: string; status: number; retryable?: boolean };
 
 /**
- * Create a PENDING order and a Stripe Checkout Session for Memorial Pack.
+ * Create a PENDING order and a Stripe Checkout Session for a consumer pack.
  * Does not grant entitlement — webhook does. Inject fetch for tests (no invented secrets).
  */
 export async function startStripeMemorialPackCheckout(
   input: {
     orderId: string;
     projectPublicId: string;
+    consumerPackId: ProposedPlanId;
     successUrl: string;
     cancelUrl: string;
   },
@@ -98,6 +120,14 @@ export async function startStripeMemorialPackCheckout(
 ): Promise<StripeCheckoutStartResult> {
   const env = creatorEnv();
   if (!isStripeMemorialPackConfigured(env)) {
+    return { error: 'stripe_not_configured', status: 503, retryable: true };
+  }
+  const plan = proposedPlanById(input.consumerPackId);
+  if (!plan) {
+    return { error: 'invalid', status: 400 };
+  }
+  const priceId = stripePriceIdForConsumerPack(input.consumerPackId, env);
+  if (!priceId) {
     return { error: 'stripe_not_configured', status: 503, retryable: true };
   }
   const tribute = await getTribute(input.projectPublicId);
@@ -112,6 +142,7 @@ export async function startStripeMemorialPackCheckout(
   const pending = await createPendingCheckoutOrder({
     orderId: input.orderId,
     projectPublicId: input.projectPublicId,
+    consumerPackId: input.consumerPackId,
   });
   if (!pending.ok) {
     return { error: pending.reason, status: 404 };
@@ -124,7 +155,8 @@ export async function startStripeMemorialPackCheckout(
     orderId: input.orderId,
     packageKey: MEMORIAL_PACK_PACKAGE_KEY,
     projectPublicId: input.projectPublicId,
-    priceId: env.STRIPE_MEMORIAL_PACK_PRICE_ID!,
+    consumerPackId: input.consumerPackId,
+    priceId,
     successUrl: input.successUrl,
     cancelUrl: input.cancelUrl,
     integrationSuffix: randomBytes(4).toString('hex'),
@@ -140,6 +172,7 @@ export async function startStripeMemorialPackCheckout(
   body.set('metadata[order_id]', planned.metadata.order_id);
   body.set('metadata[package_key]', planned.metadata.package_key);
   body.set('metadata[project_public_id]', planned.metadata.project_public_id);
+  body.set('metadata[consumer_pack_id]', planned.metadata.consumer_pack_id);
   body.set('integration_identifier', planned.integration_identifier);
 
   const fetchFn = deps.fetchFn ?? fetch;
@@ -159,7 +192,12 @@ export async function startStripeMemorialPackCheckout(
     return { error: 'stripe_session_failed', status: 502, retryable: true };
   }
   await attachCheckoutSessionId(input.orderId, session.id);
-  return { checkoutUrl: session.url, orderId: input.orderId, mode: 'stripe' };
+  return {
+    checkoutUrl: session.url,
+    orderId: input.orderId,
+    mode: 'stripe',
+    consumerPackId: input.consumerPackId,
+  };
 }
 
 export async function handleStripeWebhookPayload(payload: string): Promise<
@@ -186,6 +224,7 @@ export async function handleStripeWebhookPayload(payload: string): Promise<
     orderId: parsed.orderId,
     projectPublicId: parsed.projectPublicId,
     providerCheckoutId: parsed.sessionId,
+    consumerPackId: parsed.consumerPackId,
   });
   if (!applied.ok) {
     return { error: applied.reason, status: applied.reason === 'not_found' ? 404 : 500 };

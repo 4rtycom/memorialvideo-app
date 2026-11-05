@@ -10,7 +10,7 @@ import {
 } from './proposed-pricing';
 
 describe('approved consumer packs', () => {
-  it('records Glenn’s 2026-10-27 corrected figures and still blocks a completed charge', () => {
+  it('records Glenn’s 2026-10-27 corrected figures and marks packs purchasable in domain', () => {
     expect(PRICING_OWNER_SIGNOFF).toEqual({
       date: '2026-10-27',
       owner: 'Glenn',
@@ -24,11 +24,11 @@ describe('approved consumer packs', () => {
       'Life Story',
       'Forever Legacy',
     ]);
-    expect(proposedPlansPurchasable()).toBe(false);
+    expect(proposedPlansPurchasable()).toBe(true);
     for (const plan of PROPOSED_CONSUMER_PLANS) {
-      expect(plan.purchasable).toBe(false);
+      expect(plan.purchasable).toBe(true);
       expect(PACKAGE_KEYS).not.toContain(plan.id);
-      expect(approvedPackCheckoutBlock(plan.id)).toBe('stripe_not_wired');
+      expect(approvedPackCheckoutBlock(plan.id)).toBeNull();
     }
     expect(proposedPlanById('life-story')?.uploadCap).toBe(250);
     expect(proposedPlanById('not-a-plan')).toBeUndefined();

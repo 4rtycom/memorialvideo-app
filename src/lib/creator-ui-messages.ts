@@ -59,8 +59,6 @@ export const CREATOR_UI_KEYS = [
   'creator.pack.upToMinutes',
   'creator.pack.upgradeOver10',
   'creator.pack.upgradeOver20',
-  'creator.pack.stripeNotWired',
-  'creator.pack.stripeNotWiredBody',
   'creator.music.opening',
   'creator.music.openingHint',
   'creator.music.soundtrack',
@@ -197,7 +195,7 @@ const enCore = {
   'creator.pack.buyStripe': 'Purchase pack',
   'creator.pack.stripeUnavailable': 'Memorial Pack checkout is unavailable (XB-005).',
   'creator.pack.stripeUnavailableBody':
-    'Stripe credentials are not configured on this host. Checkout cannot invent a paid entitlement. Retry after secrets are set, or use local fulfill only in APP_ENV=local.',
+    'Stripe is not configured on this host (secret, webhook, and three pack Price IDs). Checkout cannot invent a paid entitlement. Set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_MEMORIAL_TRIBUTE, STRIPE_PRICE_LIFE_STORY, and STRIPE_PRICE_FOREVER_LEGACY — or use local fulfill only when APP_ENV=local.',
   'creator.pack.retry': 'Try again',
   'creator.pack.checkoutFailed': 'Memorial Pack checkout could not start. Please try again.',
   'creator.pack.localOnlyNote':
@@ -210,9 +208,6 @@ const enCore = {
     'Your film is longer than 10 minutes, so we moved you to the next pack (Life Story).',
   'creator.pack.upgradeOver20':
     'Your film is longer than 20 minutes, so we moved you to Forever Legacy.',
-  'creator.pack.stripeNotWired': 'Paid pack checkout is not wired yet',
-  'creator.pack.stripeNotWiredBody':
-    'Your pack is selected from the film length. No charge was made — Stripe consumer-pack SKUs are not connected (stripe_not_wired).',
   'creator.music.opening': 'Opening words',
   'creator.music.openingHint': 'Shown at the start of the film.',
   'creator.music.soundtrack': 'Your three songs',
