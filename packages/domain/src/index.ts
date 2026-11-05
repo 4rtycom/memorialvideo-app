@@ -12,6 +12,7 @@ export * from './asset-analysis';
 export * from './memory-library';
 export * from './story-intelligence';
 export * from './ceremony-pack';
+export * from './ceremony-player';
 export * from './sequence';
 export * from './director';
 export * from './director-v2';

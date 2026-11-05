@@ -14,6 +14,7 @@ export default async function FilmPage() {
   const tribute = await loadActiveTribute();
   const shell = shellProject(tribute);
   const timeline = tribute?.timeline ? parseTimelineContract(tribute.timeline) : null;
+  const speechPauses = tribute?.musicDirectorPlan?.speechPauses ?? [];
   const chapters = timeline ? chapterLabels(timeline) : [...filmChapters];
   const clock = timeline ? timelineClock(timeline) : null;
   const heroName = tribute ? `${possessive(tribute.displayName)} beautiful life.` : 'Their beautiful life.';
@@ -55,7 +56,11 @@ export default async function FilmPage() {
       </div>
 
       <div className="mt-8">
-        <CeremonyOperatorPlayer timeline={timeline} origin={origin} />
+        <CeremonyOperatorPlayer
+          timeline={timeline}
+          origin={origin}
+          speechPauses={speechPauses}
+        />
       </div>
 
       <div className="mt-8 flex flex-wrap gap-3">
@@ -72,6 +77,9 @@ export default async function FilmPage() {
         </Link>
         <Link className="btn btn-secondary" href="/film/studio">
           Studio
+        </Link>
+        <Link className="btn btn-secondary" href="/ceremony">
+          Ceremony Player
         </Link>
         <Link className="btn btn-secondary" href="/share">
           Ready for the service

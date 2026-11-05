@@ -87,7 +87,7 @@ describe('creator ceremony pack gate', () => {
     expect(checklist.ok).toBe(true);
     if (!checklist.ok) return;
     expect(checklist.fileName).toMatch(/-playback\.txt$/);
-    expect(checklist.text).toContain('Play the MP4 from this folder');
+    expect(checklist.text).toContain('ceremony-player.html');
     expect(checklist.text).toContain('ceremony computer');
     expect(pack.buildOwnerCeremonyChecklist(null)).toEqual({ ok: false, reason: 'no_tribute' });
   });

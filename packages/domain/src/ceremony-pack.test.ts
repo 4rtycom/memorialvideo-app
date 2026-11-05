@@ -5,6 +5,7 @@ import {
   canBuildCeremonyPack,
   ceremonyChecklistText,
   ceremonyCueSheetText,
+  ceremonyOfflinePlayerHtml,
   safeCeremonyFileStem,
 } from './ceremony-pack';
 
@@ -34,6 +35,32 @@ describe('ceremony pack', () => {
     expect(text).toContain('01  Opening');
     expect(text).toContain('02  Early years');
     expect(text).toContain('not included in this ZIP');
-    expect(ceremonyChecklistText('mv_abcd1234')).toContain('Pause for live words');
+    expect(ceremonyChecklistText('mv_abcd1234')).toContain('ceremony-player.html');
+  });
+
+  it('points operators at the offline interactive player when packed', () => {
+    const text = ceremonyCueSheetText({
+      publicId: 'mv_abcd1234',
+      displayName: 'Alex',
+      interactivePlayerReady: true,
+      interactivePlayerFileName: 'ceremony-player.html',
+      chapters: [{ title: '⏸ Live words — Eulogy', startLabel: '02:10' }],
+    });
+    expect(text).toContain('ceremony-player.html');
+    expect(text).toContain('Live words — Eulogy');
+  });
+
+  it('builds offline ceremony-player.html with pause/resume and local MP4', () => {
+    const html = ceremonyOfflinePlayerHtml({
+      videoFileName: 'mv_abcd1234-1080p.mp4',
+      displayName: 'Alex',
+      cues: [{ title: 'Eulogy', startLabel: '2:10', startSeconds: 130 }],
+    });
+    expect(html).toContain('Ceremony Player');
+    expect(html).toContain('./mv_abcd1234-1080p.mp4');
+    expect(html).toContain('Pause for speech');
+    expect(html).toContain('Resume film');
+    expect(html).toContain('Fullscreen display');
+    expect(html).toContain('Eulogy');
   });
 });

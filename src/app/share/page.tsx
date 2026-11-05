@@ -38,6 +38,7 @@ export default async function SharePage() {
     ? `Private link for ${tribute.displayName}`
     : 'Create a tribute to share a private screening';
   const timeline = tribute?.timeline ? parseTimelineContract(tribute.timeline) : null;
+  const speechPauses = tribute?.musicDirectorPlan?.speechPauses ?? [];
   const origin = creatorEnv().NEXT_PUBLIC_APP_URL;
   const packRecommendation: PackRecommendationView | null = synced
     ? {
@@ -89,7 +90,16 @@ export default async function SharePage() {
           <div className="card !p-7 mt-5">
             <CeremonyChecklistPanel initial={tribute.ceremonyChecklist} locale={locale} />
           </div>
-          <CeremonyOperatorPlayer timeline={timeline} origin={origin} />
+          <CeremonyOperatorPlayer
+            timeline={timeline}
+            origin={origin}
+            speechPauses={speechPauses}
+          />
+          <div className="mb-5">
+            <Button href="/ceremony" variant="secondary">
+              Open full Ceremony Player
+            </Button>
+          </div>
           <MemorialPackPanel
             active={entitlement.active}
             localFulfillAllowed={localFulfillAllowed}
