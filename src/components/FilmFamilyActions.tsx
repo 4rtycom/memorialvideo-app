@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import type { LaunchLanguage } from '@memorialvideo/contracts';
+import { MoreControlDisclosure } from '@/components/MoreControlDisclosure';
+import { ADVANCED_STUDIO_HREF } from '@/lib/advanced-control';
 import { creatorT } from '@/lib/creator-ui-messages';
 
 /** Guided film destinations nested under Your Film; Advanced Studio stays optional. */
@@ -32,12 +34,9 @@ export function FilmFamilyActions({
         </Link>
       </div>
 
-      <details className="film-advanced mt-5" data-testid="film-advanced-optional">
-        <summary className="film-advanced-summary">
-          {creatorT(locale, 'creator.nav.advanced')}
-        </summary>
-        <div className="flex flex-wrap gap-3 mt-3">
-          <Link className="btn btn-secondary" href="/film/studio">
+      <MoreControlDisclosure locale={locale} className="mt-5">
+        <div className="flex flex-wrap gap-3">
+          <Link className="btn btn-secondary" href={ADVANCED_STUDIO_HREF}>
             {creatorT(locale, 'creator.nav.advancedStudio')}
           </Link>
           <Link className="btn btn-secondary" href="/film/enhance">
@@ -47,7 +46,7 @@ export function FilmFamilyActions({
             Ceremony Player
           </Link>
         </div>
-      </details>
+      </MoreControlDisclosure>
     </div>
   );
 }

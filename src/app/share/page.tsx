@@ -5,6 +5,7 @@ import { CeremonyOperatorPlayer } from '@/components/CeremonyOperatorPlayer';
 import { CeremonyReadinessPanel } from '@/components/CeremonyReadinessPanel';
 import { ErrorRecovery } from '@/components/ErrorRecovery';
 import { MemorialPackPanel, type PackRecommendationView } from '@/components/MemorialPackPanel';
+import { MoreControlDisclosure } from '@/components/MoreControlDisclosure';
 import { RenderJobPanel } from '@/components/RenderJobPanel';
 import { ShareDownloadPanel } from '@/components/ShareDownloadPanel';
 import { Button, Eyebrow, Hero, Lede } from '@/components/ui';
@@ -119,9 +120,9 @@ export default async function SharePage() {
             locale={locale}
             packRecommendation={packRecommendation}
           />
-          <div className="mt-5">
+          <MoreControlDisclosure locale={locale} className="mt-5">
             <RenderJobPanel initialJobs={jobs} />
-          </div>
+          </MoreControlDisclosure>
         </>
       ) : (
         <ErrorRecovery

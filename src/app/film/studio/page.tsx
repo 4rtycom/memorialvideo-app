@@ -3,12 +3,16 @@ import { ErrorRecovery } from '@/components/ErrorRecovery';
 import { GuidedVariantsPanel } from '@/components/GuidedVariantsPanel';
 import { StudioEditor } from '@/components/StudioEditor';
 import { Eyebrow, Hero, Lede } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
 import { shellProject } from '@/lib/tribute-view';
+import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { parseTimelineContract } from '@memorialvideo/contracts';
+import Link from 'next/link';
 
 export default async function StudioPage() {
   const tribute = await loadActiveTribute();
+  const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
   const shell = shellProject(tribute);
   const timeline = tribute?.timeline ? parseTimelineContract(tribute.timeline) : null;
 
@@ -17,15 +21,23 @@ export default async function StudioPage() {
       brand={shell.brand}
       title={shell.title}
       ownerInitial={shell.ownerInitial}
+      locale={locale}
       footerTitle="A beautiful film, made together."
       footerBody=""
     >
       <Eyebrow>ADVANCED TOOLS, WHEN YOU WANT THEM</Eyebrow>
       <Hero>Your film. Your creative control.</Hero>
       <Lede>
-        Guided editing stays simple. Studio adjusts the same TimelineContract — aspect, length,
-        order, transitions — with conflict-safe autosave.
+        Optional Advanced Studio for operators who want precise control. Families can stay on guided
+        editing — aspect, length, order and transitions share the same film.
       </Lede>
+      <p className="text-[13px] text-[color:var(--muted)] mb-6">
+        <Link href="/film/edit" className="underline-offset-2 hover:underline">
+          {creatorT(locale, 'creator.film.edit')}
+        </Link>
+        {' · '}
+        {creatorT(locale, 'creator.moreControl')}
+      </p>
 
       {!tribute ? (
         <ErrorRecovery
