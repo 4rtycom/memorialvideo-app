@@ -44,6 +44,7 @@ const createBodySchema = z.object({
   rememberedLabel: z.string().max(80).optional(),
   about: z.string().max(500).optional(),
   ownerInitial: z.string().max(2).optional(),
+  locale: z.enum(['en', 'nl', 'de', 'fr', 'es', 'pt', 'it', 'pl']).optional(),
 });
 
 export async function POST(request: Request) {

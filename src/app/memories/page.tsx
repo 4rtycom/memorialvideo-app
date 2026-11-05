@@ -40,16 +40,19 @@ export default async function MemoriesPage() {
       title={shell.title}
       ownerInitial={shell.ownerInitial}
       locale={locale}
-      footerTitle="Private by default"
-      footerBody="Only invited people can contribute."
+      footerTitle={creatorT(locale, 'creator.memories.footerTitle')}
+      footerBody={creatorT(locale, 'creator.memories.footerBody')}
     >
       <MemoriesPoller active={inFlight} />
-      <Eyebrow>YOUR MEMORY COLLECTION</Eyebrow>
-      <Hero>Every moment has a place.</Hero>
+      <Eyebrow>{creatorT(locale, 'creator.memories.pageEyebrow')}</Eyebrow>
+      <Hero>{creatorT(locale, 'creator.memories.pageHero')}</Hero>
       <Lede>
         {tribute
-          ? `Browse, add and prepare the memories that tell ${possessive(tribute.displayName)} story.`
-          : 'Create a tribute to start collecting memories.'}
+          ? creatorT(locale, 'creator.memories.pageLedeWith').replace(
+              '{name}',
+              possessive(tribute.displayName),
+            )
+          : creatorT(locale, 'creator.memories.pageLedeWithout')}
       </Lede>
 
       <Card className="!p-4 mb-5">

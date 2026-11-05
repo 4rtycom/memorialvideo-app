@@ -3,11 +3,18 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
-import type { ThemeKey } from '@memorialvideo/contracts';
+import type { LaunchLanguage, ThemeKey } from '@memorialvideo/contracts';
 import { Button, Card } from '@/components/ui';
 import { styles } from '@/lib/copy';
+import { creatorT } from '@/lib/creator-ui-messages';
 
-export function StylePicker({ selectedTheme }: { selectedTheme: ThemeKey }) {
+export function StylePicker({
+  selectedTheme,
+  locale = 'en',
+}: {
+  selectedTheme: ThemeKey;
+  locale?: LaunchLanguage;
+}) {
   const router = useRouter();
   const [theme, setTheme] = useState<ThemeKey>(selectedTheme);
   const [pending, startTransition] = useTransition();
@@ -23,7 +30,7 @@ export function StylePicker({ selectedTheme }: { selectedTheme: ThemeKey }) {
         body: JSON.stringify({ themeKey: id }),
       });
       if (!response.ok) {
-        setError('Could not save atmosphere.');
+        setError(creatorT(locale, 'creator.styles.saveFailed'));
         return;
       }
       router.refresh();
@@ -74,7 +81,9 @@ export function StylePicker({ selectedTheme }: { selectedTheme: ThemeKey }) {
                   <span className="w-6 h-6 rounded-full border border-[color:var(--border)] grid place-items-center bg-white">
                     {selected ? '✓' : ''}
                   </span>
-                  {selected ? 'Selected' : 'Choose this style'}
+                  {selected
+                    ? creatorT(locale, 'creator.styles.selected')
+                    : creatorT(locale, 'creator.styles.choose')}
                 </div>
               </Card>
             </button>
@@ -88,13 +97,10 @@ export function StylePicker({ selectedTheme }: { selectedTheme: ThemeKey }) {
       ) : null}
       <Card className="!px-6 !py-5 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="serif text-[24px]">Ready whenever you are.</div>
-          <p className="text-[color:var(--muted)] m-0">
-            Your first film will use the memories you have now and the atmosphere you chose —
-            grade, motion, type, and transitions included.
-          </p>
+          <div className="serif text-[24px]">{creatorT(locale, 'creator.styles.ready')}</div>
+          <p className="text-[color:var(--muted)] m-0">{creatorT(locale, 'creator.styles.createHint')}</p>
         </div>
-        <Button href="/film/creating">Create the first film  ↗</Button>
+        <Button href="/film/creating">{creatorT(locale, 'creator.styles.create')}</Button>
       </Card>
     </>
   );

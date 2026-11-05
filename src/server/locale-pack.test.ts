@@ -3,7 +3,14 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CRITICAL_CREATION_KEYS } from '../lib/creator-critical-copy';
-import { creatorT, CREATOR_UI_KEYS } from '../lib/creator-ui-messages';
+import { SURFACE_CREATION_KEYS } from '../lib/creator-surface-copy';
+import {
+  CREATOR_LOCALE_STATUS,
+  CREATOR_UI_KEYS,
+  creatorLocaleNeedsNativeReview,
+  creatorT,
+  draftCreatorLocales,
+} from '../lib/creator-ui-messages';
 import { buildStoreZip } from './zip-store';
 
 describe('creator locale catalogs + ceremony pack zip', () => {
@@ -26,6 +33,27 @@ describe('creator locale catalogs + ceremony pack zip', () => {
         expect(value).not.toBe(creatorT('en', key));
       }
     }
+  });
+
+  it('keeps surface journey strings translated in every draft locale', () => {
+    for (const language of draftCreatorLocales()) {
+      for (const key of SURFACE_CREATION_KEYS) {
+        const value = creatorT(language, key);
+        expect(value.length).toBeGreaterThan(0);
+        expect(value).not.toBe(key);
+        expect(value).not.toBe(creatorT('en', key));
+      }
+    }
+  });
+
+  it('marks non-English creator locales as draft pending native review (XB-004)', () => {
+    expect(CREATOR_LOCALE_STATUS.en).toBe('source');
+    expect(draftCreatorLocales()).toEqual(['nl', 'de', 'fr', 'es', 'pt', 'it', 'pl']);
+    for (const language of draftCreatorLocales()) {
+      expect(creatorLocaleNeedsNativeReview(language)).toBe(true);
+      expect(CREATOR_LOCALE_STATUS[language]).toBe('draft_needs_native_review');
+    }
+    expect(creatorLocaleNeedsNativeReview('en')).toBe(false);
   });
 
   it('builds a store-only zip with expected entries', () => {

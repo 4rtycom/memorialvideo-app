@@ -3,10 +3,11 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import type { LaunchLanguage } from '@memorialvideo/contracts';
 import { Button, Card, Eyebrow, Hero, Lede } from '@/components/ui';
-import { reportShellSave } from '@/lib/shell-save-status';
+import { creatorT } from '@/lib/creator-ui-messages';
 
-export function SetupForm() {
+export function SetupForm({ locale = 'en' }: { locale?: LaunchLanguage }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -19,16 +20,20 @@ export function SetupForm() {
     event.preventDefault();
     setError(null);
     startTransition(async () => {
-      reportShellSave('saving');
       const response = await fetch('/api/tributes', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           displayName,
-          bornLabel: bornLabel ? `Born  ·  ${bornLabel}` : '',
-          rememberedLabel: rememberedLabel ? `Remembered  ·  ${rememberedLabel}` : '',
+          bornLabel: bornLabel
+            ? creatorT(locale, 'creator.setup.bornPrefix').replace('{year}', bornLabel)
+            : '',
+          rememberedLabel: rememberedLabel
+            ? creatorT(locale, 'creator.setup.rememberedPrefix').replace('{year}', rememberedLabel)
+            : '',
           about,
           ownerInitial: displayName.trim().slice(0, 1) || 'Y',
+          locale,
         }),
       });
       if (!response.ok) {
@@ -39,17 +44,15 @@ export function SetupForm() {
         } catch {
           code = undefined;
         }
-        reportShellSave('failed');
         setError(
           code === 'persistence_unavailable'
-            ? 'Saving is temporarily unavailable on this host. Please try again later.'
+            ? creatorT(locale, 'creator.setup.errorPersistence')
             : code === 'auth_required'
-              ? 'Sign in before creating a memorial. Your details were not saved.'
-              : 'We could not save those details. Please try again.',
+              ? creatorT(locale, 'creator.setup.errorAuth')
+              : creatorT(locale, 'creator.setup.errorGeneric'),
         );
         return;
       }
-      reportShellSave('saved');
       router.push('/workspace');
       router.refresh();
     });
@@ -57,55 +60,57 @@ export function SetupForm() {
 
   return (
     <>
-      <Eyebrow>STEP 01 OF 03  /  START WITH WHO THEY WERE</Eyebrow>
-      <Hero>Every story begins with a person.</Hero>
-      <Lede>A few details help us make a film that feels truly theirs. You can change these later.</Lede>
+      <Eyebrow>{creatorT(locale, 'creator.setup.eyebrow')}</Eyebrow>
+      <Hero>{creatorT(locale, 'creator.setup.hero')}</Hero>
+      <Lede>{creatorT(locale, 'creator.setup.lede')}</Lede>
 
       <form onSubmit={onSubmit} className="grid gap-5 lg:grid-cols-[1.7fr_1fr]">
         <Card className="!p-7">
           <label className="block font-medium mb-3" htmlFor="displayName">
-            Their name
+            {creatorT(locale, 'creator.setup.name')}
           </label>
           <input
             id="displayName"
             className="field mb-6"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Their full name"
+            placeholder={creatorT(locale, 'creator.setup.namePlaceholder')}
             required
             maxLength={160}
           />
-          <label className="block font-medium mb-3">Important dates</label>
+          <label className="block font-medium mb-3">{creatorT(locale, 'creator.setup.dates')}</label>
           <div className="grid gap-3 sm:grid-cols-2 mb-6">
             <input
               className="field"
               value={bornLabel}
               onChange={(e) => setBornLabel(e.target.value)}
-              placeholder="Born  ·  year"
+              placeholder={creatorT(locale, 'creator.setup.bornPlaceholder')}
               maxLength={40}
-              aria-label="Born year"
+              aria-label={creatorT(locale, 'creator.setup.bornAria')}
             />
             <input
               className="field"
               value={rememberedLabel}
               onChange={(e) => setRememberedLabel(e.target.value)}
-              placeholder="Remembered  ·  year"
+              placeholder={creatorT(locale, 'creator.setup.rememberedPlaceholder')}
               maxLength={40}
-              aria-label="Remembered year"
+              aria-label={creatorT(locale, 'creator.setup.rememberedAria')}
             />
           </div>
           <label className="block font-medium mb-3" htmlFor="about">
-            A few words about them  (optional)
+            {creatorT(locale, 'creator.setup.about')}
           </label>
           <textarea
             id="about"
             className="field textarea mb-4"
             value={about}
             onChange={(e) => setAbout(e.target.value)}
-            placeholder="A loving parent, a wonderful friend…"
+            placeholder={creatorT(locale, 'creator.setup.aboutPlaceholder')}
             maxLength={500}
           />
-          <p className="text-[13px] text-[color:var(--muted)] m-0">You can add more as memories arrive.</p>
+          <p className="text-[13px] text-[color:var(--muted)] m-0">
+            {creatorT(locale, 'creator.setup.aboutHint')}
+          </p>
           {error ? (
             <p className="text-[14px] text-red-700 mt-4 mb-0" role="alert">
               {error}
@@ -116,14 +121,18 @@ export function SetupForm() {
           <div className="relative h-[302px] rounded-[9px] overflow-hidden mb-5">
             <Image src="/fixtures/setup-eleanor.png" alt="" fill className="object-cover" sizes="315px" />
           </div>
-          <h3 className="serif text-[33px] m-0 mb-2">One beautiful life.</h3>
-          <p className="text-[color:var(--muted)] m-0">We’ll help tell their story.</p>
+          <h3 className="serif text-[33px] m-0 mb-2">{creatorT(locale, 'creator.setup.asideTitle')}</h3>
+          <p className="text-[color:var(--muted)] m-0">{creatorT(locale, 'creator.setup.asideBody')}</p>
         </Card>
 
         <div className="lg:col-span-2 mt-3 flex flex-wrap items-center justify-between gap-4">
-          <p className="text-[13px] text-[color:var(--muted)] m-0">Your details stay private.</p>
+          <p className="text-[13px] text-[color:var(--muted)] m-0">
+            {creatorT(locale, 'creator.setup.privacy')}
+          </p>
           <Button type="submit" className={pending ? 'opacity-70' : ''} disabled={pending}>
-            {pending ? 'Saving…' : 'Continue  ↗'}
+            {pending
+              ? creatorT(locale, 'creator.common.saving')
+              : creatorT(locale, 'creator.common.continue')}
           </Button>
         </div>
       </form>

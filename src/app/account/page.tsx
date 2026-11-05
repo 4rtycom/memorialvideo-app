@@ -1,6 +1,7 @@
 import { AccountPanel } from '@/components/AccountPanel';
 import { AppShell } from '@/components/AppShell';
 import { Button, Eyebrow, Hero, Lede } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
 import { AuthRequiredError, readAccountSession, withRequestOwner } from '@/server/account-session';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute, readActiveTributeId } from '@/server/session';
@@ -27,27 +28,27 @@ export default async function AccountPage() {
   return (
     <AppShell
       brand="memorialvideo"
-      title="Account"
+      title={creatorT(locale, 'creator.account.title')}
       ownerInitial={tribute?.ownerInitial ?? 'Y'}
       locale={locale}
-      footerTitle="Your tributes stay private."
+      footerTitle={creatorT(locale, 'creator.account.footer')}
       footerBody=""
     >
-      <Eyebrow>ACCOUNT</Eyebrow>
-      <Hero>Your tributes</Hero>
-      <Lede>Open a tribute workspace or permanently delete a local draft. Nothing is public by default.</Lede>
+      <Eyebrow>{creatorT(locale, 'creator.account.eyebrow')}</Eyebrow>
+      <Hero>{creatorT(locale, 'creator.account.hero')}</Hero>
+      <Lede>{creatorT(locale, 'creator.account.lede')}</Lede>
       <div className="mb-6">
         {signedIn ? (
           <form action="/api/auth/sign-out" method="post">
             <Button type="submit" variant="secondary">
-              Sign out
+              {creatorT(locale, 'creator.account.signOut')}
             </Button>
           </form>
         ) : (
-          <Button href="/sign-in">Sign in</Button>
+          <Button href="/sign-in">{creatorT(locale, 'creator.account.signIn')}</Button>
         )}
       </div>
-      <AccountPanel initialTributes={rows} />
+      <AccountPanel initialTributes={rows} locale={locale} />
     </AppShell>
   );
 }

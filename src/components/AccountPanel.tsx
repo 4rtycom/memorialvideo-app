@@ -2,7 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
+import type { LaunchLanguage } from '@memorialvideo/contracts';
 import { Button, Card, ErrorState } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
 
 type TributeRow = {
   publicId: string;
@@ -17,7 +19,13 @@ type TributeRow = {
   firstFilmStage: string;
 };
 
-export function AccountPanel({ initialTributes }: { initialTributes: TributeRow[] }) {
+export function AccountPanel({
+  initialTributes,
+  locale = 'en',
+}: {
+  initialTributes: TributeRow[];
+  locale?: LaunchLanguage;
+}) {
   const router = useRouter();
   const [rows, setRows] = useState(initialTributes);
   const [pending, startTransition] = useTransition();
@@ -29,7 +37,7 @@ export function AccountPanel({ initialTributes }: { initialTributes: TributeRow[
     startTransition(async () => {
       const response = await fetch('/api/tributes');
       if (!response.ok) {
-        setError('Could not refresh tributes.');
+        setError(creatorT(locale, 'creator.account.refreshFailed'));
         return;
       }
       const body = (await response.json()) as { tributes: TributeRow[] };
@@ -46,17 +54,21 @@ export function AccountPanel({ initialTributes }: { initialTributes: TributeRow[
         body: JSON.stringify({ publicId }),
       });
       if (!response.ok) {
-        setError('Could not open that tribute.');
+        setError(creatorT(locale, 'creator.account.openFailed'));
         return;
       }
-      setNote('Active tribute updated.');
+      setNote(creatorT(locale, 'creator.account.opened'));
       refreshList();
       router.refresh();
     });
   }
 
   function removeTribute(publicId: string, displayName: string) {
-    if (!window.confirm(`Permanently delete local tribute “${displayName}”? This cannot be undone.`)) {
+    if (
+      !window.confirm(
+        creatorT(locale, 'creator.account.confirmDelete').replace('{name}', displayName),
+      )
+    ) {
       return;
     }
     setError(null);
@@ -67,10 +79,10 @@ export function AccountPanel({ initialTributes }: { initialTributes: TributeRow[
         body: JSON.stringify({ publicId }),
       });
       if (!response.ok) {
-        setError('Could not delete that tribute.');
+        setError(creatorT(locale, 'creator.account.deleteFailed'));
         return;
       }
-      setNote('Tribute deleted from local storage.');
+      setNote(creatorT(locale, 'creator.account.deleted'));
       refreshList();
       router.refresh();
     });
@@ -80,9 +92,9 @@ export function AccountPanel({ initialTributes }: { initialTributes: TributeRow[
     <div className="grid gap-4">
       {rows.length === 0 ? (
         <Card soft className="!p-7">
-          <p className="m-0 text-[color:var(--muted)]">No tributes yet. Begin setup to create one.</p>
+          <p className="m-0 text-[color:var(--muted)]">{creatorT(locale, 'creator.account.empty')}</p>
           <div className="mt-4">
-            <Button href="/setup">Begin setup  ↗</Button>
+            <Button href="/setup">{creatorT(locale, 'creator.common.beginSetup')}</Button>
           </div>
         </Card>
       ) : (
@@ -115,20 +127,22 @@ export function AccountPanel({ initialTributes }: { initialTributes: TributeRow[
                   {row.isActive ? ' · active' : ''}
                 </p>
                 <p className="text-[12px] text-[color:var(--muted)] m-0 mt-1">
-                  Updated {new Date(row.updatedAt).toLocaleString()} · {row.publicId}
+                  Updated {new Date(row.updatedAt).toLocaleString(locale)} · {row.publicId}
                 </p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button disabled={pending || row.isActive} onClick={() => openTribute(row.publicId)}>
-                {row.isActive ? 'Active' : 'Open'}
+                {row.isActive
+                  ? creatorT(locale, 'creator.account.active')
+                  : creatorT(locale, 'creator.account.open')}
               </Button>
               <Button
                 variant="secondary"
                 disabled={pending}
                 onClick={() => removeTribute(row.publicId, row.displayName)}
               >
-                Delete
+                {creatorT(locale, 'creator.account.delete')}
               </Button>
             </div>
           </Card>
@@ -142,16 +156,16 @@ export function AccountPanel({ initialTributes }: { initialTributes: TributeRow[
       {error ? (
         <ErrorState
           title={error}
-          body="Your tribute work is still safe."
+          body={creatorT(locale, 'creator.common.workSafe')}
           action={
             <Button variant="secondary" disabled={pending} onClick={refreshList}>
-              Retry
+              {creatorT(locale, 'creator.common.retry')}
             </Button>
           }
         />
       ) : null}
       <p className="text-[12px] text-[color:var(--muted)] m-0">
-        Deletion is local-store authoritative. Hosted account wipe needs Supabase (XB-012).
+        {creatorT(locale, 'creator.account.deletionNote')}
       </p>
     </div>
   );

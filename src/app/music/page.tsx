@@ -2,6 +2,7 @@ import { AppShell } from '@/components/AppShell';
 import { ErrorRecovery } from '@/components/ErrorRecovery';
 import { MusicDirectorPanel } from '@/components/MusicDirectorPanel';
 import { Eyebrow, Hero, Lede } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
 import { shellProject } from '@/lib/tribute-view';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
@@ -17,15 +18,12 @@ export default async function MusicPage() {
       title={shell.title}
       ownerInitial={shell.ownerInitial}
       locale={locale}
-      footerTitle="Three songs are enough."
-      footerBody="Opening, Memories, Farewell — change them anytime."
+      footerTitle={creatorT(locale, 'creator.musicPage.footerTitle')}
+      footerBody={creatorT(locale, 'creator.musicPage.footerBody')}
     >
-      <Eyebrow>MUSIC & MOMENTS</Eyebrow>
-      <Hero>Choose three favourite songs.</Hero>
-      <Lede>
-        Opening, Memories, and Farewell. Search, type a title, or paste a link as a reference for the
-        venue. Add speech pauses for live moments at the service.
-      </Lede>
+      <Eyebrow>{creatorT(locale, 'creator.musicPage.eyebrow')}</Eyebrow>
+      <Hero>{creatorT(locale, 'creator.musicPage.hero')}</Hero>
+      <Lede>{creatorT(locale, 'creator.musicPage.lede')}</Lede>
 
       {tribute ? (
         <MusicDirectorPanel
@@ -36,10 +34,10 @@ export default async function MusicPage() {
       ) : (
         <ErrorRecovery
           label="EMPTY WORKSPACE"
-          title="Open a tribute first"
-          body="Music and opening words save on the active tribute."
+          title={creatorT(locale, 'creator.musicPage.emptyTitle')}
+          body={creatorT(locale, 'creator.musicPage.emptyBody')}
           primaryHref="/setup"
-          primaryLabel="Begin setup  ↗"
+          primaryLabel={creatorT(locale, 'creator.common.beginSetup')}
           tone="success"
         />
       )}
