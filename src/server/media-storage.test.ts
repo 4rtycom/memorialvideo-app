@@ -55,9 +55,14 @@ describe('local TUS media storage', () => {
     expect(done.sha256).toHaveLength(64);
     const media = await readMediaFile('mv_abcdef0123456789', 'mem_aaaaaaaaaaaaaaaa');
     expect(media?.bytes.equals(Buffer.from([1, 2, 3, 4, 5, 6, 7, 8]))).toBe(true);
+    // Second finalize is idempotent and must not rewrite media from the TUS bin.
+    const again = await finalizeUploadToMedia(session.uploadId);
+    expect(again.ok).toBe(true);
+    if (!again.ok) return;
+    expect(again.sha256).toBe(done.sha256);
   });
 
-  it('sniffs jpeg, png, webp, wav, mp3 and mp4 brands', () => {
+  it('sniffs jpeg, png, webp, wav, mp3, heic and mp4 brands', () => {
     expect(sniffMediaBytes(Buffer.from([0xff, 0xd8, 0xff, 0xd9]))).toBe('image/jpeg');
     expect(sniffMediaBytes(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))).toBe('image/png');
     const webp = Buffer.alloc(12);
@@ -69,6 +74,16 @@ describe('local TUS media storage', () => {
     wav.write('WAVE', 8);
     expect(sniffMediaBytes(wav)).toBe('audio/wav');
     expect(sniffMediaBytes(Buffer.from([0x49, 0x44, 0x33]))).toBe('audio/mpeg');
+    const heic = Buffer.alloc(28);
+    heic.writeUInt32BE(28, 0);
+    heic.write('ftyp', 4);
+    heic.write('mif1', 8);
+    heic.writeUInt32BE(0, 12);
+    heic.write('mif1', 16);
+    heic.write('heic', 20);
+    heic.write('hevc', 24);
+    expect(sniffMediaBytes(heic)).toBe('image/heic');
+    expect(sniffedMatchesDeclared('image/heic', 'image/heic')).toBe(true);
     const mp4 = Buffer.alloc(12);
     mp4.write('ftyp', 4);
     mp4.write('isom', 8);

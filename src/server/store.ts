@@ -38,7 +38,7 @@ import {
 import { peopleProcessingAllowed, resolveCreatorThemeKey } from '@memorialvideo/domain';
 import { z } from 'zod';
 import { creatorEnv } from './env';
-import { isHeicFilename, isIngestTerminal, isVideoMemory, nextIngestStatus } from './ingest';
+import { isIngestTerminal, isVideoMemory, nextIngestStatus } from './ingest';
 import { mediaFilePath } from './media-storage';
 import { normalizeStillWithFfmpeg, normalizedStillAbsolutePath } from './normalize-still';
 import {
@@ -1189,19 +1189,15 @@ export async function addMemory(publicId: string, input: AddMemoryInput): Promis
   }
   const now = new Date().toISOString();
   const filename = input.filename?.trim() ?? '';
-  const heic = filename ? isHeicFilename(filename) : false;
   const source = input.source ?? 'owner';
 
-  let ingestStatus: AssetStatus = input.alreadyReady
+  // HEIC is accepted: browser and/or server convert to JPEG before READY (MV-AUD-007).
+  const ingestStatus: AssetStatus = input.alreadyReady
     ? 'READY'
     : input.awaitBytes
       ? 'PENDING_UPLOAD'
       : 'UPLOADING';
-  let failureCode: AssetUiFailureCode | null = null;
-  if (heic) {
-    ingestStatus = 'REJECTED';
-    failureCode = 'heic';
-  }
+  const failureCode: AssetUiFailureCode | null = null;
 
   const memory = memoryAssetSchema.parse({
     id:
@@ -1253,7 +1249,7 @@ export async function addMemory(publicId: string, input: AddMemoryInput): Promis
 /**
  * Advance pending ingest jobs one step (worker:once / poll). No setTimeout.
  * On PROCESSING → READY for stills: orient + cap long edge into a durable sibling JPEG.
- * HEIC stays needs_attention (no silent convert). Videos skip still normalize.
+ * HEIC is converted to JPEG at upload complete; videos skip still normalize.
  */
 export async function advanceIngestJobs(publicId: string): Promise<{
   tribute: Tribute | null;
@@ -1286,9 +1282,9 @@ export async function advanceIngestJobs(publicId: string): Promise<{
     if (
       memory.ingestStatus === 'PROCESSING' &&
       nextStatus === 'READY' &&
-      memory.failureCode !== 'heic' &&
       !isVideoMemory(memory) &&
-      !isHeicFilename(memory.originalFilenameHint ?? '')
+      !(memory.contentType ?? '').toLowerCase().includes('heic') &&
+      !(memory.contentType ?? '').toLowerCase().includes('heif')
     ) {
       const source = mediaFilePath(publicId, memory.id);
       const output = normalizedStillAbsolutePath(source);
@@ -1334,9 +1330,6 @@ export async function attachMemoryBytes(
     if (memory.id !== memoryId) {
       return memory;
     }
-    if (memory.failureCode === 'heic') {
-      return memory;
-    }
     updated = memoryAssetSchema.parse({
       ...memory,
       imagePath: input.imagePath,
@@ -1346,8 +1339,11 @@ export async function attachMemoryBytes(
         typeof input.durationMs === 'number' && Number.isFinite(input.durationMs)
           ? Math.max(0, Math.round(input.durationMs))
           : memory.durationMs,
+      failureCode: null,
       ingestStatus:
-        memory.ingestStatus === 'PENDING_UPLOAD' || memory.ingestStatus === 'UPLOADING'
+        memory.ingestStatus === 'PENDING_UPLOAD' ||
+        memory.ingestStatus === 'UPLOADING' ||
+        memory.ingestStatus === 'REJECTED'
           ? 'UPLOADED'
           : memory.ingestStatus,
       updatedAt: now,
@@ -1369,7 +1365,11 @@ export async function attachMemoryBytes(
   return updated;
 }
 
-export async function markMemoryRejected(publicId: string, memoryId: string): Promise<MemoryAsset | null> {
+export async function markMemoryRejected(
+  publicId: string,
+  memoryId: string,
+  failureCode: AssetUiFailureCode = 'rejected',
+): Promise<MemoryAsset | null> {
   const store = await readStore();
   const existing = store.tributes[publicId];
   if (!existing) {
@@ -1384,7 +1384,7 @@ export async function markMemoryRejected(publicId: string, memoryId: string): Pr
     updated = memoryAssetSchema.parse({
       ...memory,
       ingestStatus: 'REJECTED',
-      failureCode: 'rejected',
+      failureCode,
       imagePath: '',
       updatedAt: now,
     });
@@ -1550,10 +1550,11 @@ export async function retryFailedMemory(
     if (memory.id !== memoryId) {
       return memory;
     }
-    if (memory.failureCode === 'heic') {
-      return memory; // HEIC: no retry
-    }
-    if (memory.ingestStatus !== 'FAILED_RETRYABLE' && memory.ingestStatus !== 'FAILED_FINAL') {
+    if (
+      memory.ingestStatus !== 'FAILED_RETRYABLE' &&
+      memory.ingestStatus !== 'FAILED_FINAL' &&
+      !(memory.ingestStatus === 'REJECTED' && memory.failureCode === 'heic')
+    ) {
       return memory;
     }
     updated = memoryAssetSchema.parse({

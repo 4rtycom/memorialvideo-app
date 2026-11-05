@@ -18,7 +18,7 @@ The masterplan names repository `C:\dev\memorialvideo`. In this workspace that r
 | PostgreSQL document store | WORKING when `DATABASE_URL` or a SQL driver is present | `src/server/sql-store.ts`, `src/server/sql-store.test.ts` (PGlite) |
 | Supabase magic link | PARTIAL | `src/app/api/auth/request-link/route.ts` only if public Supabase env exists |
 | Hosted Supabase / service-role without `DATABASE_URL` | BLOCKED | Persistence reports `database_preferred_unwired` (XB-012) |
-| Photo/video/song bytes | PARTIAL | Local ingest and encode. Originals are not a private object bucket. HEIC rejected. |
+| Photo/video/song bytes | PARTIAL | Local ingest and encode. Originals are not a private object bucket. HEIC converts to JPEG (browser and/or server). |
 | Guest invites | PARTIAL | Hash-only tokens in the local document. Not proven against hosted storage. |
 | Stripe | PARTIAL | Checkout session + webhook code. Live secrets are XB-005. Local fulfill is `local_fake`. |
 | Licensed music | BLOCKED | Synthetic `development_only` catalog. XB-002. |

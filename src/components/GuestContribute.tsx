@@ -7,6 +7,7 @@ import type { LaunchLanguage } from '@memorialvideo/contracts';
 import { Button, ErrorState } from '@/components/ui';
 import { creatorT } from '@/lib/creator-ui-messages';
 import { classifyInviteRedeemFailure, inviteRedeemMessage } from '@/lib/async-ui';
+import { prepareUploadFile, isHeicFile } from '@/lib/prepare-upload-file';
 import {
   completeLocalUpload,
   uploadFileLocalTus,
@@ -115,14 +116,19 @@ export function GuestContribute() {
     setPhase('uploading');
     startTransition(async () => {
       try {
+        if (isHeicFile(file)) {
+          setProgress(creatorT(locale, 'creator.memories.preparingHeic'));
+        }
+        const prepared = await prepareUploadFile(file);
+        const uploadFile = prepared.file;
         const response = await fetch('/api/uploads/contributor/authorize', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             title: file.name.replace(/\.[^.]+$/, '').slice(0, 160) || 'Shared memory',
-            filename: file.name,
-            contentType: file.type || 'application/octet-stream',
-            byteSize: file.size,
+            filename: uploadFile.name,
+            contentType: uploadFile.type || 'application/octet-stream',
+            byteSize: uploadFile.size,
             year: String(new Date().getFullYear()),
             contributorName: name.trim() || undefined,
             contributorNote: note.trim() || undefined,
@@ -133,16 +139,11 @@ export function GuestContribute() {
           throw new Error(`authorize_${response.status}`);
         }
         const auth = (await response.json()) as AuthorizeResponse;
-        if (auth.mode === 'rejected_heic') {
-          setPhase('ready');
-          setError('HEIC files need conversion on your device before uploading.');
-          return;
-        }
         if (!auth.uploadUrl || !auth.assetId) {
           throw new Error('missing_upload');
         }
         await uploadFileLocalTus({
-          file,
+          file: uploadFile,
           uploadUrl: auth.uploadUrl,
           chunkHintBytes: auth.chunkHintBytes,
           onProgress: (sent, total) => {
@@ -156,7 +157,11 @@ export function GuestContribute() {
         setPhase('thanks');
       } catch {
         setPhase('ready');
-        setError(creatorT(locale, 'creator.guest.uploadFailed'));
+        setError(
+          isHeicFile(file)
+            ? creatorT(locale, 'creator.memories.heic')
+            : creatorT(locale, 'creator.guest.uploadFailed'),
+        );
       }
     });
   }
@@ -264,7 +269,9 @@ export function GuestContribute() {
       <div className="card mb-4 !p-6">
         <div className="text-[35px] text-[color:var(--accent)] mb-2">＋</div>
         <div className="font-medium text-[20px] mb-1">{creatorT(locale, 'creator.guest.choose')}</div>
-        <p className="text-[13px] text-[color:var(--muted)] m-0">JPG, PNG, MP4, MP3, WAV · private upload</p>
+        <p className="text-[13px] text-[color:var(--muted)] m-0">
+          JPG, PNG, HEIC, MP4, MP3, WAV · private upload
+        </p>
         <label className="flex items-start gap-2 text-[12px] text-[color:var(--muted)] text-left mt-3">
           <input type="checkbox" checked={rights} onChange={(event) => setRights(event.target.checked)} />
           <span>{creatorT(locale, 'creator.guest.songRights')}</span>
@@ -272,7 +279,7 @@ export function GuestContribute() {
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,audio/mpeg,audio/wav,audio/mp4,.mp3,.wav,.m4a,.mov"
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,video/mp4,video/quicktime,audio/mpeg,audio/wav,audio/mp4,.mp3,.wav,.m4a,.mov"
           className="sr-only"
           onChange={onFileChange}
         />

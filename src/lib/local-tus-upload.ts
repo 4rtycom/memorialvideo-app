@@ -3,11 +3,16 @@ export const CLIENT_TUS_CHUNK_BYTES = 6 * 1024 * 1024;
 
 export type AuthorizeResponse = {
   assetId: string;
-  mode: 'local_tus' | 'rejected_heic';
+  mode: 'local_tus';
   uploadUrl?: string;
   chunkHintBytes?: number;
   byteSize?: number;
   blocker?: string;
+};
+
+export type CompleteUploadResponse = {
+  ok: true;
+  convertedFromHeic?: boolean;
 };
 
 export async function authorizeLocalUpload(input: {
@@ -64,7 +69,7 @@ export async function uploadFileLocalTus(input: {
 export async function completeLocalUpload(input: {
   uploadId: string;
   assetId: string;
-}): Promise<void> {
+}): Promise<CompleteUploadResponse> {
   const response = await fetch('/api/uploads/complete', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -73,6 +78,7 @@ export async function completeLocalUpload(input: {
   if (!response.ok) {
     throw new Error(`complete_${response.status}`);
   }
+  return (await response.json()) as CompleteUploadResponse;
 }
 
 export function uploadIdFromUrl(uploadUrl: string): string {

@@ -22,10 +22,10 @@ Spec slices from the masterplan. Ticket IDs in `memorialvideo/docs/AUTONOMOUS_BU
 ## Slice 02 — Upload photo, video, song into the library
 
 - Status: VERIFIED
-- Build: owner and guest authorize write a private local object (`/api/media/{tribute}/{asset}`), TUS PATCH is limited to the active tribute or a redeemed guest invite, complete sniffs JPEG/PNG/WebP/WAV/MP3/MP4 bytes, stores SHA-256, and deletes a mismatch. Personal songs require `musicRightsConfirmed`. HEIC stays rejected with no conversion. Library cards render songs and videos without treating them as photos.
+- Build: owner and guest authorize write a private local object (`/api/media/{tribute}/{asset}`), TUS PATCH is limited to the active tribute or a redeemed guest invite, complete sniffs JPEG/PNG/WebP/HEIC/WAV/MP3/MP4 bytes, stores SHA-256, and deletes a mismatch. Personal songs require `musicRightsConfirmed`. HEIC is accepted: browser converts when possible, otherwise server converts to JPEG on complete (MV-AUD-007). Library cards render songs and videos without treating them as photos.
 - Tests: `corepack pnpm exec vitest run src/server/upload-flow.test.ts src/server/media-storage.test.ts src/server/media-auth.test.ts src/server/store.test.ts` — 13 passed (jpeg checksum and private path, PDF-as-jpeg 415 with bytes deleted, wav rights gate, other account media GET and TUS PATCH 404).
 - Browser: Chrome on `http://127.0.0.1:3000`. Account `nora2.upload@example.com` created “Nora Two”, uploaded `family-song.wav` (rights checked) and `garden.png`, reload kept both on `/memories`. Owner `GET /api/media/mv_dbc9071389c34a6a/mem_d0aa9dfbdb3db83e` returned 200 (70 PNG bytes). Second account `owen2.upload@example.com` received 404.
-- Known gap: hosted Supabase Storage is not connected (XB-012). Bytes live under `.data/media` and are served only by the owner-checked route. The 30-photo/5-video/2-song bulk fixture was not replayed as one browser session. HEIC is rejected, not converted.
+- Known gap: hosted Supabase Storage is not connected (XB-012). Bytes live under `.data/media` and are served only by the owner-checked route. The 30-photo/5-video/2-song bulk fixture was not replayed as one browser session. Live Photo pairs and real-device iOS matrix remain EXTERNAL_EVIDENCE_REQUIRED.
 
 ## Slice 03 — Guest invite, submit, owner approve
 

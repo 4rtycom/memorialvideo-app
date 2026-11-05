@@ -137,12 +137,27 @@ export async function finalizeUploadToMedia(uploadId: string): Promise<
   if (session.offset !== session.byteSize) {
     return { ok: false, reason: 'incomplete' };
   }
+  const dest = mediaFilePath(session.tributePublicId, session.assetId);
+  // Idempotent: never recopy the TUS bin over media that may already be HEIC→JPEG converted.
+  if (session.completed) {
+    if (!existsSync(dest)) {
+      return { ok: false, reason: 'media_missing' };
+    }
+    const existing = await readFile(dest);
+    return {
+      ok: true,
+      mediaPath: mediaPublicPath(session.tributePublicId, session.assetId),
+      contentType: session.contentType,
+      byteSize: existing.byteLength,
+      sha256: createHash('sha256').update(existing).digest('hex'),
+      session,
+    };
+  }
   const binStat = await stat(sessionBinPath(uploadId));
   if (binStat.size !== session.byteSize) {
     return { ok: false, reason: 'size_mismatch' };
   }
   await mkdir(mediaDir(session.tributePublicId), { recursive: true });
-  const dest = mediaFilePath(session.tributePublicId, session.assetId);
   const bytes = await readFile(sessionBinPath(uploadId));
   const sha256 = createHash('sha256').update(bytes).digest('hex');
   await writeFile(dest, bytes);
@@ -170,18 +185,22 @@ export async function readMediaFile(
     return null;
   }
   const bytes = await readFile(file);
-  let contentType = file.endsWith('.normalized.jpg')
-    ? 'image/jpeg'
-    : 'application/octet-stream';
+  if (file.endsWith('.normalized.jpg')) {
+    return { bytes, contentType: 'image/jpeg' };
+  }
+  // Bytes win over session declaration — HEIC→JPEG conversion rewrites the object in place.
+  const sniffed = sniffMediaBytes(bytes);
+  if (sniffed) {
+    return { bytes, contentType: sniffed };
+  }
+  let contentType = 'application/octet-stream';
   try {
     const names = await readdir(tusDir());
     for (const name of names) {
       if (!name.endsWith('.json')) continue;
       const session = await readUploadSession(name.replace(/\.json$/, ''));
       if (session?.tributePublicId === tributePublicId && session.assetId === assetId) {
-        contentType = file.endsWith('.normalized.jpg')
-          ? 'image/jpeg'
-          : session.contentType || contentType;
+        contentType = session.contentType || contentType;
         break;
       }
     }
@@ -193,6 +212,46 @@ export async function readMediaFile(
 
 function ascii(bytes: Uint8Array, start: number, length: number): string {
   return String.fromCharCode(...bytes.subarray(start, start + length));
+}
+
+/** ISOBMFF brands that identify HEIC/HEIF stills (not AVIF, not MP4 video). */
+const HEIC_FTYP_BRANDS = new Set([
+  'heic',
+  'heix',
+  'hevc',
+  'hevx',
+  'heim',
+  'heis',
+  'hevm',
+  'hevs',
+  'mif1',
+  'msf1',
+]);
+
+function ftypBrands(bytes: Uint8Array): string[] {
+  if (bytes.length < 12 || ascii(bytes, 4, 4) !== 'ftyp') {
+    return [];
+  }
+  const boxSize = (bytes[0]! << 24) | (bytes[1]! << 16) | (bytes[2]! << 8) | bytes[3]!;
+  const end = Math.min(bytes.length, Number.isFinite(boxSize) && boxSize >= 16 ? boxSize : 64);
+  const brands: string[] = [ascii(bytes, 8, 4)];
+  for (let offset = 16; offset + 4 <= end; offset += 4) {
+    brands.push(ascii(bytes, offset, 4));
+  }
+  return brands;
+}
+
+function isHeicFtyp(bytes: Uint8Array): boolean {
+  const brands = ftypBrands(bytes);
+  if (brands.length === 0) return false;
+  // Prefer explicit HEIC codecs; mif1 alone is shared with AVIF.
+  if (brands.some((brand) => brand === 'heic' || brand === 'heix' || brand === 'hevc' || brand === 'hevx' || brand === 'heim' || brand === 'heis' || brand === 'hevm' || brand === 'hevs')) {
+    return true;
+  }
+  if (brands.some((brand) => brand === 'avif' || brand === 'avis')) {
+    return false;
+  }
+  return brands.some((brand) => HEIC_FTYP_BRANDS.has(brand));
 }
 
 /** Content type from magic bytes. Null when the file is not a supported photo, video, or song. */
@@ -222,9 +281,17 @@ export function sniffMediaBytes(bytes: Uint8Array): string | null {
     return 'audio/mpeg';
   }
   if (bytes.length >= 12 && ascii(bytes, 4, 4) === 'ftyp') {
+    if (isHeicFtyp(bytes)) {
+      return 'image/heic';
+    }
     const brand = ascii(bytes, 8, 4);
     if (brand === 'M4A ' || brand === 'M4B ' || brand === 'M4P ') {
       return 'audio/mp4';
+    }
+    // AVIF is not a launch still format — reject rather than mislabel as video.
+    const brands = ftypBrands(bytes);
+    if (brands.some((item) => item === 'avif' || item === 'avis')) {
+      return null;
     }
     return 'video/mp4';
   }
@@ -245,6 +312,9 @@ export function sniffedMatchesDeclared(declared: string, sniffed: string): boole
   if (sniffed === 'image/webp') {
     return normalized === 'image/webp';
   }
+  if (sniffed === 'image/heic') {
+    return normalized === 'image/heic' || normalized === 'image/heif';
+  }
   if (sniffed === 'audio/wav') {
     return normalized.includes('wav');
   }
@@ -260,6 +330,43 @@ export function sniffedMatchesDeclared(declared: string, sniffed: string): boole
     );
   }
   return false;
+}
+
+/** Overwrite a finalized media object (used after HEIC→JPEG conversion). */
+export async function replaceMediaBytes(
+  tributePublicId: string,
+  assetId: string,
+  bytes: Buffer,
+  contentType?: string,
+): Promise<{ sha256: string; byteSize: number }> {
+  await mkdir(mediaDir(tributePublicId), { recursive: true });
+  const dest = mediaFilePath(tributePublicId, assetId);
+  const sha256 = createHash('sha256').update(bytes).digest('hex');
+  const tmp = `${dest}.${process.pid}.tmp`;
+  await writeFile(tmp, bytes);
+  await rename(tmp, dest);
+  if (contentType) {
+    try {
+      const names = await readdir(tusDir());
+      for (const name of names) {
+        if (!name.endsWith('.json')) continue;
+        const uploadId = name.replace(/\.json$/, '');
+        const session = await readUploadSession(uploadId);
+        if (session?.tributePublicId === tributePublicId && session.assetId === assetId) {
+          await writeSession(
+            sessionSchema.parse({
+              ...session,
+              contentType: contentType.slice(0, 120),
+            }),
+          );
+          break;
+        }
+      }
+    } catch {
+      // Session metadata is best-effort; sniff on read remains the safety net.
+    }
+  }
+  return { sha256, byteSize: bytes.byteLength };
 }
 
 export function isAudioUpload(contentType: string, filename: string): boolean {

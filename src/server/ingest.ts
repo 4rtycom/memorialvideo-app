@@ -8,15 +8,18 @@ import {
   type AssetUiStatus,
 } from '@memorialvideo/domain';
 
-/** HEIC is not auto-converted in beta — honest needs_attention, no retry loop. */
+/** Detect HEIC/HEIF by filename (case-insensitive). */
 export function isHeicFilename(name: string): boolean {
   const lower = name.trim().toLowerCase();
   return lower.endsWith('.heic') || lower.endsWith('.heif');
 }
 
-/** Family-facing HEIC guidance — convert on device; we do not silently invent JPG bytes. */
+/**
+ * Family-facing note when HEIC preparation fails after upload.
+ * Guests are not asked to convert on device — we convert automatically when possible.
+ */
 export const HEIC_CONVERT_GUIDANCE =
-  'This photo is HEIC. Convert it to JPG or PNG on your phone or computer, then upload again. We keep the original listed so nothing is lost.';
+  'We could not prepare this iPhone photo automatically. Please try again, or choose a JPG or PNG.';
 
 /** True when the memory is a short video upload (mp4), not a still photograph. */
 export function isVideoMemory(memory: {
@@ -37,7 +40,7 @@ export function uiStatusLabel(ui: AssetUiStatus, failureCode?: AssetUiFailureCod
     case 'queued':
       return 'Still preparing';
     case 'needs_attention':
-      return failureCode === 'heic' ? 'HEIC — convert to JPG/PNG' : 'Needs attention';
+      return failureCode === 'heic' ? 'Could not prepare iPhone photo' : 'Needs attention';
     case 'error':
       return 'Could not prepare — retry';
     default:

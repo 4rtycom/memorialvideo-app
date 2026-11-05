@@ -1245,7 +1245,7 @@ const en: Catalog = {
     'wizard.memories.body': 'Add what you have now. Family can contribute more later.',
     'wizard.memories.add': 'Add photographs or short clips',
     'wizard.memories.hint':
-      'JPEG, PNG, WebP, MP4, or WAV/MP3 audio. HEIC is not supported yet—export as JPEG or PNG. You can add more in any order. Spoken audio can be transcribed after upload when the format is supported.',
+      'JPEG, PNG, WebP, HEIC, MP4, or WAV/MP3 audio. iPhone HEIC photos are prepared automatically. You can add more in any order. Spoken audio can be transcribed after upload when the format is supported.',
     'wizard.memories.empty': 'No memories yet. Add the first photograph when you are ready.',
     'wizard.story.title': 'A few words',
     'wizard.story.body': 'Chapters help the video breathe. Leave them blank if you prefer a simple sequence.',
@@ -1427,7 +1427,7 @@ const en: Catalog = {
     'contribute.forTribute': 'Add photographs for {tribute}',
     'contribute.addFor': 'Add photographs for {tribute}',
     'contribute.hint':
-      'JPEG, PNG, WebP, or a short MP4. HEIC is not supported yet. Choose from your camera roll.',
+      'JPEG, PNG, WebP, HEIC, or a short MP4. iPhone photos are prepared automatically. Choose from your camera roll.',
     'contribute.loading': 'Checking the invitation…',
     'contribute.readyHint': 'Confirm consent, then add photographs when you are ready.',
     'contribute.uploading': 'Uploading photographs…',
