@@ -50,6 +50,10 @@ describe('Gate B family a11y inventory', () => {
     expect(css).toContain(':focus-visible');
     expect(css).toContain('prefers-reduced-motion: reduce');
     expect(css).toContain('.primary-nav-mobile');
+    expect(css).not.toContain('overflow-x: auto');
+    expect(css).toContain('grid-template-areas:');
+    expect(css).toContain('.save-status');
+    expect(css).toContain('repeat(2, minmax(0, 1fr))');
 
     const shell = readFileSync(path.join(ROOT, 'components/AppShell.tsx'), 'utf8');
     expect(shell).toContain('href="#main"');

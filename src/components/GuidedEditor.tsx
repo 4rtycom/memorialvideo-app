@@ -244,7 +244,7 @@ export function GuidedEditor({
         {mediaScenes.map((m, index) => (
           <button key={m.id} type="button" className="text-left" onClick={() => select(m)}>
             <Card className={`!p-2 ${m.id === selected.id ? '!bg-[color:var(--cinema-soft)]' : ''}`}>
-              <div className="grid grid-cols-[93px_1fr] gap-3 items-center">
+              <div className="grid grid-cols-[minmax(0,93px)_minmax(0,1fr)] gap-3 items-center">
                 <div className="relative h-[84px] rounded-[10px] overflow-hidden">
                   {m.type === 'image' ? (
                     <Image src={m.asset.src} alt="" fill className="object-cover" sizes="93px" />

@@ -238,7 +238,7 @@ export function ShareDownloadPanel({
           </p>
         </summary>
         <div className="mt-5 pt-5 border-t border-[color:var(--border)]">
-          <div className="field flex items-center mb-4 text-[14px] overflow-hidden">
+          <div className="field flex items-center mb-4 min-w-0 text-[14px] overflow-hidden">
             <span className="truncate">{actionUrl ?? watchPathPlaceholder}</span>
           </div>
           <div className="flex flex-wrap gap-3 mb-4">
@@ -258,7 +258,7 @@ export function ShareDownloadPanel({
           {shares.length > 0 ? (
             <ul className="list-none p-0 m-0 grid gap-2 text-[13px] text-[color:var(--muted)] mb-0">
               {shares.map((share) => (
-                <li key={share.id} className="flex justify-between gap-3 items-center">
+                <li key={share.id} className="flex flex-wrap justify-between gap-3 items-center min-w-0">
                   <span>
                     {share.status === 'revoked' || share.revoked
                       ? creatorT(locale, 'creator.share.statusRevoked')

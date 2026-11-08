@@ -39,7 +39,7 @@ export default async function WorkspacePage() {
           <p className="text-[color:var(--muted)] mb-6">
             {creatorT(locale, 'creator.workspace.gatherBody')}
           </p>
-          <div className="flex gap-3 mb-6 overflow-x-auto">
+          <div className="flex gap-3 mb-6 overflow-x-auto min-w-0 max-w-full">
             {(tribute?.memories.length
               ? tribute.memories.slice(0, 4).map((m) => m.imagePath)
               : thumbs

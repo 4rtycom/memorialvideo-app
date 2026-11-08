@@ -39,7 +39,7 @@ function NavLinks({
             <span className="nav-icon" aria-hidden>
               {item.icon}
             </span>
-            <span>{labels[item.href] ?? item.label}</span>
+            <span className="nav-item-label">{labels[item.href] ?? item.label}</span>
           </Link>
         );
       })}
@@ -130,9 +130,11 @@ export function AppShell({
       <div className="main">
         <header className="topbar">
           <div className="topbar-title">{title}</div>
-          <div className="topbar-meta">
-            <LocaleSwitcher locale={locale} label={creatorT(locale, 'creator.locale.label')} />
-            <SaveStatus locale={locale} />
+          <div className="topbar-cluster">
+            <div className="topbar-meta">
+              <LocaleSwitcher locale={locale} label={creatorT(locale, 'creator.locale.label')} />
+              <SaveStatus locale={locale} />
+            </div>
             <Link href="/account" className="avatar" aria-label={creatorT(locale, 'creator.a11y.account')}>
               {ownerInitial}
             </Link>

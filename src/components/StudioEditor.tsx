@@ -238,7 +238,7 @@ export function StudioEditor({
 
       <div className="text-[12px] font-bold text-[color:var(--accent)] mb-3">TIMELINE   ·   PRECISE CONTROL</div>
       <Card className="!p-5">
-        <div className="flex items-center gap-4 overflow-x-auto">
+        <div className="flex items-center gap-4 overflow-x-auto min-w-0 max-w-full">
           <div className="text-[13px] font-medium w-[88px] shrink-0">Film</div>
           {imageScenes.map((scene) => (
             <button

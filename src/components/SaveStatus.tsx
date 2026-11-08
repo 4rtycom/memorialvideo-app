@@ -85,15 +85,15 @@ export function SaveStatus({ locale }: { locale: LaunchLanguage }) {
   const showRetry = shellSaveNeedsRetry(state) && !retrying;
 
   return (
-    <span className="inline-flex items-center gap-2" role="status" aria-live="polite" data-save-state={state}>
-      <span>
+    <span className="save-status" role="status" aria-live="polite" data-save-state={state}>
+      <span className="save-status-text">
         {prefix}
         {retrying ? creatorT(locale, 'creator.save.checking') : label}
       </span>
       {showRetry ? (
         <button
           type="button"
-          className="btn btn-ghost !py-0 !px-2 !text-[12px] !min-h-0"
+          className="btn btn-ghost save-retry"
           onClick={onRetry}
           data-testid="shell-save-retry"
         >

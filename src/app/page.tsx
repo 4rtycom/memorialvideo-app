@@ -23,13 +23,13 @@ export default async function OverviewPage() {
       <Hero>{copy.hero}</Hero>
       <Lede>{copy.lede}</Lede>
 
-      <Card className="!p-4 grid gap-5 md:grid-cols-[332px_1fr] items-stretch">
-        <div className="relative h-[308px] overflow-hidden rounded-[9px]">
-          <Image src={poster} alt="" fill className="object-cover" sizes="332px" priority />
+      <Card className="!p-4 grid gap-5 md:grid-cols-[minmax(0,332px)_minmax(0,1fr)] items-stretch">
+        <div className="relative h-[308px] max-h-[70vw] overflow-hidden rounded-[9px]">
+          <Image src={poster} alt="" fill className="object-cover" sizes="(max-width: 768px) 100vw, 332px" priority />
         </div>
         <div className="flex flex-col justify-center py-4 pr-4">
           <Eyebrow>{copy.cardEyebrow}</Eyebrow>
-          <h2 className="serif text-[53px] leading-[1.02] m-0 mb-3">{copy.storyTitle}</h2>
+          <h2 className="serif text-[clamp(1.75rem,6vw,3.3125rem)] leading-[1.02] m-0 mb-3">{copy.storyTitle}</h2>
           <p className="text-[color:var(--muted)] text-[17px] m-0 mb-5">{copy.storyMeta}</p>
           <div className="progress mb-3">
             <span style={{ width: copy.progressWidth }} />

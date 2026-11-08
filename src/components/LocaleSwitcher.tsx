@@ -21,7 +21,7 @@ export function LocaleSwitcher({
   const draft = creatorLocaleNeedsNativeReview(locale);
 
   return (
-    <label className="flex items-center gap-2 text-[12px] text-[color:var(--muted)]">
+    <label className="locale-switcher flex items-center gap-2 text-[12px] text-[color:var(--muted)]">
       <span className="sr-only">{label}</span>
       <select
         aria-label={label}

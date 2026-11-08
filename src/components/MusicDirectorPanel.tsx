@@ -568,13 +568,13 @@ export function MusicDirectorPanel({
             return (
               <div
                 key={track.trackId}
-                className={`rounded-[9px] min-h-[72px] px-4 py-3 grid grid-cols-[40px_1fr_auto] items-center gap-3 ${
+                className={`catalog-track rounded-[9px] min-h-[72px] px-4 py-3 ${
                   selected ? 'bg-[color:var(--cinema-soft)]' : 'bg-[color:var(--bg)]'
                 }`}
               >
                 <button
                   type="button"
-                  className="text-[23px] bg-transparent border-0 p-0"
+                  className="catalog-track-preview text-[23px] bg-transparent border-0 p-0"
                   aria-label={creatorT(locale, 'creator.music.preview')}
                   onClick={() => previewTrack(track)}
                 >
@@ -583,7 +583,7 @@ export function MusicDirectorPanel({
                 <button
                   type="button"
                   disabled={pending}
-                  className="text-left bg-transparent border-0 p-0"
+                  className="catalog-track-title text-left bg-transparent border-0 p-0"
                   onClick={() => chooseCatalogTrack(track)}
                 >
                   <div className="font-medium text-[17px]">{track.title}</div>
@@ -592,7 +592,7 @@ export function MusicDirectorPanel({
                     {track.momentTags?.length ? ` · ${track.momentTags.join(', ')}` : ''}
                   </div>
                 </button>
-                <span className="text-[12px] text-[color:var(--muted)]">
+                <span className="catalog-track-status text-[12px] text-[color:var(--muted)]">
                   {selected ? creatorT(locale, 'creator.music.selected') : creatorT(locale, 'creator.music.useSong')}
                 </span>
               </div>
