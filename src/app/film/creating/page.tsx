@@ -54,7 +54,7 @@ export default async function CreatingPage() {
       <Hero>{creatorT(locale, 'creator.creating.hero')}</Hero>
       <Lede>{creatorT(locale, 'creator.creating.lede')}</Lede>
 
-      <Card className="!p-5 grid gap-6 lg:grid-cols-[471px_1fr] items-stretch">
+      <Card className="!p-5 grid gap-6 lg:grid-cols-[minmax(0,471px)_minmax(0,1fr)] items-stretch">
         <div className="relative h-[420px] rounded-[10px] overflow-hidden">
           <Image src="/fixtures/finish-film.png" alt="" fill className="object-cover" sizes="471px" />
           <div className="absolute inset-x-0 bottom-0 bg-[color:var(--cinema)]/90 text-white p-6">

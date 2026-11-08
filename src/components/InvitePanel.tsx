@@ -153,7 +153,7 @@ export function InvitePanel({
           Anyone you invite can open the link and add memories — no account needed. Only a hash of
           the token is stored.
         </p>
-        <div className="flex gap-2 mb-4">
+        <div className="link-row mb-4">
           <div className="field flex items-center flex-1 !min-h-[61px] text-[14px] overflow-hidden">
             <span className="truncate">
               {actionUrl ?? 'Create an invitation to reveal a one-time private link'}

@@ -76,7 +76,7 @@ export function ContributorReviewList({
                 ? creatorT(locale, 'creator.review.stateDeclined')
                 : null;
           return (
-            <Card key={item.id} className="!p-3 grid gap-4 md:grid-cols-[173px_1fr_auto] items-center">
+            <Card key={item.id} className="!p-3 grid gap-4 md:grid-cols-[minmax(0,173px)_minmax(0,1fr)] xl:grid-cols-[minmax(0,173px)_minmax(0,1fr)_auto] items-center">
               <div className="relative h-[106px] rounded-[10px] overflow-hidden">
                 <Image src={item.imagePath} alt="" fill className="object-cover" sizes="173px" />
               </div>
