@@ -116,7 +116,7 @@ export function GuidedVariantsPanel() {
         Face-aware reframe deferred (not COMPLETE). Focal crops inherit only.
       </p>
 
-      <label className="block text-[13px] mb-2" htmlFor="guided-variant-kind">
+      <label className="block text-[14px] mb-2" htmlFor="guided-variant-kind">
         Delivery intent
       </label>
       <select
@@ -134,7 +134,7 @@ export function GuidedVariantsPanel() {
       </select>
 
       <fieldset className="mb-4 border-0 p-0 m-0">
-        <legend className="text-[13px] mb-2">Aspect</legend>
+        <legend className="text-[14px] mb-2">Aspect</legend>
         <div className="flex flex-wrap gap-4">
           {(overview?.aspects ?? ['16:9', '9:16', '1:1']).map((item) => (
             <label key={item} className="flex items-center gap-2 text-[14px]">
@@ -199,9 +199,9 @@ export function GuidedVariantsPanel() {
           {overview.faceAwareReframe.note}
         </p>
       ) : null}
-      {status ? <p className="text-[13px] text-[color:var(--primary)] m-0 mb-2">{status}</p> : null}
+      {status ? <p className="text-[14px] text-[color:var(--primary)] m-0 mb-2">{status}</p> : null}
       {error ? (
-        <p className="text-[13px] text-[color:var(--accent)] m-0" role="alert">
+        <p className="text-[14px] text-[color:var(--accent)] m-0" role="alert">
           {error}{' '}
           <button type="button" className="underline bg-transparent border-0 p-0" onClick={reload}>
             Retry

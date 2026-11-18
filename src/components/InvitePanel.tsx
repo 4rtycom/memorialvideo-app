@@ -160,12 +160,12 @@ export function InvitePanel({
             </span>
           </div>
           <Button onClick={copyLink} disabled={!actionUrl || pending}>
-            {copied ? 'Copied' : 'Copy  ↗'}
+            {copied ? 'Copied' : 'Copy'}
           </Button>
         </div>
         <div className="flex flex-wrap gap-3 mb-4">
           <Button onClick={createInvite} disabled={pending}>
-            {pending ? 'Working…' : 'Create invitation  ↗'}
+            {pending ? 'Working…' : 'Create invitation'}
           </Button>
           {collectionLocked ? (
             <Button
@@ -188,7 +188,7 @@ export function InvitePanel({
           )}
         </div>
         <p
-          className="text-[13px] text-[color:var(--muted)] mb-4"
+          className="text-[14px] text-[color:var(--muted)] mb-4"
           data-testid="collection-status"
           role="status"
         >
@@ -203,7 +203,7 @@ export function InvitePanel({
             {error}
           </p>
         ) : null}
-        <p className="text-[13px] text-[color:var(--muted)] mb-4">
+        <p className="text-[14px] text-[color:var(--muted)] mb-4">
           Collected {progress.photoCount} memories · {progress.contributorPhotoCount} from loved ones
           · {progress.inviteUseCount} invite uses
         </p>
@@ -236,7 +236,7 @@ export function InvitePanel({
         <h3 className="serif text-[30px] m-0 mb-4">What guests will see</h3>
         <div className="bg-[color:var(--primary)] text-white rounded-[9px] px-4 py-4">
           <div className="serif text-[26px]">{previewName}</div>
-          <p className="text-[13px] text-[color:var(--cinema-soft)] m-0 mt-1">Private contribution</p>
+          <p className="text-[14px] text-[color:var(--cinema-soft)] m-0 mt-1">Private contribution</p>
         </div>
         <p className="text-[color:var(--muted)] mt-5 mb-2">Upload pictures and videos in a few taps.</p>
         <p className="text-[12px] text-[color:var(--muted)] m-0">No sign-up · Your memories are private</p>

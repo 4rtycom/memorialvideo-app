@@ -19,7 +19,7 @@ const thumbs = [
 export default async function WorkspacePage() {
   const tribute = await loadActiveTribute();
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
-  const shell = shellProject(tribute);
+  const shell = shellProject(tribute, locale);
   const count = tribute ? memoryCount(tribute) : 0;
   const readyCount = tribute ? readyMemoryCount(tribute) : 0;
 
@@ -90,7 +90,7 @@ export default async function WorkspacePage() {
           <Card key={n} soft={i > 0} className="!p-5">
             <div className="text-[12px] font-bold text-[color:var(--accent)] mb-1">{n}</div>
             <div className="serif text-[18px] mb-2">{creatorT(locale, titleKey)}</div>
-            <p className="text-[13px] text-[color:var(--muted)] m-0">{creatorT(locale, bodyKey)}</p>
+            <p className="text-[14px] text-[color:var(--muted)] m-0">{creatorT(locale, bodyKey)}</p>
           </Card>
         ))}
       </div>

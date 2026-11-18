@@ -21,12 +21,12 @@ export function LocaleSwitcher({
   const draft = creatorLocaleNeedsNativeReview(locale);
 
   return (
-    <label className="locale-switcher flex items-center gap-2 text-[12px] text-[color:var(--muted)]">
+    <label className="locale-switcher flex items-center gap-2 text-[14px] text-[color:var(--muted)]">
       <span className="sr-only">{label}</span>
       <select
         aria-label={label}
         disabled={pending}
-        className="rounded border border-[color:var(--border)] bg-white px-2 py-1 text-[12px] text-[color:var(--ink)]"
+        className="rounded border border-[color:var(--border)] bg-white px-2 py-1 text-[14px] text-[color:var(--ink)]"
         value={locale}
         onChange={(event) => {
           const next = event.target.value as LaunchLanguage;
@@ -43,7 +43,6 @@ export function LocaleSwitcher({
         {CREATOR_LAUNCH_LANGUAGES.map((code) => (
           <option key={code} value={code}>
             {code.toUpperCase()}
-            {creatorLocaleNeedsNativeReview(code) ? ' · draft' : ''}
           </option>
         ))}
       </select>

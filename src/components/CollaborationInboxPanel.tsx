@@ -214,7 +214,7 @@ export function CollaborationInboxPanel() {
       ) : null}
       {state === 'failed' ? (
         <div className="mb-4">
-          <p className="text-[13px] text-[color:var(--accent)]" role="alert">
+          <p className="text-[14px] text-[color:var(--accent)]" role="alert">
             {error}
           </p>
           <Button variant="secondary" onClick={load}>
@@ -312,7 +312,7 @@ export function CollaborationInboxPanel() {
                   .filter((item) => item.applyStatus === 'applied')
                   .map((item) => (
                     <li key={item.suggestionId} className="flex gap-2 items-center">
-                      <span className="text-[13px] text-[color:var(--muted)]">
+                      <span className="text-[14px] text-[color:var(--muted)]">
                         Confirmed in film
                       </span>
                       <Button
@@ -330,7 +330,7 @@ export function CollaborationInboxPanel() {
 
           <div className="mb-4">
             <h4 className="serif text-[20px] m-0 mb-2">Final film approval</h4>
-            <p className="text-[13px] text-[color:var(--muted)] mb-3" data-testid="collaboration-approval-state">
+            <p className="text-[14px] text-[color:var(--muted)] mb-3" data-testid="collaboration-approval-state">
               {overview.activeFinalApproval
                 ? LABEL[`collab.decision.${overview.activeFinalApproval.outcome}`] ??
                   overview.activeFinalApproval.outcome
@@ -353,7 +353,7 @@ export function CollaborationInboxPanel() {
 
           {overview.decisions.length > 0 ? (
             <ul
-              className="list-none p-0 m-0 text-[13px] text-[color:var(--muted)] grid gap-1"
+              className="list-none p-0 m-0 text-[14px] text-[color:var(--muted)] grid gap-1"
               data-testid="collaboration-history"
             >
               {overview.decisions.slice(0, 8).map((decision) => (
@@ -368,11 +368,11 @@ export function CollaborationInboxPanel() {
       ) : null}
 
       {error && state === 'ready' ? (
-        <p className="text-[13px] text-[color:var(--accent)] mt-3" role="alert">
+        <p className="text-[14px] text-[color:var(--accent)] mt-3" role="alert">
           {error}
         </p>
       ) : null}
-      {status ? <p className="text-[13px] text-[color:var(--muted)] mt-3">{status}</p> : null}
+      {status ? <p className="text-[14px] text-[color:var(--muted)] mt-3">{status}</p> : null}
     </Card>
   );
 }

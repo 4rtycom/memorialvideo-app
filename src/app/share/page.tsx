@@ -21,13 +21,18 @@ import { summarizeShareList } from '@/server/share-list';
 import { entitlementView } from '@/server/store';
 import { isStripeMemorialPackConfigured } from '@/server/stripe-checkout';
 import { parseTimelineContract } from '@memorialvideo/contracts';
+import { pageTitle } from '@/server/page-title';
+
+export async function generateMetadata() {
+  return pageTitle('creator.nav.share');
+}
 
 export default async function SharePage() {
   const active = await loadActiveTribute();
   const synced = active ? await syncConsumerPackForFilmDuration(active.publicId) : null;
   const tribute = synced?.tribute ?? active;
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
-  const shell = shellProject(tribute);
+  const shell = shellProject(tribute, locale);
   const entitlement = entitlementView(tribute);
   const localFulfillAllowed = isLocalCreatorEnv();
   const stripeConfigured = isStripeMemorialPackConfigured();
@@ -106,10 +111,11 @@ export default async function SharePage() {
             timeline={timeline}
             origin={origin}
             speechPauses={speechPauses}
+            locale={locale}
           />
           <div className="mb-5">
             <Button href="/ceremony" variant="secondary">
-              Open full Ceremony Player
+              {creatorT(locale, 'creator.film.ceremonyTitle')}
             </Button>
           </div>
           <MemorialPackPanel
@@ -130,14 +136,14 @@ export default async function SharePage() {
           title="Create a tribute first"
           body="Then prepare the venue pack and take the film to the funeral service."
           primaryHref="/setup"
-          primaryLabel="Begin setup  ↗"
+          primaryLabel="Begin setup"
           secondaryHref="/workspace"
           secondaryLabel="Open workspace"
           tone="success"
         />
       )}
       {!tribute ? null : !entitlement.active ? (
-        <p className="text-[13px] text-[color:var(--muted)] mt-4">
+        <p className="text-[14px] text-[color:var(--muted)] mt-4">
           <Button href="/share" variant="ghost">
             Refresh after Memorial Pack
           </Button>

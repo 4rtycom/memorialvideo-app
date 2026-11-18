@@ -105,7 +105,7 @@ export function GuidedEditor({
         </div>
         <Card className="!p-6">
           <h3 className="serif text-[31px] m-0 mb-3">{creatorT(locale, 'creator.editor.thisMoment')}</h3>
-          <div className="text-[11px] font-bold text-[color:var(--accent)] mb-2">GUIDED  /  TIMELINECONTRACT</div>
+          <div className="text-[12px] font-bold text-[color:var(--accent)] mb-2">GUIDED  /  TIMELINECONTRACT</div>
           <p className="text-[12px] text-[color:var(--muted)] mb-4" role="status" aria-live="polite">
             v{version} · {autosaveLabel(saveUi)}
           </p>
@@ -127,7 +127,7 @@ export function GuidedEditor({
               )
             }
           >
-            {creatorT(locale, 'creator.editor.saveWords')}  ↗
+            {creatorT(locale, 'creator.editor.saveWords')}
           </Button>
           <Button
             variant="secondary"
@@ -218,16 +218,16 @@ export function GuidedEditor({
           </Button>
           {saveUi === 'conflict' ? (
             <Button className="btn-block mt-3" onClick={() => router.refresh()}>
-              {creatorT(locale, 'creator.editor.reload')}  ↗
+              {creatorT(locale, 'creator.editor.reload')}
             </Button>
           ) : null}
           {status ? (
-            <p className="text-[13px] mt-4 mb-0" role="status">
+            <p className="text-[14px] mt-4 mb-0" role="status">
               {status}
             </p>
           ) : null}
           {error ? (
-            <p className="text-[13px] text-red-700 mt-4 mb-0" role="alert">
+            <p className="text-[14px] text-red-700 mt-4 mb-0" role="alert">
               {error}
             </p>
           ) : null}
@@ -235,10 +235,10 @@ export function GuidedEditor({
       </div>
 
       <div className="flex items-center justify-between mb-3">
-        <div className="text-[11px] font-bold text-[color:var(--accent)]">
+        <div className="text-[12px] font-bold text-[color:var(--accent)]">
           {creatorT(locale, 'creator.editor.moments')}
         </div>
-        <div className="text-[13px] text-[color:var(--muted)]">Saved on TimelineContract</div>
+        <div className="text-[14px] text-[color:var(--muted)]">Saved on TimelineContract</div>
       </div>
       <div className="grid gap-3 md:grid-cols-4">
         {mediaScenes.map((m, index) => (
@@ -253,7 +253,7 @@ export function GuidedEditor({
                   )}
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold text-[color:var(--accent)]">
+                  <div className="text-[12px] font-bold text-[color:var(--accent)]">
                     {String(index + 1).padStart(2, '0')}
                   </div>
                   <div className="serif text-[18px] leading-tight">

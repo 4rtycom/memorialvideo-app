@@ -10,7 +10,7 @@ import { loadActiveTribute } from '@/server/session';
 export default async function StylesPage() {
   const tribute = await loadActiveTribute();
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
-  const shell = shellProject(tribute);
+  const shell = shellProject(tribute, locale);
 
   return (
     <AppShell

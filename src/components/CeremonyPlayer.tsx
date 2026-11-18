@@ -1,6 +1,10 @@
 'use client';
 
-import type { CeremonySpeechPause, TimelineContract } from '@memorialvideo/contracts';
+import type {
+  CeremonySpeechPause,
+  LaunchLanguage,
+  TimelineContract,
+} from '@memorialvideo/contracts';
 import {
   formatTimelineClock,
   totalDurationFrames,
@@ -14,6 +18,7 @@ import type { PlayerRef } from '@remotion/player';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RemotionCinemaPlayer } from '@/components/RemotionCinemaPlayer';
 import { Button } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
 
 type HoldState =
   | { active: false }
@@ -29,7 +34,9 @@ export function CeremonyPlayer({
   origin,
   speechPauses = [],
   compact = false,
+  locale = 'en',
 }: {
+  locale?: LaunchLanguage;
   timeline: TimelineContract | null;
   origin: string;
   speechPauses?: readonly CeremonySpeechPause[] | null;
@@ -97,10 +104,8 @@ export function CeremonyPlayer({
   if (!timeline) {
     return (
       <div className="card !p-6 mb-5" data-testid="ceremony-player-empty">
-        <h3 className="serif text-[28px] m-0 mb-2">Ceremony Player</h3>
-        <p className="text-[color:var(--muted)] m-0">
-          Arrange the first film, then rehearse pause and resume for live words at the service.
-        </p>
+        <h3 className="serif text-[28px] m-0 mb-2">{creatorT(locale, 'creator.film.ceremonyTitle')}</h3>
+        <p className="text-[color:var(--muted)] m-0">{creatorT(locale, 'creator.film.ceremonyEmpty')}</p>
       </div>
     );
   }
@@ -197,7 +202,7 @@ export function CeremonyPlayer({
           aria-live="polite"
           data-testid="ceremony-speech-hold"
         >
-          <p className="text-[11px] font-bold tracking-[0.08em] text-[color:var(--accent)] m-0 mb-3">
+          <p className="text-[12px] font-bold tracking-[0.08em] text-[color:var(--accent)] m-0 mb-3">
             LIVE WORDS
           </p>
           <h2 className="serif text-white text-[clamp(1.5rem,4vw,2.75rem)] font-normal m-0 mb-3">
@@ -236,10 +241,12 @@ export function CeremonyPlayer({
         }
       }}
     >
-      <p className="text-[11px] font-bold tracking-[0.08em] text-[color:var(--accent)] m-0 mb-2">
+      <p className="text-[12px] font-bold tracking-[0.08em] text-[color:var(--accent)] m-0 mb-2">
         OPERATOR
       </p>
-      <h3 className={`serif m-0 mb-2 ${compact ? 'text-[24px]' : 'text-[28px]'}`}>Ceremony Player</h3>
+      <h3 className={`serif m-0 mb-2 ${compact ? 'text-[24px]' : 'text-[28px]'}`}>
+        {creatorT(locale, 'creator.film.ceremonyTitle')}
+      </h3>
       <p className="text-[color:var(--muted)] text-[14px] mb-4">
         {speechCues.length > 0
           ? `${speechCues.length} speech pause${speechCues.length === 1 ? '' : 's'} marked — the film holds automatically; resume when the room is ready.`
@@ -284,12 +291,12 @@ export function CeremonyPlayer({
           Fullscreen display
         </Button>
       </div>
-      <p className="text-[13px] text-[color:var(--muted)] m-0 mb-3">
+      <p className="text-[14px] text-[color:var(--muted)] m-0 mb-3">
         {clock} · {total}
         {hold.active ? ' · holding for live words' : playing ? ' · playing' : ' · paused'}
       </p>
       {order.length > 0 ? (
-        <ul className="list-none p-0 m-0 grid gap-2 text-[13px]" data-testid="ceremony-running-order">
+        <ul className="list-none p-0 m-0 grid gap-2 text-[14px]" data-testid="ceremony-running-order">
           {order.map((item) => (
             <li key={item.id} className="flex flex-wrap items-center gap-3">
               <span className="text-[color:var(--muted)] min-w-[3.5rem]">{item.startLabel}</span>
@@ -306,7 +313,7 @@ export function CeremonyPlayer({
           ))}
         </ul>
       ) : (
-        <p className="text-[13px] text-[color:var(--muted)] m-0">
+        <p className="text-[14px] text-[color:var(--muted)] m-0">
           No chapter or speech markers yet — pause anywhere during the service.
         </p>
       )}

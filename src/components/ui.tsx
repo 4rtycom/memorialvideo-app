@@ -80,8 +80,8 @@ export function ErrorState({
 }) {
   return (
     <div role="alert" data-testid="error-state">
-      <p className="text-[13px] text-[color:var(--accent)] m-0 mb-2">{title}</p>
-      {body ? <p className="text-[13px] text-[color:var(--muted)] m-0 mb-3">{body}</p> : null}
+      <p className="text-[14px] text-[color:var(--accent)] m-0 mb-2">{title}</p>
+      {body ? <p className="text-[14px] text-[color:var(--muted)] m-0 mb-3">{body}</p> : null}
       {action ?? null}
     </div>
   );

@@ -200,7 +200,7 @@ export function MemorialPackPanel({
         </h3>
         <p className="text-[14px] text-[color:var(--muted)] m-0">{creatorT(locale, 'creator.pack.active')}</p>
         {packRecommendation ? (
-          <p className="text-[13px] text-[color:var(--muted)] mt-2 mb-0">
+          <p className="text-[14px] text-[color:var(--muted)] mt-2 mb-0">
             {creatorT(locale, 'creator.pack.projectedLength')}: {packRecommendation.filmClock} ·{' '}
             {creatorT(locale, 'creator.pack.allowance')}: {selectedPlan?.filmMinutes ?? '—'} min
           </p>
@@ -220,7 +220,7 @@ export function MemorialPackPanel({
             {creatorT(locale, 'creator.pack.projectedLength')}:{' '}
             <strong className="font-medium">{packRecommendation.filmClock}</strong>
           </p>
-          <p className="text-[13px] text-[color:var(--muted)] m-0 mb-3">
+          <p className="text-[14px] text-[color:var(--muted)] m-0 mb-3">
             {packRecommendation.drivingSource === 'music'
               ? creatorT(locale, 'creator.pack.projectedFromSongs').replace(
                   '{count}',
@@ -236,7 +236,7 @@ export function MemorialPackPanel({
               {explanation}
             </p>
           ) : null}
-          <p className="text-[13px] text-[color:var(--muted)] m-0 mb-3">
+          <p className="text-[14px] text-[color:var(--muted)] m-0 mb-3">
             {creatorT(locale, 'creator.pack.noSilentShorten')}
           </p>
           <div
@@ -291,7 +291,7 @@ export function MemorialPackPanel({
                     <span className="serif text-[18px]">{plan.displayName}</span>
                     <span className="text-[14px]">€{plan.amountEur}</span>
                   </div>
-                  <p className="text-[13px] text-[color:var(--muted)] m-0 mt-1">
+                  <p className="text-[14px] text-[color:var(--muted)] m-0 mt-1">
                     {creatorT(locale, 'creator.pack.upToMinutes').replace('{minutes}', String(plan.filmMinutes))}
                     {tooLow ? ` · ${creatorT(locale, 'creator.pack.tooShortForFilm')}` : ''}
                   </p>
@@ -310,7 +310,7 @@ export function MemorialPackPanel({
         >
           {pending
             ? '…'
-            : `${creatorT(locale, 'creator.pack.buyStripe')} · ${selectedPlan?.displayName ?? 'Memorial Pack'} · €${selectedPlan?.amountEur ?? '—'}  ↗`}
+            : `${creatorT(locale, 'creator.pack.buyStripe')} · ${selectedPlan?.displayName ?? 'Memorial Pack'} · €${selectedPlan?.amountEur ?? '—'}`}
         </Button>
       ) : null}
 
@@ -320,7 +320,7 @@ export function MemorialPackPanel({
           variant="secondary"
           className={pending ? 'opacity-70 btn-block' : 'btn-block'}
         >
-          {pending ? '…' : `${creatorT(locale, 'creator.pack.activateLocal')}  ↗`}
+          {pending ? '…' : `${creatorT(locale, 'creator.pack.activateLocal')}`}
         </Button>
       ) : null}
 
@@ -348,13 +348,13 @@ export function MemorialPackPanel({
       ) : null}
 
       {mode === 'local_fake' ? (
-        <p className="text-[13px] text-[color:var(--muted)] mt-3 mb-0">
+        <p className="text-[14px] text-[color:var(--muted)] mt-3 mb-0">
           {creatorT(locale, 'creator.pack.localOnlyNote')}
         </p>
       ) : null}
 
       {message ? (
-        <p className="text-[13px] mt-3 mb-0" role="status">
+        <p className="text-[14px] mt-3 mb-0" role="status">
           {message}
         </p>
       ) : null}

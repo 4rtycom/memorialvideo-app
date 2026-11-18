@@ -5,6 +5,7 @@ import {
   surfaceDrafts,
   surfaceEnglish,
 } from '@/lib/creator-surface-copy';
+import { HOME_COPY_KEYS, homeDrafts, homeEnglish } from '@/lib/creator-home-copy';
 import {
   REMAINING_SURFACE_KEYS,
   remainingDrafts,
@@ -169,6 +170,7 @@ export const CREATOR_UI_KEYS = [
   ...CRITICAL_CREATION_KEYS,
   ...SURFACE_CREATION_KEYS,
   ...REMAINING_SURFACE_KEYS,
+  ...HOME_COPY_KEYS,
 ] as const;
 
 /** Locale release status for creator UI catalogs. Non-en stays draft until XB-004. */
@@ -391,6 +393,7 @@ const en: Catalog = {
   ...criticalEnglish,
   ...surfaceEnglish,
   ...remainingEnglish,
+  ...homeEnglish,
 };
 
 /** Draft translations — status remains draft until XB-004 native review. */
@@ -418,7 +421,7 @@ const drafts: Record<Exclude<LaunchLanguage, 'en'>, Partial<Catalog>> = {
     'creator.save.saved': 'Opgeslagen',
     'creator.save.failed': 'Kon niet opslaan — probeer opnieuw',
     'creator.save.offline': 'Offline — wijzigingen niet opgeslagen',
-    'creator.save.retry': 'Opnieuw',
+    'creator.save.retry': 'Opnieuw proberen',
     'creator.locale.label': 'Taal',
     'creator.share.eyebrow': 'KLAAR VOOR DE DIENST',
     'creator.share.hero': 'Neem de film mee naar de locatie.',
@@ -973,6 +976,7 @@ function catalogFor(language: LaunchLanguage): Catalog {
     ...criticalDrafts[language],
     ...surfaceDrafts[language],
     ...remainingDrafts[language],
+    ...homeDrafts[language],
   };
 }
 

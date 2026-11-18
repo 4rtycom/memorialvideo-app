@@ -147,10 +147,10 @@ export function AddMemoryControl({
           disabled={pending}
           className={pending ? 'opacity-70' : ''}
         >
-          {creatorT(locale, 'creator.memories.choose')}  ↗
+          {creatorT(locale, 'creator.memories.choose')}
         </Button>
         <Button onClick={addSample} disabled={pending} className={pending ? 'opacity-70' : ''}>
-          {pending ? creatorT(locale, 'creator.memories.working') : `${creatorT(locale, 'creator.memories.sample')}  ↗`}
+          {pending ? creatorT(locale, 'creator.memories.working') : `${creatorT(locale, 'creator.memories.sample')}`}
         </Button>
       </div>
       <label className="flex items-start gap-2 text-[12px] text-[color:var(--muted)] max-w-sm text-left">

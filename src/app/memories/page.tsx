@@ -14,11 +14,16 @@ import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { hasInFlightIngest } from '@/server/store';
 import Link from 'next/link';
+import { pageTitle } from '@/server/page-title';
+
+export async function generateMetadata() {
+  return pageTitle('creator.nav.memories');
+}
 
 export default async function MemoriesPage() {
   const tribute = await loadActiveTribute();
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
-  const shell = shellProject(tribute);
+  const shell = shellProject(tribute, locale);
   const live = tribute?.memories ?? [];
   const inFlight = tribute ? hasInFlightIngest(tribute) : false;
   const listed = tribute ? await listOwnerInvites(tribute.publicId) : null;
@@ -62,7 +67,7 @@ export default async function MemoriesPage() {
             <span className="text-[35px] text-[color:var(--accent)] leading-none">＋</span>
             <div>
               <div className="font-medium text-[22px]">{creatorT(locale, 'creator.memories.drop')}</div>
-              <p className="text-[13px] text-[color:var(--muted)] m-0">
+              <p className="text-[14px] text-[color:var(--muted)] m-0">
                 {creatorT(locale, 'creator.memories.formats')}
               </p>
             </div>
@@ -70,7 +75,12 @@ export default async function MemoriesPage() {
           {tribute ? (
             <AddMemoryControl nextIndex={live.length} locale={locale} />
           ) : (
-            <Button href="/setup">{creatorT(locale, 'creator.memories.beginSetup')}  ↗</Button>
+            <div className="flex flex-col items-start gap-2">
+              <p className="text-[14px] text-[color:var(--muted)] m-0">
+                {creatorT(locale, 'creator.memories.needTribute')}
+              </p>
+              <Button href="/setup">{creatorT(locale, 'creator.memories.beginSetup')}</Button>
+            </div>
           )}
         </div>
       </Card>

@@ -102,19 +102,19 @@ export function RenderJobPanel({ initialJobs }: { initialJobs: JobRow[] }) {
         </Button>
       </div>
       {note ? (
-        <p className="text-[13px] text-[color:var(--muted)] mb-3" role="status">
+        <p className="text-[14px] text-[color:var(--muted)] mb-3" role="status">
           {note}
         </p>
       ) : null}
       {error ? (
-        <p className="text-[13px] text-[color:var(--accent)] mb-3" role="alert">
+        <p className="text-[14px] text-[color:var(--accent)] mb-3" role="alert">
           {error}
         </p>
       ) : null}
       {jobs.length === 0 ? (
         <p className="text-[14px] text-[color:var(--muted)] m-0">No render jobs yet.</p>
       ) : (
-        <ul className="list-none p-0 m-0 grid gap-2 text-[13px]">
+        <ul className="list-none p-0 m-0 grid gap-2 text-[14px]">
           {jobs.map((job) => (
             <li key={job.id} className="border-t border-[color:var(--border)] pt-2 flex flex-wrap items-center gap-3">
               {job.status === 'READY' && job.hasPoster ? (

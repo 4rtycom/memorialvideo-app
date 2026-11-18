@@ -6,7 +6,7 @@
   --sidebar-active: #f0eae1;
   --surface: #ffffff;
   --ink: #24322e;
-  --muted: #748078;
+  --muted: #5d6a63;
   --accent: #ad8864;
   --accent-soft: #ab8460;
   --border: #e4dfd7;
@@ -169,7 +169,7 @@ button { font: inherit; cursor: pointer; }
 }
 
 .nav-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--accent);
@@ -329,7 +329,7 @@ button { font: inherit; cursor: pointer; }
   justify-content: flex-end;
   gap: 10px 14px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
   min-width: 0;
   max-width: 100%;
   flex: 1 1 12rem;
@@ -358,7 +358,7 @@ button { font: inherit; cursor: pointer; }
 .save-retry {
   min-height: 44px;
   padding: 0 14px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .avatar {
@@ -383,7 +383,7 @@ button { font: inherit; cursor: pointer; }
 .cinema-mode .content { color: white; }
 
 .eyebrow {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--accent);
@@ -821,9 +821,20 @@ img, video, canvas {
   .app-shell { grid-template-columns: minmax(0, 1fr); }
   .sidebar { display: none; }
   .main, .content { min-width: 0; max-width: 100%; }
+  /* Bottom tab bar: the five primary routes stay one thumb-reach away. */
   .primary-nav-mobile {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    gap: 2px;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    box-shadow: 0 -4px 16px rgba(36, 50, 46, 0.06);
   }
   .primary-nav-mobile .nav-item {
     flex-direction: column;
@@ -834,7 +845,7 @@ img, video, canvas {
     min-height: 64px;
     font-size: 12px;
   }
-  .content { padding: 24px 16px 40px; }
+  .content { padding: 24px 16px calc(96px + env(safe-area-inset-bottom)); }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: minmax(0, 1fr); }
   .topbar {
     display: grid;
@@ -852,12 +863,15 @@ img, video, canvas {
   .topbar-meta {
     grid-area: meta;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: flex-start;
     align-items: center;
     gap: 8px 10px;
     width: 100%;
   }
+  .topbar-meta .locale-switcher { flex: 0 0 auto; }
+  .topbar-meta .save-status { flex: 1 1 0; min-width: 0; }
+  .save-retry { padding: 0 10px; }
   .topbar .avatar { grid-area: avatar; }
   .hero { font-size: clamp(32px, 6vw, 48px); }
   .upload-zone { align-items: stretch; }
@@ -868,18 +882,12 @@ img, video, canvas {
 }
 
 @media (max-width: 720px) {
-  .primary-nav-mobile {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
   .primary-nav-mobile .nav-item {
-    flex-direction: row;
-    justify-content: flex-start;
-    text-align: left;
-    gap: 8px;
-    padding: 8px 12px;
-    font-size: 14px;
+    padding: 6px 2px;
+    font-size: 12px;
+    line-height: 1.2;
   }
-  .content { padding: 20px 14px 36px; }
+  .content { padding: 20px 14px calc(96px + env(safe-area-inset-bottom)); }
   .hero { font-size: clamp(30px, 9vw, 40px); }
   .content h2.serif,
   .guest-main h1.serif,

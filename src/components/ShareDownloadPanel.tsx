@@ -172,7 +172,7 @@ export function ShareDownloadPanel({
         </p>
         <div className="mb-5">
           <h3 className="serif text-[23px] m-0 mb-2">{creatorT(locale, 'creator.share.ceremonyPack')}</h3>
-          <p className="text-[13px] text-[color:var(--muted)] mb-3">
+          <p className="text-[14px] text-[color:var(--muted)] mb-3">
             {ceremonyPack.canBuild
               ? creatorT(locale, 'creator.share.ceremonyPackReady')
               : creatorT(locale, 'creator.share.ceremonyPackBlocked')}
@@ -201,7 +201,7 @@ export function ShareDownloadPanel({
         </p>
         {download.staleFinal ? (
           <p
-            className="text-[13px] text-[color:var(--accent)] mt-2 mb-0"
+            className="text-[14px] text-[color:var(--accent)] mt-2 mb-0"
             data-testid="ceremony-render-stale"
             role="status"
           >
@@ -243,10 +243,10 @@ export function ShareDownloadPanel({
           </div>
           <div className="flex flex-wrap gap-3 mb-4">
             <Button onClick={createShare} disabled={pending || !entitlementActive} variant="secondary">
-              {pending ? creatorT(locale, 'creator.music.working') : `${creatorT(locale, 'creator.share.createLink')}  ↗`}
+              {pending ? creatorT(locale, 'creator.music.working') : `${creatorT(locale, 'creator.share.createLink')}`}
             </Button>
             <Button variant="ghost" onClick={copyLink} disabled={!actionUrl}>
-              {copied ? creatorT(locale, 'creator.share.copied') : `${creatorT(locale, 'creator.share.copy')}  ↗`}
+              {copied ? creatorT(locale, 'creator.share.copied') : `${creatorT(locale, 'creator.share.copy')}`}
             </Button>
           </div>
           {note ? <p className="text-[12px] text-[color:var(--muted)] mb-3">{note}</p> : null}
@@ -256,7 +256,7 @@ export function ShareDownloadPanel({
             </p>
           ) : null}
           {shares.length > 0 ? (
-            <ul className="list-none p-0 m-0 grid gap-2 text-[13px] text-[color:var(--muted)] mb-0">
+            <ul className="list-none p-0 m-0 grid gap-2 text-[14px] text-[color:var(--muted)] mb-0">
               {shares.map((share) => (
                 <li key={share.id} className="flex flex-wrap justify-between gap-3 items-center min-w-0">
                   <span>

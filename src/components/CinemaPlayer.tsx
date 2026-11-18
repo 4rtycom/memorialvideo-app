@@ -59,7 +59,7 @@ export function CinemaPlayer({
         <div className="relative aspect-[1006/412]">
           <Image src={fallbackStill} alt="" fill className="object-cover" sizes="1000px" priority />
           <div className="player-overlay">
-            <div className="text-[11px] font-bold text-[color:var(--accent)] mb-1">DRAFT PREVIEW</div>
+            <div className="text-[12px] font-bold text-[color:var(--accent)] mb-1">DRAFT PREVIEW</div>
             <div className="serif text-[32px] text-white leading-none">Arrange the first film to open the screening room.</div>
           </div>
         </div>
@@ -103,7 +103,7 @@ export function CinemaPlayer({
           {playing ? 'Ⅱ' : '▷'}
         </button>
         <div className="player-overlay">
-          <div className="text-[11px] font-bold text-[color:var(--accent)] mb-1">
+          <div className="text-[12px] font-bold text-[color:var(--accent)] mb-1">
             {timeline.watermark ? 'DRAFT PREVIEW' : 'IN LOVING MEMORY'}
           </div>
           <div className="serif text-[46px] text-white leading-none">{overlayTitle}</div>

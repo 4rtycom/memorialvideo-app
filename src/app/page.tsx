@@ -4,13 +4,15 @@ import { Button, Card, Eyebrow, Hero, Lede } from '@/components/ui';
 import { creatorT } from '@/lib/creator-ui-messages';
 import { overviewCopy, shellProject } from '@/lib/tribute-view';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
+import { resolvePersistence } from '@/server/persistence';
 import { loadActiveTribute } from '@/server/session';
 
 export default async function OverviewPage() {
   const tribute = await loadActiveTribute();
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
-  const shell = shellProject(tribute);
-  const copy = overviewCopy(tribute);
+  const shell = shellProject(tribute, locale);
+  const storage = await resolvePersistence();
+  const copy = overviewCopy(tribute, locale, storage.writable);
   const poster = tribute?.isFixtureSeed ? '/fixtures/eleanor.png' : '/fixtures/workspace-family.png';
 
   return (
@@ -35,7 +37,7 @@ export default async function OverviewPage() {
             <span style={{ width: copy.progressWidth }} />
           </div>
           <p className="font-medium text-[16px] m-0 mb-2">{copy.progressLabel}</p>
-          <p className="text-[color:var(--muted)] text-[13px] m-0 mb-6">
+          <p className="text-[color:var(--muted)] text-[14px] m-0 mb-6">
             {tribute
               ? creatorT(locale, 'creator.home.updatedPrivate').replace(
                   '{when}',
@@ -52,12 +54,7 @@ export default async function OverviewPage() {
                 </Button>
               </>
             ) : (
-              <>
-                <Button href="/setup">{creatorT(locale, 'creator.home.begin')}</Button>
-                <Button href="/workspace" variant="secondary">
-                  {creatorT(locale, 'creator.home.openWorkspace')}
-                </Button>
-              </>
+              <Button href="/setup">{creatorT(locale, 'creator.home.begin')}</Button>
             )}
           </div>
         </div>
@@ -72,11 +69,11 @@ export default async function OverviewPage() {
               : creatorT(locale, 'creator.home.nextWithout')}
           </p>
         </div>
-        <Button href={tribute ? '/memories' : '/setup'} variant="secondary">
-          {tribute
-            ? creatorT(locale, 'creator.home.viewMemories')
-            : creatorT(locale, 'creator.home.startSetup')}
-        </Button>
+        {tribute ? (
+          <Button href="/memories" variant="secondary">
+            {creatorT(locale, 'creator.home.viewMemories')}
+          </Button>
+        ) : null}
       </div>
       {shell.person ? <p className="sr-only">{shell.person}</p> : null}
     </AppShell>

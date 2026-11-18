@@ -75,7 +75,7 @@ export function CeremonyChecklistPanel({
         {creatorT(locale, 'creator.share.checklistDownloadHint')}
       </p>
       {error ? (
-        <p className="text-[13px] text-[color:var(--accent)] mt-3 mb-0" role="alert">
+        <p className="text-[14px] text-[color:var(--accent)] mt-3 mb-0" role="alert">
           {error}
         </p>
       ) : null}

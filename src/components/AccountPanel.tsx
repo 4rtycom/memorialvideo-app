@@ -119,7 +119,7 @@ export function AccountPanel({
               )}
               <div className="min-w-0">
                 <div className="serif text-[28px] leading-none mb-2">{row.displayName}</div>
-                <p className="text-[13px] text-[color:var(--muted)] m-0">
+                <p className="text-[14px] text-[color:var(--muted)] m-0">
                   {row.memoryCount} memories · {row.firstFilmStage}
                   {row.entitlementActive ? ' · Memorial Pack' : ''}
                   {row.hasReadyFinal ? ' · READY final' : ''}
@@ -149,7 +149,7 @@ export function AccountPanel({
         ))
       )}
       {note ? (
-        <p className="text-[13px] m-0" role="status">
+        <p className="text-[14px] m-0" role="status">
           {note}
         </p>
       ) : null}

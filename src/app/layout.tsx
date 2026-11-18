@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, DM_Sans } from "next/font/google";
 import "./globals.css";
+import { resolveCreatorLocaleWithTribute } from "@/server/locale";
 
 const dm = DM_Sans({
   variable: "--font-dm",
@@ -15,7 +16,7 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "MemorialVideo Creator",
+  title: { default: "MemorialVideo Creator", template: "%s · MemorialVideo" },
   description:
     "A calm, ceremony-first memorial video creator. AI does the heavy work. Families make the meaningful decisions.",
   applicationName: "MemorialVideo",
@@ -30,9 +31,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await resolveCreatorLocaleWithTribute(null);
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className={`${dm.variable} ${cormorant.variable} antialiased`}>{children}</body>
     </html>
   );

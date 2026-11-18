@@ -6,11 +6,16 @@ import { creatorT } from '@/lib/creator-ui-messages';
 import { shellProject } from '@/lib/tribute-view';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
+import { pageTitle } from '@/server/page-title';
+
+export async function generateMetadata() {
+  return pageTitle('creator.nav.music');
+}
 
 export default async function MusicPage() {
   const tribute = await loadActiveTribute();
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
-  const shell = shellProject(tribute);
+  const shell = shellProject(tribute, locale);
 
   return (
     <AppShell

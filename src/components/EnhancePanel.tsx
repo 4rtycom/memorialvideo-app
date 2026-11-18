@@ -175,13 +175,13 @@ export function EnhancePanel({
   return (
     <>
       <Card className="!p-5 mb-5" data-testid="enhance-capability">
-        <div className="text-[11px] font-bold tracking-[0.08em] text-[color:var(--accent)] mb-2">
+        <div className="text-[12px] font-bold tracking-[0.08em] text-[color:var(--accent)] mb-2">
           WHAT THIS DOES
         </div>
         <p className="m-0 text-[14px] text-[color:var(--ink)]">
           Available now: local, reversible photograph correction (contrast, warmth, gentle sharpen).
         </p>
-        <p className="mt-2 mb-0 text-[13px] text-[color:var(--muted)]">
+        <p className="mt-2 mb-0 text-[14px] text-[color:var(--muted)]">
           Not available: generative restoration, invented detail, face synthesis, or video
           post-processing. Those stay off — we will not present them as ready.
         </p>
@@ -205,10 +205,10 @@ export function EnhancePanel({
 
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-[11px] font-bold tracking-[0.08em] text-[color:var(--accent)]">
+          <div className="text-[12px] font-bold tracking-[0.08em] text-[color:var(--accent)]">
             BEFORE / AFTER
           </div>
-          <p className="m-0 mt-1 text-[13px] text-[color:var(--muted)]">
+          <p className="m-0 mt-1 text-[14px] text-[color:var(--muted)]">
             Side-by-side compare, or toggle with Before/After (keys O / V or arrow keys).
           </p>
         </div>
@@ -231,7 +231,7 @@ export function EnhancePanel({
 
       <div className="grid gap-5 md:grid-cols-2 mb-5">
         <Card className="!p-4" data-testid="enhance-before">
-          <div className="text-[11px] font-bold text-[color:var(--accent)] mb-3">
+          <div className="text-[12px] font-bold text-[color:var(--accent)] mb-3">
             BEFORE · ORIGINAL (IMMUTABLE)
           </div>
           <div
@@ -241,10 +241,10 @@ export function EnhancePanel({
           >
             <Image src={selected.imagePath} alt="" fill className="object-cover" sizes="480px" />
           </div>
-          <p className="text-[13px] text-[color:var(--muted)] mt-3 mb-0">{selected.title}</p>
+          <p className="text-[14px] text-[color:var(--muted)] mt-3 mb-0">{selected.title}</p>
         </Card>
         <Card className="!p-4" data-testid="enhance-after">
-          <div className="text-[11px] font-bold text-[color:var(--accent)] mb-3">
+          <div className="text-[12px] font-bold text-[color:var(--accent)] mb-3">
             AFTER · LOCAL PIXEL CORRECTION
           </div>
           {readyVariant ? (
@@ -265,7 +265,7 @@ export function EnhancePanel({
               No improved variant yet. We never invent a generative before/after.
             </div>
           )}
-          <p className="text-[13px] text-[color:var(--muted)] mt-3 mb-0">
+          <p className="text-[14px] text-[color:var(--muted)] mt-3 mb-0">
             Method: deterministic local correction — no synthesised detail
           </p>
         </Card>
@@ -324,22 +324,22 @@ export function EnhancePanel({
           Back to memories
         </Button>
       </div>
-      <p className="text-[13px] text-[color:var(--muted)] mt-4">
+      <p className="text-[14px] text-[color:var(--muted)] mt-4">
         Family sign-off is required before a local improvement enters the film. You can reverse that
         binding at any time. Originals stay in the library.
       </p>
       {info ? (
-        <p className="text-[13px] mt-2" role="status">
+        <p className="text-[14px] mt-2" role="status">
           {info}
         </p>
       ) : null}
       {error ? (
-        <p className="text-[13px] text-[color:var(--accent)] mt-2" role="alert">
+        <p className="text-[14px] text-[color:var(--accent)] mt-2" role="alert">
           {error}
         </p>
       ) : null}
       {selectedRows.length > 0 ? (
-        <ul className="list-none p-0 mt-4 grid gap-2 text-[13px] text-[color:var(--muted)]">
+        <ul className="list-none p-0 mt-4 grid gap-2 text-[14px] text-[color:var(--muted)]">
           {selectedRows.slice(0, 8).map((r) => (
             <li key={r.id} data-testid={`enhance-status-${r.status}`}>
               {statusLabel(r.status)}
