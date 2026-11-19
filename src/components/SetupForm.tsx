@@ -151,7 +151,7 @@ export function SetupForm({ locale = 'en' }: { locale?: LaunchLanguage }) {
         </Card>
         <Card soft className="!p-4">
           <div className="relative h-[302px] rounded-[9px] overflow-hidden mb-5">
-            <Image src="/fixtures/setup-eleanor.png" alt="" fill className="object-cover" sizes="315px" />
+            <Image src="/brand/soft-light.svg" unoptimized alt="" fill className="object-cover" sizes="315px" />
           </div>
           <h3 className="serif text-[33px] m-0 mb-2">{creatorT(locale, 'creator.setup.asideTitle')}</h3>
           <p className="text-[color:var(--muted)] m-0">{creatorT(locale, 'creator.setup.asideBody')}</p>

@@ -13,7 +13,9 @@ export default async function OverviewPage() {
   const shell = shellProject(tribute, locale);
   const storage = await resolvePersistence();
   const copy = overviewCopy(tribute, locale, storage.writable);
-  const poster = tribute?.isFixtureSeed ? '/fixtures/eleanor.png' : '/fixtures/workspace-family.png';
+  const poster = tribute?.isFixtureSeed
+    ? '/fixtures/eleanor.png'
+    : (tribute?.memories[0]?.imagePath ?? '/brand/soft-light.svg');
 
   return (
     <AppShell brand={shell.brand} title={shell.title} ownerInitial={shell.ownerInitial} locale={locale}>
@@ -27,7 +29,7 @@ export default async function OverviewPage() {
 
       <Card className="!p-4 grid gap-5 md:grid-cols-[minmax(0,332px)_minmax(0,1fr)] items-stretch">
         <div className="relative h-[308px] max-h-[70vw] overflow-hidden rounded-[9px]">
-          <Image src={poster} alt="" fill className="object-cover" sizes="(max-width: 768px) 100vw, 332px" priority />
+          <Image src={poster} unoptimized={poster.endsWith('.svg')} alt="" fill className="object-cover" sizes="(max-width: 768px) 100vw, 332px" priority />
         </div>
         <div className="flex flex-col justify-center py-4 pr-4">
           <Eyebrow>{copy.cardEyebrow}</Eyebrow>

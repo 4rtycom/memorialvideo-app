@@ -9,12 +9,6 @@ import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { memoryCount, readyMemoryCount } from '@/server/store';
 
-const thumbs = [
-  '/fixtures/workspace-eleanor.png',
-  '/fixtures/workspace-couple.png',
-  '/fixtures/workspace-happy.png',
-  '/fixtures/workspace-family.png',
-];
 
 export default async function WorkspacePage() {
   const tribute = await loadActiveTribute();
@@ -42,10 +36,10 @@ export default async function WorkspacePage() {
           <div className="flex gap-3 mb-6 overflow-x-auto min-w-0 max-w-full">
             {(tribute?.memories.length
               ? tribute.memories.slice(0, 4).map((m) => m.imagePath)
-              : thumbs
+              : ['/brand/soft-light.svg']
             ).map((src) => (
               <div key={src} className="relative w-[125px] h-[120px] shrink-0 rounded-[9px] overflow-hidden">
-                <Image src={src} alt="" fill className="object-cover" sizes="125px" />
+                <Image src={src} alt="" fill className="object-cover" sizes="125px" unoptimized={src.endsWith('.svg')} />
               </div>
             ))}
           </div>

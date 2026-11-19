@@ -56,7 +56,18 @@ export default async function CreatingPage() {
 
       <Card className="!p-5 grid gap-6 lg:grid-cols-[minmax(0,471px)_minmax(0,1fr)] items-stretch">
         <div className="relative h-[420px] rounded-[10px] overflow-hidden">
-          <Image src="/fixtures/finish-film.png" alt="" fill className="object-cover" sizes="471px" />
+          <Image
+            src={
+              tribute?.isFixtureSeed
+                ? '/fixtures/finish-film.png'
+                : (tribute?.memories[0]?.imagePath ?? '/brand/soft-light.svg')
+            }
+            alt=""
+            fill
+            className="object-cover"
+            sizes="471px"
+            unoptimized={Boolean(tribute) && !tribute?.isFixtureSeed && !tribute?.memories[0]}
+          />
           <div className="absolute inset-x-0 bottom-0 bg-[color:var(--cinema)]/90 text-white p-6">
             <div className="text-[12px] font-bold text-[color:var(--accent)] mb-2">
               {creatorT(locale, 'creator.creating.cardTag')}
