@@ -123,8 +123,8 @@ export function CeremonyPlayer({
     if (manual) {
       setHold({
         active: true,
-        title: 'Waiting for live words',
-        note: 'Press Resume film when the room is ready.',
+        title: creatorT(locale, 'creator.ceremony.holdTitle'),
+        note: creatorT(locale, 'creator.ceremony.holdNote'),
         cueId: null,
       });
     }
@@ -161,7 +161,7 @@ export function CeremonyPlayer({
       setHold({
         active: true,
         title: item.title,
-        note: item.waitingNote || 'Cued. Resume when ready.',
+        note: item.waitingNote || creatorT(locale, 'creator.ceremony.cuedNote'),
         cueId: item.id,
       });
     } else {
@@ -205,7 +205,7 @@ export function CeremonyPlayer({
           data-testid="ceremony-speech-hold"
         >
           <p className="text-[12px] font-bold tracking-[0.08em] text-[color:var(--accent)] m-0 mb-3">
-            LIVE WORDS
+            {creatorT(locale, 'creator.ceremony.liveWords')}
           </p>
           <h2 className="serif text-white text-[clamp(1.5rem,4vw,2.75rem)] font-normal m-0 mb-3">
             {hold.title}
@@ -244,18 +244,20 @@ export function CeremonyPlayer({
       }}
     >
       <p className="text-[12px] font-bold tracking-[0.08em] text-[color:var(--accent)] m-0 mb-2">
-        OPERATOR
+        {creatorT(locale, 'creator.ceremony.operator')}
       </p>
       <h3 className={`serif m-0 mb-2 ${compact ? 'text-[24px]' : 'text-[28px]'}`}>
         {creatorT(locale, 'creator.film.ceremonyTitle')}
       </h3>
       <p className="text-[color:var(--muted)] text-[14px] mb-4">
-        {speechCues.length > 0
-          ? `${speechCues.length} speech pause${speechCues.length === 1 ? '' : 's'} marked — the film holds automatically; resume when the room is ready.`
-          : 'Add speech pauses under Music & Moments, or pause manually for live words.'}
+        {speechCues.length === 1
+          ? creatorT(locale, 'creator.ceremony.cuesOne')
+          : speechCues.length > 1
+            ? creatorT(locale, 'creator.ceremony.cuesMany').replace('{count}', String(speechCues.length))
+            : creatorT(locale, 'creator.ceremony.cuesNone')}
       </p>
       <p className="sr-only">
-        Keyboard: Space or K pauses or resumes, Left and Right arrows seek ten seconds.
+        {creatorT(locale, 'creator.ceremony.keyboardHint')}
       </p>
       <div className="flex flex-wrap gap-3 mb-4">
         <Button
@@ -264,16 +266,16 @@ export function CeremonyPlayer({
           onClick={() => pauseForSpeech(true)}
           aria-keyshortcuts="Space K"
         >
-          Pause for speech
+          {creatorT(locale, 'creator.ceremony.pause')}
         </Button>
         <Button type="button" variant={emphasis.resume} onClick={resumeFilm} aria-keyshortcuts="Space K">
-          Resume film
+          {creatorT(locale, 'creator.ceremony.resume')}
         </Button>
         <Button type="button" variant="ghost" onClick={() => seekRelative(-10)} aria-keyshortcuts="ArrowLeft">
-          Back 10s
+          {creatorT(locale, 'creator.ceremony.back10')}
         </Button>
         <Button type="button" variant="ghost" onClick={() => seekRelative(10)} aria-keyshortcuts="ArrowRight">
-          Skip 10s
+          {creatorT(locale, 'creator.ceremony.skip10')}
         </Button>
         <Button
           type="button"
@@ -287,15 +289,21 @@ export function CeremonyPlayer({
             setHold({ active: false });
           }}
         >
-          Restart
+          {creatorT(locale, 'creator.ceremony.restart')}
         </Button>
         <Button type="button" variant="ghost" onClick={() => void toggleFullscreen()}>
-          Fullscreen display
+          {creatorT(locale, 'creator.ceremony.fullscreen')}
         </Button>
       </div>
       <p className="text-[14px] text-[color:var(--muted)] m-0 mb-3">
         {clock} · {total}
-        {hold.active ? ' · holding for live words' : playing ? ' · playing' : ' · paused'}
+        {` · ${
+          hold.active
+            ? creatorT(locale, 'creator.ceremony.statusHolding')
+            : playing
+              ? creatorT(locale, 'creator.ceremony.statusPlaying')
+              : creatorT(locale, 'creator.ceremony.statusPaused')
+        }`}
       </p>
       {order.length > 0 ? (
         <ul className="list-none p-0 m-0 grid gap-2 text-[14px]" data-testid="ceremony-running-order">
@@ -304,19 +312,21 @@ export function CeremonyPlayer({
               <span className="text-[color:var(--muted)] min-w-[3.5rem]">{item.startLabel}</span>
               <span>
                 {item.kind === 'speech_pause' ? (
-                  <span className="text-[color:var(--accent)]">Live words · </span>
+                  <span className="text-[color:var(--accent)]">
+                    {creatorT(locale, 'creator.ceremony.liveWordsInline')} ·{' '}
+                  </span>
                 ) : null}
                 {item.title}
               </span>
               <Button type="button" variant="ghost" onClick={() => cueTo(item)}>
-                Cue here
+                {creatorT(locale, 'creator.ceremony.cueHere')}
               </Button>
             </li>
           ))}
         </ul>
       ) : (
         <p className="text-[14px] text-[color:var(--muted)] m-0">
-          No chapter or speech markers yet — pause anywhere during the service.
+          {creatorT(locale, 'creator.ceremony.noMarkers')}
         </p>
       )}
     </div>

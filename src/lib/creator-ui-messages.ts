@@ -5,6 +5,11 @@ import {
   surfaceDrafts,
   surfaceEnglish,
 } from '@/lib/creator-surface-copy';
+import {
+  CEREMONY_COPY_KEYS,
+  ceremonyDrafts,
+  ceremonyEnglish,
+} from '@/lib/creator-ceremony-copy';
 import { HOME_COPY_KEYS, homeDrafts, homeEnglish } from '@/lib/creator-home-copy';
 import {
   REMAINING_SURFACE_KEYS,
@@ -171,6 +176,7 @@ export const CREATOR_UI_KEYS = [
   ...SURFACE_CREATION_KEYS,
   ...REMAINING_SURFACE_KEYS,
   ...HOME_COPY_KEYS,
+  ...CEREMONY_COPY_KEYS,
 ] as const;
 
 /** Locale release status for creator UI catalogs. Non-en stays draft until XB-004. */
@@ -394,6 +400,7 @@ const en: Catalog = {
   ...surfaceEnglish,
   ...remainingEnglish,
   ...homeEnglish,
+  ...ceremonyEnglish,
 };
 
 /** Draft translations — status remains draft until XB-004 native review. */
@@ -977,6 +984,7 @@ function catalogFor(language: LaunchLanguage): Catalog {
     ...surfaceDrafts[language],
     ...remainingDrafts[language],
     ...homeDrafts[language],
+    ...ceremonyDrafts[language],
   };
 }
 

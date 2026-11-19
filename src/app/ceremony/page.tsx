@@ -1,6 +1,7 @@
 import { AppShell } from '@/components/AppShell';
 import { CeremonyPlayer } from '@/components/CeremonyPlayer';
 import { Button, Eyebrow, Hero, Lede } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
 import { shellProject } from '@/lib/tribute-view';
 import { creatorEnv } from '@/server/env';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
@@ -27,15 +28,12 @@ export default async function CeremonyPage() {
       title={shell.title}
       ownerInitial={shell.ownerInitial}
       locale={locale}
-      footerTitle="One operator. Calm controls."
-      footerBody="Pause for live words, then resume when the room is ready."
+      footerTitle={creatorT(locale, 'creator.ceremony.pageFooterTitle')}
+      footerBody={creatorT(locale, 'creator.ceremony.pageFooterBody')}
     >
-      <Eyebrow>CEREMONY PLAYER</Eyebrow>
-      <Hero className="!text-white">Present the film at the service.</Hero>
-      <Lede>
-        Fullscreen the display for the projector. Keep the operator panel on a second screen or below.
-        Marked speech pauses hold automatically until you resume.
-      </Lede>
+      <Eyebrow>{creatorT(locale, 'creator.ceremony.pageEyebrow')}</Eyebrow>
+      <Hero className="!text-white">{creatorT(locale, 'creator.ceremony.pageHero')}</Hero>
+      <Lede>{creatorT(locale, 'creator.ceremony.pageLede')}</Lede>
 
       <CeremonyPlayer
         timeline={timeline}
@@ -46,14 +44,14 @@ export default async function CeremonyPage() {
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Button href="/share" variant="secondary">
-          Ready for the service
+          {creatorT(locale, 'creator.nav.share')}
         </Button>
         <Button href="/music" variant="ghost">
-          Edit speech pauses
+          {creatorT(locale, 'creator.ceremony.editPauses')}
         </Button>
         {!timeline ? (
           <Link className="btn btn-secondary" href="/film/creating">
-            Arrange first film
+            {creatorT(locale, 'creator.ceremony.arrange')}
           </Link>
         ) : null}
       </div>
