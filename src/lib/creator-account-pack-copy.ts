@@ -16,6 +16,8 @@ export const ACCOUNT_PACK_KEYS = [
   'creator.account.deleteConfirm',
   'creator.music.songMomentsLabel',
   'creator.account.signInHint',
+  'creator.ceremony.videoMissing',
+  'creator.ceremony.offlineHint',
 ] as const;
 
 export type AccountPackKey = (typeof ACCOUNT_PACK_KEYS)[number];
@@ -32,6 +34,8 @@ export const accountPackEnglish: AccountPackCatalog = {
   'creator.account.deleteConfirm': 'Delete permanently',
   'creator.music.songMomentsLabel': 'Song moments',
   'creator.account.signInHint': 'Sign in to keep your tributes together and come back to them on any device.',
+  'creator.ceremony.videoMissing': 'The film file was not found. Keep the .mp4 in the same folder as this page.',
+  'creator.ceremony.offlineHint': 'One operator. Guests see the display above. No internet required.',
 };
 
 const nl: AccountPackCatalog = {
@@ -45,6 +49,8 @@ const nl: AccountPackCatalog = {
   'creator.account.deleteConfirm': 'Definitief verwijderen',
   'creator.music.songMomentsLabel': 'Muziekmomenten',
   'creator.account.signInHint': 'Meld je aan om je eerbetonen bij elkaar te houden en er op elk apparaat op terug te komen.',
+  'creator.ceremony.videoMissing': 'Het filmbestand is niet gevonden. Bewaar de .mp4 in dezelfde map als deze pagina.',
+  'creator.ceremony.offlineHint': 'Eén bediener. Gasten zien het scherm hierboven. Geen internet nodig.',
 };
 
 const de: AccountPackCatalog = {
@@ -58,6 +64,8 @@ const de: AccountPackCatalog = {
   'creator.account.deleteConfirm': 'Endgültig löschen',
   'creator.music.songMomentsLabel': 'Musikmomente',
   'creator.account.signInHint': 'Melden Sie sich an, um Ihre Gedenkseiten zusammenzuhalten und auf jedem Gerät wieder aufzurufen.',
+  'creator.ceremony.videoMissing': 'Die Filmdatei wurde nicht gefunden. Die .mp4 muss im selben Ordner wie diese Seite liegen.',
+  'creator.ceremony.offlineHint': 'Eine Person bedient. Gäste sehen die Anzeige oben. Kein Internet nötig.',
 };
 
 const fr: AccountPackCatalog = {
@@ -71,6 +79,8 @@ const fr: AccountPackCatalog = {
   'creator.account.deleteConfirm': 'Supprimer définitivement',
   'creator.music.songMomentsLabel': 'Moments musicaux',
   'creator.account.signInHint': 'Connectez-vous pour garder vos hommages ensemble et les retrouver sur n’importe quel appareil.',
+  'creator.ceremony.videoMissing': 'Le fichier du film est introuvable. Gardez le .mp4 dans le même dossier que cette page.',
+  'creator.ceremony.offlineHint': 'Un seul opérateur. Les invités voient l’écran ci-dessus. Aucune connexion internet requise.',
 };
 
 const es: AccountPackCatalog = {
@@ -84,6 +94,8 @@ const es: AccountPackCatalog = {
   'creator.account.deleteConfirm': 'Eliminar definitivamente',
   'creator.music.songMomentsLabel': 'Momentos musicales',
   'creator.account.signInHint': 'Inicie sesión para conservar sus homenajes juntos y volver a ellos desde cualquier dispositivo.',
+  'creator.ceremony.videoMissing': 'No se encuentra el archivo de la película. Mantenga el .mp4 en la misma carpeta que esta página.',
+  'creator.ceremony.offlineHint': 'Un solo operador. Los invitados ven la pantalla de arriba. No necesita internet.',
 };
 
 const pt: AccountPackCatalog = {
@@ -97,6 +109,8 @@ const pt: AccountPackCatalog = {
   'creator.account.deleteConfirm': 'Eliminar definitivamente',
   'creator.music.songMomentsLabel': 'Momentos musicais',
   'creator.account.signInHint': 'Inicie sessão para manter as suas homenagens juntas e voltar a elas em qualquer dispositivo.',
+  'creator.ceremony.videoMissing': 'O ficheiro do filme não foi encontrado. Mantenha o .mp4 na mesma pasta que esta página.',
+  'creator.ceremony.offlineHint': 'Um só operador. Os convidados veem o ecrã acima. Não precisa de internet.',
 };
 
 const it: AccountPackCatalog = {
@@ -110,6 +124,8 @@ const it: AccountPackCatalog = {
   'creator.account.deleteConfirm': 'Elimina definitivamente',
   'creator.music.songMomentsLabel': 'Momenti musicali',
   'creator.account.signInHint': 'Acceda per tenere insieme i suoi omaggi e ritrovarli su qualsiasi dispositivo.',
+  'creator.ceremony.videoMissing': 'File del film non trovato. Tenga il .mp4 nella stessa cartella di questa pagina.',
+  'creator.ceremony.offlineHint': 'Un solo operatore. Gli ospiti vedono lo schermo sopra. Non serve internet.',
 };
 
 const pl: AccountPackCatalog = {
@@ -123,6 +139,8 @@ const pl: AccountPackCatalog = {
   'creator.account.deleteConfirm': 'Usuń trwale',
   'creator.music.songMomentsLabel': 'Momenty muzyczne',
   'creator.account.signInHint': 'Zaloguj się, aby mieć wszystkie hołdy w jednym miejscu i wracać do nich na każdym urządzeniu.',
+  'creator.ceremony.videoMissing': 'Nie znaleziono pliku filmu. Plik .mp4 musi być w tym samym folderze co ta strona.',
+  'creator.ceremony.offlineHint': 'Jeden operator. Goście widzą ekran powyżej. Internet nie jest potrzebny.',
 };
 
 export const accountPackDrafts: Record<Exclude<LaunchLanguage, 'en'>, AccountPackCatalog> = {

@@ -123,22 +123,27 @@ export function ceremonyOfflinePlayerHtml(input: {
   videoFileName: string;
   displayName?: string | null;
   cues?: readonly { title: string; startLabel?: string | null; startSeconds?: number | null }[];
+  lang?: string;
+  labels?: Partial<CeremonyOfflineLabels>;
 }): string {
   const title = input.displayName?.trim() || 'Memorial film';
+  const L: CeremonyOfflineLabels = { ...CEREMONY_OFFLINE_DEFAULT_LABELS, ...input.labels };
+  const labelsJson = JSON.stringify(L).replaceAll('<', '\\u003c');
+  const lang = /^[a-zA-Z-]{2,10}$/.test(input.lang ?? '') ? (input.lang as string) : 'en';
   const cuesJson = JSON.stringify(
     (input.cues ?? []).map((cue) => ({
       title: cue.title,
       startLabel: cue.startLabel ?? '',
       startSeconds: typeof cue.startSeconds === 'number' ? cue.startSeconds : null,
     })),
-  );
+  ).replaceAll('<', '\\u003c');
   // Intentionally inline — venue machines may open this file:// without a bundler.
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Ceremony Player — ${escapeHtml(title)}</title>
+<title>${escapeHtml(L.pageTitle)} — ${escapeHtml(title)}</title>
 <style>
   :root { color-scheme: dark; --bg:#101b21; --panel:#1a2a31; --soft:#e5ede4; --accent:#c4a574; --muted:#9bb0a8; }
   * { box-sizing: border-box; }
@@ -164,6 +169,9 @@ export function ceremonyOfflinePlayerHtml(input: {
     cursor:pointer; background:#365159; color:white;
   }
   button.primary { background:var(--accent); color:#101b21; font-weight:600; }
+  button:focus-visible, video:focus-visible { outline:3px solid #fff; outline-offset:2px; }
+  .err { display:none; margin:0; padding:0.75rem 1rem; background:#5a2a2a; color:#fff; font-family:system-ui,sans-serif; }
+  .err.active { display:block; }
   button:disabled { opacity:0.45; cursor:not-allowed; }
   .clock { color:var(--muted); font-size:0.85rem; margin-left:auto; }
   .cues { list-style:none; margin:0; padding:0; display:grid; gap:0.35rem; max-height:8rem; overflow:auto; }
@@ -176,22 +184,24 @@ export function ceremonyOfflinePlayerHtml(input: {
   <div class="stage" id="stage">
     <video id="film" playsinline preload="metadata" src="./${escapeAttr(input.videoFileName)}"></video>
     <div class="hold" id="hold" role="status" aria-live="polite">
-      <h1 id="holdTitle">Waiting for live words</h1>
-      <p id="holdNote">Press Resume film when the room is ready.</p>
+      <h1 id="holdTitle">${escapeHtml(L.holdTitle)}</h1>
+      <p id="holdNote">${escapeHtml(L.holdNote)}</p>
     </div>
   </div>
   <div class="ops" data-testid="offline-ceremony-ops">
-    <h2>Operator controls</h2>
+    <h2>${escapeHtml(L.operator)}</h2>
+    <p class="err" id="err" role="alert">${escapeHtml(L.videoMissing)}</p>
     <div class="row">
-      <button type="button" class="primary" id="btnPause">Pause for speech</button>
-      <button type="button" id="btnResume">Resume film</button>
-      <button type="button" id="btnBack">Back 10s</button>
-      <button type="button" id="btnSkip">Skip 10s</button>
-      <button type="button" id="btnRestart">Restart</button>
-      <button type="button" id="btnFull">Fullscreen display</button>
+      <button type="button" class="primary" id="btnPause">${escapeHtml(L.pause)}</button>
+      <button type="button" id="btnResume">${escapeHtml(L.resume)}</button>
+      <button type="button" id="btnBack">${escapeHtml(L.back10)}</button>
+      <button type="button" id="btnSkip">${escapeHtml(L.skip10)}</button>
+      <button type="button" id="btnRestart">${escapeHtml(L.restart)}</button>
+      <button type="button" id="btnFull">${escapeHtml(L.fullscreen)}</button>
       <span class="clock" id="clock">0:00 / 0:00</span>
     </div>
-    <p class="hint">One operator. Guests see the display above. No internet required.</p>
+    <p class="hint">${escapeHtml(L.offlineHint)}</p>
+    <p class="hint">${escapeHtml(L.keyboardHint)}</p>
     <ul class="cues" id="cues"></ul>
   </div>
 <script>
@@ -201,6 +211,7 @@ export function ceremonyOfflinePlayerHtml(input: {
   var holdTitle = document.getElementById('holdTitle');
   var holdNote = document.getElementById('holdNote');
   var clock = document.getElementById('clock');
+  var L = ${labelsJson};
   var cues = ${cuesJson};
   var speechHold = false;
 
@@ -221,7 +232,7 @@ export function ceremonyOfflinePlayerHtml(input: {
   }
   document.getElementById('btnPause').onclick = function () {
     video.pause();
-    setHold(true, 'Waiting for live words', 'Press Resume film when the room is ready.');
+    setHold(true, L.holdTitle, L.holdNote);
   };
   document.getElementById('btnResume').onclick = function () {
     setHold(false);
@@ -243,6 +254,22 @@ export function ceremonyOfflinePlayerHtml(input: {
     if (!document.fullscreenElement) stage.requestFullscreen().catch(function () {});
     else document.exitFullscreen().catch(function () {});
   };
+  function toggle() {
+    if (video.paused || speechHold) document.getElementById('btnResume').onclick();
+    else document.getElementById('btnPause').onclick();
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return;
+    var tag = e.target && e.target.tagName;
+    var onButton = tag === 'BUTTON' || tag === 'A';
+    if (e.key === 'k' || e.key === 'K' || (e.key === ' ' && !onButton)) { e.preventDefault(); toggle(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); document.getElementById('btnBack').onclick(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); document.getElementById('btnSkip').onclick(); }
+    else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); document.getElementById('btnFull').onclick(); }
+  });
+  video.addEventListener('error', function () {
+    document.getElementById('err').classList.add('active');
+  });
   video.addEventListener('timeupdate', tick);
   video.addEventListener('loadedmetadata', tick);
   var list = document.getElementById('cues');
@@ -252,11 +279,11 @@ export function ceremonyOfflinePlayerHtml(input: {
     label.textContent = (cue.startLabel ? cue.startLabel + ' · ' : '') + cue.title;
     var btn = document.createElement('button');
     btn.type = 'button';
-    btn.textContent = 'Cue here';
+    btn.textContent = L.cueHere;
     btn.onclick = function () {
       if (typeof cue.startSeconds === 'number') video.currentTime = cue.startSeconds;
       video.pause();
-      setHold(true, cue.title, 'Cued. Resume when ready.');
+      setHold(true, cue.title, L.cuedNote);
     };
     li.appendChild(label);
     li.appendChild(btn);
@@ -267,6 +294,42 @@ export function ceremonyOfflinePlayerHtml(input: {
 </body>
 </html>`;
 }
+
+export type CeremonyOfflineLabels = {
+  pageTitle: string;
+  holdTitle: string;
+  holdNote: string;
+  cuedNote: string;
+  operator: string;
+  pause: string;
+  resume: string;
+  back10: string;
+  skip10: string;
+  restart: string;
+  fullscreen: string;
+  cueHere: string;
+  keyboardHint: string;
+  offlineHint: string;
+  videoMissing: string;
+};
+
+export const CEREMONY_OFFLINE_DEFAULT_LABELS: CeremonyOfflineLabels = {
+  pageTitle: 'Ceremony Player',
+  holdTitle: 'Waiting for live words',
+  holdNote: 'Press Resume film when the room is ready.',
+  cuedNote: 'Cued. Resume when ready.',
+  operator: 'Operator controls',
+  pause: 'Pause for speech',
+  resume: 'Resume film',
+  back10: 'Back 10s',
+  skip10: 'Skip 10s',
+  restart: 'Restart',
+  fullscreen: 'Fullscreen display',
+  cueHere: 'Cue here',
+  keyboardHint: 'Keyboard: Space or K pauses or resumes, Left and Right arrows seek ten seconds, F toggles fullscreen.',
+  offlineHint: 'One operator. Guests see the display above. No internet required.',
+  videoMissing: 'The film file was not found. Keep the .mp4 in the same folder as this page.',
+};
 
 function escapeHtml(value: string): string {
   return value
