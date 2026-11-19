@@ -196,7 +196,7 @@ export function MemorialPackPanel({
     return (
       <div className="border-t border-[color:var(--border)] pt-5 mt-5">
         <h3 className="serif text-[23px] m-0 mb-2">
-          {selectedPlan?.displayName ?? 'Memorial Pack'}
+          {selectedPlan?.displayName ?? creatorT(locale, 'creator.pack.fallbackName')}
         </h3>
         <p className="text-[14px] text-[color:var(--muted)] m-0">{creatorT(locale, 'creator.pack.active')}</p>
         {packRecommendation ? (
@@ -205,6 +205,20 @@ export function MemorialPackPanel({
             {creatorT(locale, 'creator.pack.allowance')}: {selectedPlan?.filmMinutes ?? '—'} min
           </p>
         ) : null}
+      </div>
+    );
+  }
+
+  // No payment provider on this host: do not offer plans or prices the visitor cannot buy.
+  if (mode === 'unavailable') {
+    return (
+      <div className="border-t border-[color:var(--border)] pt-5 mt-5" data-testid="pack-unavailable">
+        <h3 className="serif text-[23px] m-0 mb-2">
+          {creatorT(locale, 'creator.pack.stripeUnavailable')}
+        </h3>
+        <p className="text-[14px] text-[color:var(--muted)] m-0">
+          {creatorT(locale, 'creator.pack.stripeUnavailableBody')}
+        </p>
       </div>
     );
   }
@@ -310,7 +324,7 @@ export function MemorialPackPanel({
         >
           {pending
             ? '…'
-            : `${creatorT(locale, 'creator.pack.buyStripe')} · ${selectedPlan?.displayName ?? 'Memorial Pack'} · €${selectedPlan?.amountEur ?? '—'}`}
+            : `${creatorT(locale, 'creator.pack.buyStripe')} · ${selectedPlan?.displayName ?? creatorT(locale, 'creator.pack.fallbackName')} · €${selectedPlan?.amountEur ?? '—'}`}
         </Button>
       ) : null}
 
@@ -324,7 +338,7 @@ export function MemorialPackPanel({
         </Button>
       ) : null}
 
-      {mode === 'unavailable' || unavailable ? (
+      {unavailable ? (
         <ErrorState
           title={creatorT(locale, 'creator.pack.stripeUnavailable')}
           body={creatorT(locale, 'creator.pack.stripeUnavailableBody')}
