@@ -18,6 +18,7 @@ import type { PlayerRef } from '@remotion/player';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RemotionCinemaPlayer } from '@/components/RemotionCinemaPlayer';
 import { Button } from '@/components/ui';
+import { ceremonyButtonEmphasis } from '@/lib/ceremony-emphasis';
 import { creatorT } from '@/lib/creator-ui-messages';
 
 type HoldState =
@@ -114,6 +115,7 @@ export function CeremonyPlayer({
   const total = formatTimelineClock(totalFrames, timeline.fps);
   const clock = formatTimelineClock(frame, timeline.fps);
   const fps = timeline.fps;
+  const emphasis = ceremonyButtonEmphasis({ playing, holdActive: hold.active });
 
   function pauseForSpeech(manual = true) {
     playerRef.current?.pause();
@@ -258,13 +260,13 @@ export function CeremonyPlayer({
       <div className="flex flex-wrap gap-3 mb-4">
         <Button
           type="button"
-          variant={hold.active || !playing ? 'primary' : 'secondary'}
+          variant={emphasis.pause}
           onClick={() => pauseForSpeech(true)}
           aria-keyshortcuts="Space K"
         >
           Pause for speech
         </Button>
-        <Button type="button" variant={playing ? 'primary' : 'secondary'} onClick={resumeFilm} aria-keyshortcuts="Space K">
+        <Button type="button" variant={emphasis.resume} onClick={resumeFilm} aria-keyshortcuts="Space K">
           Resume film
         </Button>
         <Button type="button" variant="ghost" onClick={() => seekRelative(-10)} aria-keyshortcuts="ArrowLeft">
