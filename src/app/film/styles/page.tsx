@@ -29,7 +29,7 @@ export default async function StylesPage() {
         <StylePicker selectedTheme={tribute.themeKey} locale={locale} />
       ) : (
         <ErrorRecovery
-          label="EMPTY WORKSPACE"
+          label={creatorT(locale, 'creator.common.emptyLabel')}
           title={creatorT(locale, 'creator.styles.emptyTitle')}
           body={creatorT(locale, 'creator.styles.emptyBody')}
           primaryHref="/setup"

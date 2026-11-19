@@ -114,7 +114,7 @@ export default async function WorkspacePage() {
       ) : (
         <div className="mt-8">
           <ErrorRecovery
-            label="EMPTY WORKSPACE"
+            label={creatorT(locale, 'creator.common.emptyLabel')}
             title={creatorT(locale, 'creator.workspace.emptyTitle')}
             body={creatorT(locale, 'creator.workspace.emptyBody')}
             primaryHref="/setup"

@@ -236,7 +236,7 @@ export const surfaceEnglish: SurfaceCatalog = {
   'creator.account.openFailed': 'Could not open that tribute.',
   'creator.account.deleteFailed': 'Could not delete that tribute.',
   'creator.account.deletionNote':
-    'Deletion is local-store authoritative. Hosted account wipe needs Supabase (XB-012).',
+    'Deleting a tribute is permanent and cannot be undone.',
   'creator.film.eyebrow': 'YOUR FILM',
   'creator.film.eyebrowReady': 'YOUR FILM IS READY',
   'creator.film.heroFallback': 'Their beautiful life.',
@@ -385,7 +385,7 @@ const nl: SurfaceCatalog = {
   'creator.account.openFailed': 'Dat eerbetoon kon niet worden geopend.',
   'creator.account.deleteFailed': 'Dat eerbetoon kon niet worden verwijderd.',
   'creator.account.deletionNote':
-    'Verwijderen is lokaal gezaghebbend. Hosted account-wissen heeft Supabase nodig (XB-012).',
+    'Een eerbetoon verwijderen is definitief en kan niet ongedaan worden gemaakt.',
   'creator.film.eyebrow': 'UW FILM',
   'creator.film.eyebrowReady': 'UW FILM IS KLAAR',
   'creator.film.heroFallback': 'Hun mooie leven.',
@@ -537,7 +537,7 @@ const de: SurfaceCatalog = {
   'creator.account.openFailed': 'Dieses Andenken konnte nicht geöffnet werden.',
   'creator.account.deleteFailed': 'Dieses Andenken konnte nicht gelöscht werden.',
   'creator.account.deletionNote':
-    'Löschen ist lokal maßgeblich. Hosted-Kontolöschung braucht Supabase (XB-012).',
+    'Das Löschen eines Gedenkens ist endgültig und kann nicht rückgängig gemacht werden.',
   'creator.film.eyebrow': 'IHR FILM',
   'creator.film.eyebrowReady': 'IHR FILM IST BEREIT',
   'creator.film.heroFallback': 'Ihr wunderschönes Leben.',
@@ -688,7 +688,7 @@ const fr: SurfaceCatalog = {
   'creator.account.openFailed': 'Impossible d’ouvrir cet hommage.',
   'creator.account.deleteFailed': 'Impossible de supprimer cet hommage.',
   'creator.account.deletionNote':
-    'La suppression est autoritaire en local. L’effacement d’un compte hébergé nécessite Supabase (XB-012).',
+    'La suppression d’un hommage est définitive et ne peut pas être annulée.',
   'creator.film.eyebrow': 'VOTRE FILM',
   'creator.film.eyebrowReady': 'VOTRE FILM EST PRÊT',
   'creator.film.heroFallback': 'Leur belle vie.',
@@ -839,7 +839,7 @@ const es: SurfaceCatalog = {
   'creator.account.openFailed': 'No se pudo abrir ese homenaje.',
   'creator.account.deleteFailed': 'No se pudo eliminar ese homenaje.',
   'creator.account.deletionNote':
-    'La eliminación es autoritativa en local. Borrar una cuenta alojada necesita Supabase (XB-012).',
+    'Eliminar un homenaje es definitivo y no se puede deshacer.',
   'creator.film.eyebrow': 'SU PELÍCULA',
   'creator.film.eyebrowReady': 'SU PELÍCULA ESTÁ LISTA',
   'creator.film.heroFallback': 'Su hermosa vida.',
@@ -990,7 +990,7 @@ const pt: SurfaceCatalog = {
   'creator.account.openFailed': 'Não foi possível abrir esse tributo.',
   'creator.account.deleteFailed': 'Não foi possível eliminar esse tributo.',
   'creator.account.deletionNote':
-    'A eliminação é autoritativa em local. Apagar conta alojada precisa de Supabase (XB-012).',
+    'Eliminar uma homenagem é definitivo e não pode ser desfeito.',
   'creator.film.eyebrow': 'O SEU FILME',
   'creator.film.eyebrowReady': 'O SEU FILME ESTÁ PRONTO',
   'creator.film.heroFallback': 'A bela vida deles.',
@@ -1141,7 +1141,7 @@ const it: SurfaceCatalog = {
   'creator.account.openFailed': 'Impossibile aprire quell’omaggio.',
   'creator.account.deleteFailed': 'Impossibile eliminare quell’omaggio.',
   'creator.account.deletionNote':
-    'L’eliminazione è autorevole in locale. La cancellazione account ospitato richiede Supabase (XB-012).',
+    'L’eliminazione di un omaggio è definitiva e non può essere annullata.',
   'creator.film.eyebrow': 'IL TUO FILM',
   'creator.film.eyebrowReady': 'IL TUO FILM È PRONTO',
   'creator.film.heroFallback': 'La loro bella vita.',
@@ -1292,7 +1292,7 @@ const pl: SurfaceCatalog = {
   'creator.account.openFailed': 'Nie udało się otworzyć tego upamiętnienia.',
   'creator.account.deleteFailed': 'Nie udało się usunąć tego upamiętnienia.',
   'creator.account.deletionNote':
-    'Usuwanie jest autorytatywne lokalnie. Kasowanie konta hostowanego wymaga Supabase (XB-012).',
+    'Usunięcie hołdu jest trwałe i nie można go cofnąć.',
   'creator.film.eyebrow': 'TWÓJ FILM',
   'creator.film.eyebrowReady': 'TWÓJ FILM JEST GOTOWY',
   'creator.film.heroFallback': 'Ich piękne życie.',

@@ -38,7 +38,7 @@ export default async function MusicPage() {
         />
       ) : (
         <ErrorRecovery
-          label="EMPTY WORKSPACE"
+          label={creatorT(locale, 'creator.common.emptyLabel')}
           title={creatorT(locale, 'creator.musicPage.emptyTitle')}
           body={creatorT(locale, 'creator.musicPage.emptyBody')}
           primaryHref="/setup"

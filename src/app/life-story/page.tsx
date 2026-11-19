@@ -48,7 +48,7 @@ export default async function LifeStoryPage() {
         />
       ) : (
         <ErrorRecovery
-          label="EMPTY WORKSPACE"
+          label={creatorT(locale, 'creator.common.emptyLabel')}
           title="No tribute open yet"
           body="Begin setup, then add memories so chapters can be suggested without inventing facts."
           primaryHref="/setup"

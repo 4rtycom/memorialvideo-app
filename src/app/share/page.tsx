@@ -132,13 +132,13 @@ export default async function SharePage() {
         </>
       ) : (
         <ErrorRecovery
-          label="EMPTY WORKSPACE"
-          title="Create a tribute first"
-          body="Then prepare the venue pack and take the film to the funeral service."
+          label={creatorT(locale, 'creator.common.emptyLabel')}
+          title={creatorT(locale, 'creator.share.emptyTitle')}
+          body={creatorT(locale, 'creator.share.emptyBody')}
           primaryHref="/setup"
-          primaryLabel="Begin setup"
+          primaryLabel={creatorT(locale, 'creator.common.beginSetup')}
           secondaryHref="/workspace"
-          secondaryLabel="Open workspace"
+          secondaryLabel={creatorT(locale, 'creator.home.openWorkspace')}
           tone="success"
         />
       )}

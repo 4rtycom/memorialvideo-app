@@ -29,6 +29,9 @@ export const HOME_COPY_KEYS = [
   'creator.film.chaptersEmpty',
   'creator.setup.back',
   'creator.setup.nameHint',
+  'creator.common.emptyLabel',
+  'creator.share.emptyTitle',
+  'creator.share.emptyBody',
 ] as const;
 
 export type HomeCopyKey = (typeof HOME_COPY_KEYS)[number];
@@ -59,6 +62,10 @@ export const homeEnglish: HomeCatalog = {
   'creator.film.chaptersEmpty': 'Chapters appear here once your first film is arranged.',
   'creator.setup.back': 'Back',
   'creator.setup.nameHint': 'Enter a name to continue.',
+  'creator.common.emptyLabel': 'EMPTY WORKSPACE',
+  'creator.share.emptyTitle': 'Create a tribute first',
+  'creator.share.emptyBody':
+    'Then prepare the venue pack and take the film to the funeral service.',
 };
 
 const nl: HomeCatalog = {
@@ -86,6 +93,10 @@ const nl: HomeCatalog = {
   'creator.film.chaptersEmpty': 'Hoofdstukken verschijnen hier zodra uw eerste film is geordend.',
   'creator.setup.back': 'Terug',
   'creator.setup.nameHint': 'Vul een naam in om door te gaan.',
+  'creator.common.emptyLabel': 'LEGE WERKRUIMTE',
+  'creator.share.emptyTitle': 'Maak eerst een eerbetoon',
+  'creator.share.emptyBody':
+    'Bereid daarna het locatiepakket voor en neem de film mee naar de uitvaart.',
 };
 
 const de: HomeCatalog = {
@@ -113,6 +124,10 @@ const de: HomeCatalog = {
   'creator.film.chaptersEmpty': 'Kapitel erscheinen hier, sobald Ihr erster Film angeordnet ist.',
   'creator.setup.back': 'Zurück',
   'creator.setup.nameHint': 'Geben Sie einen Namen ein, um fortzufahren.',
+  'creator.common.emptyLabel': 'LEERER ARBEITSBEREICH',
+  'creator.share.emptyTitle': 'Legen Sie zuerst ein Gedenken an',
+  'creator.share.emptyBody':
+    'Danach bereiten Sie das Veranstaltungspaket vor und nehmen den Film zur Trauerfeier mit.',
 };
 
 const fr: HomeCatalog = {
@@ -140,6 +155,10 @@ const fr: HomeCatalog = {
   'creator.film.chaptersEmpty': 'Les chapitres apparaîtront ici une fois votre premier film organisé.',
   'creator.setup.back': 'Retour',
   'creator.setup.nameHint': 'Saisissez un nom pour continuer.',
+  'creator.common.emptyLabel': 'ESPACE VIDE',
+  'creator.share.emptyTitle': 'Créez d’abord un hommage',
+  'creator.share.emptyBody':
+    'Préparez ensuite le pack pour le lieu et emportez le film à la cérémonie.',
 };
 
 const es: HomeCatalog = {
@@ -167,6 +186,10 @@ const es: HomeCatalog = {
   'creator.film.chaptersEmpty': 'Los capítulos aparecerán aquí cuando su primera película esté organizada.',
   'creator.setup.back': 'Atrás',
   'creator.setup.nameHint': 'Escriba un nombre para continuar.',
+  'creator.common.emptyLabel': 'ESPACIO VACÍO',
+  'creator.share.emptyTitle': 'Cree primero un homenaje',
+  'creator.share.emptyBody':
+    'Después prepare el paquete para el lugar y lleve la película a la ceremonia.',
 };
 
 const pt: HomeCatalog = {
@@ -194,6 +217,10 @@ const pt: HomeCatalog = {
   'creator.film.chaptersEmpty': 'Os capítulos aparecem aqui quando o seu primeiro filme estiver organizado.',
   'creator.setup.back': 'Voltar',
   'creator.setup.nameHint': 'Introduza um nome para continuar.',
+  'creator.common.emptyLabel': 'ESPAÇO VAZIO',
+  'creator.share.emptyTitle': 'Crie primeiro uma homenagem',
+  'creator.share.emptyBody':
+    'Depois prepare o pacote para o local e leve o filme para a cerimónia.',
 };
 
 const it: HomeCatalog = {
@@ -221,6 +248,10 @@ const it: HomeCatalog = {
   'creator.film.chaptersEmpty': 'I capitoli compariranno qui quando il suo primo film sarà organizzato.',
   'creator.setup.back': 'Indietro',
   'creator.setup.nameHint': 'Inserisca un nome per continuare.',
+  'creator.common.emptyLabel': 'SPAZIO VUOTO',
+  'creator.share.emptyTitle': 'Crei prima un omaggio',
+  'creator.share.emptyBody':
+    'Poi prepari il pacchetto per il luogo e porti il film alla cerimonia.',
 };
 
 const pl: HomeCatalog = {
@@ -248,6 +279,10 @@ const pl: HomeCatalog = {
   'creator.film.chaptersEmpty': 'Rozdziały pojawią się tutaj, gdy pierwszy film zostanie ułożony.',
   'creator.setup.back': 'Wstecz',
   'creator.setup.nameHint': 'Wpisz imię i nazwisko, aby kontynuować.',
+  'creator.common.emptyLabel': 'PUSTA PRZESTRZEŃ',
+  'creator.share.emptyTitle': 'Najpierw utwórz hołd',
+  'creator.share.emptyBody':
+    'Następnie przygotuj pakiet na miejsce i zabierz film na uroczystość.',
 };
 
 export const homeDrafts: Record<Exclude<LaunchLanguage, 'en'>, HomeCatalog> = {
