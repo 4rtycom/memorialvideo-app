@@ -14,6 +14,8 @@ export const ACCOUNT_PACK_KEYS = [
   'creator.account.deleteTypeLabel',
   'creator.account.deleteCancel',
   'creator.account.deleteConfirm',
+  'creator.music.songMomentsLabel',
+  'creator.account.signInHint',
 ] as const;
 
 export type AccountPackKey = (typeof ACCOUNT_PACK_KEYS)[number];
@@ -28,6 +30,8 @@ export const accountPackEnglish: AccountPackCatalog = {
   'creator.account.deleteTypeLabel': 'Type the name to confirm',
   'creator.account.deleteCancel': 'Cancel',
   'creator.account.deleteConfirm': 'Delete permanently',
+  'creator.music.songMomentsLabel': 'Song moments',
+  'creator.account.signInHint': 'Sign in to keep your tributes together and come back to them on any device.',
 };
 
 const nl: AccountPackCatalog = {
@@ -39,6 +43,8 @@ const nl: AccountPackCatalog = {
   'creator.account.deleteTypeLabel': 'Typ de naam om te bevestigen',
   'creator.account.deleteCancel': 'Annuleren',
   'creator.account.deleteConfirm': 'Definitief verwijderen',
+  'creator.music.songMomentsLabel': 'Muziekmomenten',
+  'creator.account.signInHint': 'Meld je aan om je eerbetonen bij elkaar te houden en er op elk apparaat op terug te komen.',
 };
 
 const de: AccountPackCatalog = {
@@ -50,6 +56,8 @@ const de: AccountPackCatalog = {
   'creator.account.deleteTypeLabel': 'Geben Sie zur Bestätigung den Namen ein',
   'creator.account.deleteCancel': 'Abbrechen',
   'creator.account.deleteConfirm': 'Endgültig löschen',
+  'creator.music.songMomentsLabel': 'Musikmomente',
+  'creator.account.signInHint': 'Melden Sie sich an, um Ihre Gedenkseiten zusammenzuhalten und auf jedem Gerät wieder aufzurufen.',
 };
 
 const fr: AccountPackCatalog = {
@@ -61,6 +69,8 @@ const fr: AccountPackCatalog = {
   'creator.account.deleteTypeLabel': 'Saisissez le nom pour confirmer',
   'creator.account.deleteCancel': 'Annuler',
   'creator.account.deleteConfirm': 'Supprimer définitivement',
+  'creator.music.songMomentsLabel': 'Moments musicaux',
+  'creator.account.signInHint': 'Connectez-vous pour garder vos hommages ensemble et les retrouver sur n’importe quel appareil.',
 };
 
 const es: AccountPackCatalog = {
@@ -72,6 +82,8 @@ const es: AccountPackCatalog = {
   'creator.account.deleteTypeLabel': 'Escriba el nombre para confirmar',
   'creator.account.deleteCancel': 'Cancelar',
   'creator.account.deleteConfirm': 'Eliminar definitivamente',
+  'creator.music.songMomentsLabel': 'Momentos musicales',
+  'creator.account.signInHint': 'Inicie sesión para conservar sus homenajes juntos y volver a ellos desde cualquier dispositivo.',
 };
 
 const pt: AccountPackCatalog = {
@@ -83,6 +95,8 @@ const pt: AccountPackCatalog = {
   'creator.account.deleteTypeLabel': 'Escreva o nome para confirmar',
   'creator.account.deleteCancel': 'Cancelar',
   'creator.account.deleteConfirm': 'Eliminar definitivamente',
+  'creator.music.songMomentsLabel': 'Momentos musicais',
+  'creator.account.signInHint': 'Inicie sessão para manter as suas homenagens juntas e voltar a elas em qualquer dispositivo.',
 };
 
 const it: AccountPackCatalog = {
@@ -94,6 +108,8 @@ const it: AccountPackCatalog = {
   'creator.account.deleteTypeLabel': 'Scriva il nome per confermare',
   'creator.account.deleteCancel': 'Annulla',
   'creator.account.deleteConfirm': 'Elimina definitivamente',
+  'creator.music.songMomentsLabel': 'Momenti musicali',
+  'creator.account.signInHint': 'Acceda per tenere insieme i suoi omaggi e ritrovarli su qualsiasi dispositivo.',
 };
 
 const pl: AccountPackCatalog = {
@@ -105,6 +121,8 @@ const pl: AccountPackCatalog = {
   'creator.account.deleteTypeLabel': 'Wpisz nazwę, aby potwierdzić',
   'creator.account.deleteCancel': 'Anuluj',
   'creator.account.deleteConfirm': 'Usuń trwale',
+  'creator.music.songMomentsLabel': 'Momenty muzyczne',
+  'creator.account.signInHint': 'Zaloguj się, aby mieć wszystkie hołdy w jednym miejscu i wracać do nich na każdym urządzeniu.',
 };
 
 export const accountPackDrafts: Record<Exclude<LaunchLanguage, 'en'>, AccountPackCatalog> = {

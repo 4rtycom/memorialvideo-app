@@ -67,12 +67,12 @@ button { font: inherit; cursor: pointer; }
 
 .skip-link:focus {
   top: 0.75rem;
-  outline: 2px solid rgba(173, 136, 100, 0.65);
+  outline: 2px solid #8a5f33;
   outline-offset: 3px;
 }
 
 :focus-visible {
-  outline: 2px solid rgba(173, 136, 100, 0.65);
+  outline: 2px solid #8a5f33;
   outline-offset: 3px;
 }
 
@@ -493,7 +493,7 @@ button { font: inherit; cursor: pointer; }
 }
 
 .field:focus-visible {
-  outline: 2px solid rgba(173, 136, 100, 0.65);
+  outline: 2px solid #8a5f33;
   outline-offset: 2px;
 }
 
@@ -665,7 +665,7 @@ button { font: inherit; cursor: pointer; }
 }
 
 .library-filter-chip:focus-visible {
-  outline: 2px solid rgba(173, 136, 100, 0.45);
+  outline: 2px solid #8a5f33;
   outline-offset: 2px;
 }
 
@@ -715,7 +715,7 @@ button { font: inherit; cursor: pointer; }
 }
 
 .content:focus-visible {
-  outline: 2px solid rgba(173, 136, 100, 0.45);
+  outline: 2px solid #8a5f33;
   outline-offset: -2px;
 }
 

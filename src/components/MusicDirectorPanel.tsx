@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type {
   LaunchLanguage,
@@ -172,6 +172,16 @@ export function MusicDirectorPanel({
       });
   }
 
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [previewingId, setPreviewingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      previewAudioRef.current?.pause();
+      previewAudioRef.current = null;
+    };
+  }, []);
+
   useEffect(() => {
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -207,8 +217,27 @@ export function MusicDirectorPanel({
   function previewTrack(track: CatalogTrack) {
     setPreviewNote(null);
     if (!track.previewUrl) return;
+    const current = previewAudioRef.current;
+    if (current) {
+      current.pause();
+      previewAudioRef.current = null;
+      if (previewingId === track.trackId) {
+        setPreviewingId(null);
+        return;
+      }
+    }
     const audio = new Audio(track.previewUrl);
+    previewAudioRef.current = audio;
+    setPreviewingId(track.trackId);
+    audio.addEventListener('ended', () => {
+      if (previewAudioRef.current === audio) {
+        previewAudioRef.current = null;
+        setPreviewingId(null);
+      }
+    });
     void audio.play().catch(() => {
+      previewAudioRef.current = null;
+      setPreviewingId(null);
       setPreviewNote(creatorT(locale, 'creator.music.previewUnavailable'));
     });
   }
@@ -399,7 +428,7 @@ export function MusicDirectorPanel({
         <div
           className="grid gap-3 mb-5 sm:grid-cols-3"
           role="tablist"
-          aria-label="Song moments"
+          aria-label={creatorT(locale, 'creator.music.songMomentsLabel')}
           onKeyDown={(event) => {
             if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft' && event.key !== 'Home' && event.key !== 'End') {
               return;
@@ -576,9 +605,10 @@ export function MusicDirectorPanel({
                   type="button"
                   className="catalog-track-preview text-[23px] bg-transparent border-0 p-0"
                   aria-label={creatorT(locale, 'creator.music.preview')}
+                  aria-pressed={previewingId === track.trackId}
                   onClick={() => previewTrack(track)}
                 >
-                  ▷
+                  {previewingId === track.trackId ? '■' : '▷'}
                 </button>
                 <button
                   type="button"
