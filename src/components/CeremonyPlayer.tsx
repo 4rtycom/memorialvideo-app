@@ -51,6 +51,16 @@ export function CeremonyPlayer({
   const [hold, setHold] = useState<HoldState>({ active: false });
   /** Frames already consumed for auto-pause so we do not re-trigger on resume. */
   const clearedAutoPauseRef = useRef<number>(-1);
+  /** Latest keyboard handler; the document listener below always calls the current one. */
+  const keyHandlerRef = useRef<((event: KeyboardEvent) => void) | null>(null);
+
+  useEffect(() => {
+    function onDocumentKeyDown(event: KeyboardEvent) {
+      keyHandlerRef.current?.(event);
+    }
+    document.addEventListener('keydown', onDocumentKeyDown);
+    return () => document.removeEventListener('keydown', onDocumentKeyDown);
+  }, []);
 
   const order = useMemo(() => {
     if (!timeline) return [] as CeremonyRunningOrderItem[];
@@ -183,6 +193,40 @@ export function CeremonyPlayer({
     }
   }
 
+  keyHandlerRef.current = (event: KeyboardEvent) => {
+    // Never fight the browser or assistive tech: skip shortcut combos and form fields.
+    if (event.ctrlKey || event.metaKey || event.altKey || event.defaultPrevented) {
+      return;
+    }
+    const target = event.target as HTMLElement | null;
+    if (
+      target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable)
+    ) {
+      return;
+    }
+    const onControl = Boolean(target?.closest('button, a, [role="button"], [role="tab"]'));
+    // Space activates a focused control natively — only take it when focus is elsewhere.
+    if ((event.key === ' ' && !onControl) || event.key === 'k' || event.key === 'K') {
+      event.preventDefault();
+      if (hold.active || !playing) resumeFilm();
+      else pauseForSpeech(true);
+      return;
+    }
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      seekRelative(-10);
+      return;
+    }
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      seekRelative(10);
+    }
+  };
+
   const display = (
     <div
       ref={displayRef}
@@ -219,29 +263,6 @@ export function CeremonyPlayer({
   const controls = (
     <div
       data-testid="ceremony-operator-controls"
-      onKeyDown={(event) => {
-        const target = event.target as HTMLElement | null;
-        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
-          return;
-        }
-        const onControl = Boolean(target?.closest('button, a, [role="button"]'));
-        // Space activates the focused control natively — only steal it off-control.
-        if ((event.key === ' ' && !onControl) || event.key === 'k' || event.key === 'K') {
-          event.preventDefault();
-          if (hold.active || !playing) resumeFilm();
-          else pauseForSpeech(true);
-          return;
-        }
-        if (event.key === 'ArrowLeft') {
-          event.preventDefault();
-          seekRelative(-10);
-          return;
-        }
-        if (event.key === 'ArrowRight') {
-          event.preventDefault();
-          seekRelative(10);
-        }
-      }}
     >
       <p className="text-[12px] font-bold tracking-[0.08em] text-[color:var(--accent)] m-0 mb-2">
         {creatorT(locale, 'creator.ceremony.operator')}
@@ -256,7 +277,7 @@ export function CeremonyPlayer({
             ? creatorT(locale, 'creator.ceremony.cuesMany').replace('{count}', String(speechCues.length))
             : creatorT(locale, 'creator.ceremony.cuesNone')}
       </p>
-      <p className="sr-only">
+      <p className="text-[14px] text-[color:var(--muted)] mb-4">
         {creatorT(locale, 'creator.ceremony.keyboardHint')}
       </p>
       <div className="flex flex-wrap gap-3 mb-4">
