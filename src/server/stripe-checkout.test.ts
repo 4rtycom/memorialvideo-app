@@ -317,5 +317,14 @@ describe('creator Stripe checkout surface', () => {
         secret: MOCK_WEBHOOK,
       }),
     ).toBe(false);
+    // Secret rotation: Stripe sends several v1 signatures; one valid match is enough.
+    const valid = sign(payload, MOCK_WEBHOOK, now);
+    expect(
+      stripe.verifyStripeSignature({
+        payload,
+        signatureHeader: `t=${now},v1=deadbeef,${valid.split(',').find((p) => p.startsWith('v1='))}`,
+        secret: MOCK_WEBHOOK,
+      }),
+    ).toBe(true);
   });
 });

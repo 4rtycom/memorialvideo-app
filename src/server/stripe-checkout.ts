@@ -63,15 +63,14 @@ export function verifyStripeSignature(input: {
   secret: string;
   toleranceSeconds?: number;
 }): boolean {
-  const parts = Object.fromEntries(
-    input.signatureHeader.split(',').map((part) => {
-      const [key, ...rest] = part.split('=');
-      return [key, rest.join('=')];
-    }),
-  );
-  const timestamp = parts.t;
-  const expected = parts.v1;
-  if (!timestamp || !expected) {
+  // The header may hold several v1 signatures (secret rotation): accept a match on any of them.
+  const entries = input.signatureHeader.split(',').map((part) => {
+    const [key, ...rest] = part.trim().split('=');
+    return [key, rest.join('=')] as const;
+  });
+  const timestamp = entries.find(([key]) => key === 't')?.[1];
+  const candidates = entries.filter(([key, value]) => key === 'v1' && value).map(([, value]) => value);
+  if (!timestamp || candidates.length === 0) {
     return false;
   }
   const ts = Number(timestamp);
@@ -83,10 +82,13 @@ export function verifyStripeSignature(input: {
     return false;
   }
   const secretBytes = decodeStripeWebhookSecret(input.secret);
-  const digest = createHmac('sha256', secretBytes).update(`${timestamp}.${input.payload}`).digest('hex');
-  const left = Buffer.from(digest);
-  const right = Buffer.from(expected);
-  return left.length === right.length && timingSafeEqual(left, right);
+  const left = Buffer.from(
+    createHmac('sha256', secretBytes).update(`${timestamp}.${input.payload}`).digest('hex'),
+  );
+  return candidates.some((candidate) => {
+    const right = Buffer.from(candidate);
+    return left.length === right.length && timingSafeEqual(left, right);
+  });
 }
 
 function decodeStripeWebhookSecret(secret: string): Buffer {
