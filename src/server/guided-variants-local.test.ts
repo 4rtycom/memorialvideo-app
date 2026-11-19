@@ -3,6 +3,9 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// chmod-based read-only simulation has no effect for root (e.g. CI containers).
+const isRoot = typeof process.getuid === 'function' && process.getuid() === 0;
+
 describe('creator guided variants', () => {
   let cwd: string;
   let dataRoot: string;
@@ -140,7 +143,7 @@ describe('creator guided variants', () => {
     expect(stale.error).toBe('stale_base');
   });
 
-  it('propose returns persistence_unavailable when local FS becomes read-only', async () => {
+  it.skipIf(isRoot)('propose returns persistence_unavailable when local FS becomes read-only', async () => {
     const publicId = await tributeWithTimeline();
     const persistence = await import('./persistence');
     // Lock .data itself so the writable probe fails even though the store file still reads.

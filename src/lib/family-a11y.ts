@@ -25,15 +25,7 @@ export const FAMILY_PRIMARY_ROUTES = [
 export type FamilyPrimaryRoute = (typeof FAMILY_PRIMARY_ROUTES)[number];
 
 /** Sidebar / mobile chrome destinations (stable deep links). */
-export const FAMILY_PRIMARY_NAV_HREFS = [
-  '/',
-  '/memories',
-  '/contributors',
-  '/life-story',
-  '/film',
-  '/music',
-  '/share',
-] as const;
+export const FAMILY_PRIMARY_NAV_HREFS = ['/', '/memories', '/music', '/film', '/share'] as const;
 
 export function isFamilyPrimaryPath(pathname: string): boolean {
   return FAMILY_PRIMARY_ROUTES.some(
