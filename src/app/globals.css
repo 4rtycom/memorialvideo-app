@@ -515,6 +515,12 @@ button { font: inherit; cursor: pointer; }
   min-width: 0;
 }
 
+.upload-zone-active {
+  outline: 2px dashed var(--accent);
+  outline-offset: -6px;
+  background: #efe9dd;
+}
+
 .chapter-row {
   display: grid;
   grid-template-columns: minmax(0, 93px) minmax(0, 1fr) auto;

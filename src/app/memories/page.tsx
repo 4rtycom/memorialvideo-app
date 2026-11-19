@@ -11,6 +11,7 @@ import { shellProject } from '@/lib/tribute-view';
 import { memoryView } from '@/server/ingest';
 import { listOwnerInvites } from '@/server/invites';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
+import { isLocalCreatorEnv } from '@/server/env';
 import { loadActiveTribute } from '@/server/session';
 import { hasInFlightIngest } from '@/server/store';
 import Link from 'next/link';
@@ -73,7 +74,11 @@ export default async function MemoriesPage() {
             </div>
           </div>
           {tribute ? (
-            <AddMemoryControl nextIndex={live.length} locale={locale} />
+            <AddMemoryControl
+              nextIndex={live.length}
+              locale={locale}
+              showSample={isLocalCreatorEnv()}
+            />
           ) : (
             <div className="flex flex-col items-start gap-2">
               <p className="text-[14px] text-[color:var(--muted)] m-0">
