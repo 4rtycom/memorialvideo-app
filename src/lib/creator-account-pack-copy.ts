@@ -19,6 +19,12 @@ export const ACCOUNT_PACK_KEYS = [
   'creator.ceremony.videoMissing',
   'creator.ceremony.offlineHint',
   'creator.memories.emptyBody',
+  'creator.legal.eyebrow',
+  'creator.legal.privacy',
+  'creator.legal.terms',
+  'creator.legal.cookies',
+  'creator.legal.englishOnly',
+  'creator.legal.contact',
 ] as const;
 
 export type AccountPackKey = (typeof ACCOUNT_PACK_KEYS)[number];
@@ -38,6 +44,12 @@ export const accountPackEnglish: AccountPackCatalog = {
   'creator.ceremony.videoMissing': 'The film file was not found. Keep the .mp4 in the same folder as this page.',
   'creator.ceremony.offlineHint': 'One operator. Guests see the display above. No internet required.',
   'creator.memories.emptyBody': 'Use the button above to add the first photo or video. Nothing is shown to anyone else.',
+  'creator.legal.eyebrow': 'Legal',
+  'creator.legal.privacy': 'Privacy',
+  'creator.legal.terms': 'Terms of use',
+  'creator.legal.cookies': 'Cookies',
+  'creator.legal.englishOnly': 'This text is currently available in English only.',
+  'creator.legal.contact': 'Contact',
 };
 
 const nl: AccountPackCatalog = {
@@ -54,6 +66,12 @@ const nl: AccountPackCatalog = {
   'creator.ceremony.videoMissing': 'Het filmbestand is niet gevonden. Bewaar de .mp4 in dezelfde map als deze pagina.',
   'creator.ceremony.offlineHint': 'Eén bediener. Gasten zien het scherm hierboven. Geen internet nodig.',
   'creator.memories.emptyBody': 'Gebruik de knop hierboven om de eerste foto of video toe te voegen. Er wordt niets met anderen gedeeld.',
+  'creator.legal.eyebrow': 'Juridisch',
+  'creator.legal.privacy': 'Privacy',
+  'creator.legal.terms': 'Gebruiksvoorwaarden',
+  'creator.legal.cookies': 'Cookies',
+  'creator.legal.englishOnly': 'Deze tekst is op dit moment alleen in het Engels beschikbaar.',
+  'creator.legal.contact': 'Contact',
 };
 
 const de: AccountPackCatalog = {
@@ -70,6 +88,12 @@ const de: AccountPackCatalog = {
   'creator.ceremony.videoMissing': 'Die Filmdatei wurde nicht gefunden. Die .mp4 muss im selben Ordner wie diese Seite liegen.',
   'creator.ceremony.offlineHint': 'Eine Person bedient. Gäste sehen die Anzeige oben. Kein Internet nötig.',
   'creator.memories.emptyBody': 'Fügen Sie mit der Schaltfläche oben das erste Foto oder Video hinzu. Niemand sonst sieht etwas davon.',
+  'creator.legal.eyebrow': 'Rechtliches',
+  'creator.legal.privacy': 'Datenschutz',
+  'creator.legal.terms': 'Nutzungsbedingungen',
+  'creator.legal.cookies': 'Cookies',
+  'creator.legal.englishOnly': 'Dieser Text ist derzeit nur auf Englisch verfügbar.',
+  'creator.legal.contact': 'Kontakt',
 };
 
 const fr: AccountPackCatalog = {
@@ -86,6 +110,12 @@ const fr: AccountPackCatalog = {
   'creator.ceremony.videoMissing': 'Le fichier du film est introuvable. Gardez le .mp4 dans le même dossier que cette page.',
   'creator.ceremony.offlineHint': 'Un seul opérateur. Les invités voient l’écran ci-dessus. Aucune connexion internet requise.',
   'creator.memories.emptyBody': 'Utilisez le bouton ci-dessus pour ajouter la première photo ou vidéo. Rien n’est montré à d’autres personnes.',
+  'creator.legal.eyebrow': 'Mentions légales',
+  'creator.legal.privacy': 'Confidentialité',
+  'creator.legal.terms': 'Conditions d’utilisation',
+  'creator.legal.cookies': 'Cookies',
+  'creator.legal.englishOnly': 'Ce texte n’est actuellement disponible qu’en anglais.',
+  'creator.legal.contact': 'Contact',
 };
 
 const es: AccountPackCatalog = {
@@ -102,6 +132,12 @@ const es: AccountPackCatalog = {
   'creator.ceremony.videoMissing': 'No se encuentra el archivo de la película. Mantenga el .mp4 en la misma carpeta que esta página.',
   'creator.ceremony.offlineHint': 'Un solo operador. Los invitados ven la pantalla de arriba. No necesita internet.',
   'creator.memories.emptyBody': 'Use el botón de arriba para añadir la primera foto o vídeo. No se muestra nada a nadie más.',
+  'creator.legal.eyebrow': 'Información legal',
+  'creator.legal.privacy': 'Privacidad',
+  'creator.legal.terms': 'Condiciones de uso',
+  'creator.legal.cookies': 'Cookies',
+  'creator.legal.englishOnly': 'Este texto solo está disponible en inglés por ahora.',
+  'creator.legal.contact': 'Contacto',
 };
 
 const pt: AccountPackCatalog = {
@@ -118,6 +154,12 @@ const pt: AccountPackCatalog = {
   'creator.ceremony.videoMissing': 'O ficheiro do filme não foi encontrado. Mantenha o .mp4 na mesma pasta que esta página.',
   'creator.ceremony.offlineHint': 'Um só operador. Os convidados veem o ecrã acima. Não precisa de internet.',
   'creator.memories.emptyBody': 'Use o botão acima para adicionar a primeira foto ou vídeo. Nada é mostrado a mais ninguém.',
+  'creator.legal.eyebrow': 'Informação legal',
+  'creator.legal.privacy': 'Privacidade',
+  'creator.legal.terms': 'Termos de utilização',
+  'creator.legal.cookies': 'Cookies',
+  'creator.legal.englishOnly': 'Este texto está atualmente disponível apenas em inglês.',
+  'creator.legal.contact': 'Contacto',
 };
 
 const it: AccountPackCatalog = {
@@ -134,6 +176,12 @@ const it: AccountPackCatalog = {
   'creator.ceremony.videoMissing': 'File del film non trovato. Tenga il .mp4 nella stessa cartella di questa pagina.',
   'creator.ceremony.offlineHint': 'Un solo operatore. Gli ospiti vedono lo schermo sopra. Non serve internet.',
   'creator.memories.emptyBody': 'Usi il pulsante qui sopra per aggiungere la prima foto o il primo video. Nulla viene mostrato ad altri.',
+  'creator.legal.eyebrow': 'Informazioni legali',
+  'creator.legal.privacy': 'Privacy',
+  'creator.legal.terms': 'Condizioni d’uso',
+  'creator.legal.cookies': 'Cookie',
+  'creator.legal.englishOnly': 'Questo testo è al momento disponibile solo in inglese.',
+  'creator.legal.contact': 'Contatti',
 };
 
 const pl: AccountPackCatalog = {
@@ -150,6 +198,12 @@ const pl: AccountPackCatalog = {
   'creator.ceremony.videoMissing': 'Nie znaleziono pliku filmu. Plik .mp4 musi być w tym samym folderze co ta strona.',
   'creator.ceremony.offlineHint': 'Jeden operator. Goście widzą ekran powyżej. Internet nie jest potrzebny.',
   'creator.memories.emptyBody': 'Użyj przycisku powyżej, aby dodać pierwsze zdjęcie lub film. Nikt inny niczego nie zobaczy.',
+  'creator.legal.eyebrow': 'Informacje prawne',
+  'creator.legal.privacy': 'Prywatność',
+  'creator.legal.terms': 'Warunki korzystania',
+  'creator.legal.cookies': 'Pliki cookie',
+  'creator.legal.englishOnly': 'Ten tekst jest obecnie dostępny tylko po angielsku.',
+  'creator.legal.contact': 'Kontakt',
 };
 
 export const accountPackDrafts: Record<Exclude<LaunchLanguage, 'en'>, AccountPackCatalog> = {
