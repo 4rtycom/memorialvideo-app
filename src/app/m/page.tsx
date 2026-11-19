@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+import { isLocalCreatorEnv } from '@/server/env';
 import Image from 'next/image';
 import Link from 'next/link';
 import { BrandWordmark } from '@/components/BrandWordmark';
@@ -14,6 +16,7 @@ const tabs = [
 ] as const;
 
 export default async function MobileHomePage() {
+  if (!isLocalCreatorEnv()) notFound();
   const tribute = await loadActiveTribute();
   const shell = shellProject(tribute);
   const copy = mobileHomeCopy(tribute);

@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+import { isLocalCreatorEnv } from '@/server/env';
 import { Button, Eyebrow, Hero, Lede } from "@/components/ui";
 import Link from "next/link";
 
@@ -42,6 +44,7 @@ const states = [
 ];
 
 export default function StatesPage() {
+  if (!isLocalCreatorEnv()) notFound();
   return (
     <div className="min-h-screen bg-white px-8 py-12">
       <Link href="/" className="text-[14px] text-[color:var(--muted)]">← Back to creator</Link>
