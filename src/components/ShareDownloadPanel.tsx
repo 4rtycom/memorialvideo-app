@@ -41,7 +41,7 @@ function familyDownloadReason(reason: string): string {
     case 'readiness_blocking':
       return 'Clear blocking readiness items before the venue pack unlocks.';
     case 'pack_unavailable_hosted':
-      return 'The venue pack is not available yet. You can still download the film.';
+      return 'The venue pack for this film is not available. Make the film again to get it. You can still download the film.';
     case 'no_timeline':
       return 'Create the first film before downloading.';
     default:

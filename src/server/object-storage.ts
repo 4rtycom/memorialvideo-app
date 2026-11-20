@@ -168,22 +168,39 @@ export async function removeTributeObjects(tributePublicId: string): Promise<num
 
 /* ---- finished films and posters (bucket `renders`, written by the render worker) ---- */
 
-export function renderObjectKey(tributePublicId: string, jobId: string, kind: 'mp4' | 'poster'): string {
-  return `${tributePublicId}/${jobId}${kind === 'mp4' ? '.mp4' : '.poster.jpg'}`;
+export type RenderObjectKind = 'mp4' | 'poster' | 'pack';
+const RENDER_SUFFIX: Record<RenderObjectKind, string> = { mp4: '.mp4', poster: '.poster.jpg', pack: '.pack.zip' };
+const RENDER_CONTENT_TYPE: Record<RenderObjectKind, string> = {
+  mp4: 'video/mp4',
+  poster: 'image/jpeg',
+  pack: 'application/zip',
+};
+
+export function renderObjectKey(tributePublicId: string, jobId: string, kind: RenderObjectKind): string {
+  return `${tributePublicId}/${jobId}${RENDER_SUFFIX[kind]}`;
+}
+
+export async function renderObjectExists(tributePublicId: string, jobId: string, kind: RenderObjectKind): Promise<boolean> {
+  const config = required();
+  const name = `${jobId}${RENDER_SUFFIX[kind]}`;
+  const { data, error } = await client(config)
+    .storage.from(config.renderBucket)
+    .list(tributePublicId, { search: name, limit: 5 });
+  return !error && (data ?? []).some((entry) => entry.name === name);
 }
 
 export async function uploadRenderObject(
   tributePublicId: string,
   jobId: string,
-  kind: 'mp4' | 'poster',
-  bytes: Buffer,
+  kind: RenderObjectKind,
+  bytes: Buffer | Uint8Array,
 ): Promise<void> {
   const config = required();
   await ensureRenderBucket(config);
   const { error } = await client(config)
     .storage.from(config.renderBucket)
     .upload(renderObjectKey(tributePublicId, jobId, kind), bytes, {
-      contentType: kind === 'mp4' ? 'video/mp4' : 'image/jpeg',
+      contentType: RENDER_CONTENT_TYPE[kind],
       upsert: true,
     });
   if (error) throw new Error(`render_upload_failed:${error.message}`);
@@ -192,7 +209,7 @@ export async function uploadRenderObject(
 export async function createRenderReadUrl(
   tributePublicId: string,
   jobId: string,
-  kind: 'mp4' | 'poster',
+  kind: RenderObjectKind,
   options: { seconds?: number; downloadName?: string } = {},
 ): Promise<string | null> {
   const config = required();
@@ -209,7 +226,7 @@ export async function createRenderReadUrl(
 export async function downloadRenderObject(
   tributePublicId: string,
   jobId: string,
-  kind: 'mp4' | 'poster',
+  kind: RenderObjectKind,
 ): Promise<Buffer | null> {
   const config = required();
   const { data, error } = await client(config)

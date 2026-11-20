@@ -18,7 +18,6 @@ import {
   parseTimelineContract,
   totalDurationFrames,
 } from '@memorialvideo/contracts';
-import { mediaBackend } from './object-storage';
 import { evaluateCreatorReadiness } from './readiness-local';
 import { resolveReadyFinalAbsolutePath } from './render';
 import { entitlementView, type Tribute } from './store';
@@ -72,10 +71,6 @@ export async function planCeremonyPackWithReadiness(tribute: Tribute | null): Pr
   readinessBlocking: number;
 }> {
   const base = planCeremonyPack(tribute);
-  if (tribute && base.canBuild && mediaBackend() === 'supabase') {
-    // The venue pack ZIP is assembled from a file on disk; hosted assembly is not built yet.
-    return { ...base, canBuild: false, reason: 'pack_unavailable_hosted', readinessBlocking: 0 };
-  }
   if (!tribute || !base.canBuild) {
     return { ...base, readinessBlocking: 0 };
   }
@@ -180,8 +175,15 @@ export async function buildCeremonyPackZip(
   if (!absolute) {
     return { ok: false, reason: 'output_missing' };
   }
+  return assembleCeremonyPackZip(tribute, new Uint8Array(await readFile(absolute)));
+}
+
+/** Assemble the venue pack around an already available film (used by the hosted render worker). */
+export function assembleCeremonyPackZip(
+  tribute: Tribute,
+  mp4: Uint8Array,
+): { ok: true; bytes: Uint8Array; fileName: string } {
   const manifest = buildCeremonyPackManifest(tribute.publicId);
-  const mp4 = await readFile(absolute);
   const checklistBundle = buildOwnerCeremonyChecklist(tribute);
   const cueSheet = buildOwnerCeremonyCueSheet(tribute);
   const { offlineCues } = cueSheetChaptersFromTribute(tribute);
@@ -235,7 +237,7 @@ export async function buildCeremonyPackZip(
     )}\n`,
   );
   const bytes = buildStoreZip([
-    { name: manifest.videoFileName, data: new Uint8Array(mp4) },
+    { name: manifest.videoFileName, data: mp4 },
     { name: CEREMONY_OFFLINE_PLAYER_FILE, data: player },
     { name: manifest.checklistFileName, data: checklist },
     { name: manifest.cueSheetFileName, data: cue },

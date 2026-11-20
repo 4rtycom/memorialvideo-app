@@ -27,4 +27,4 @@ Renders the memorial film outside Vercel. Runs **exactly one instance** (there i
 
 ## Known limits
 - App and worker both read-modify-write the single store document; acceptable for beta, move jobs to Postgres later.
-- Image normalization/enhancement variants and the venue pack ZIP are not built in hosted mode yet.
+- Enhancement variants are not built in hosted mode yet. The venue pack is built by the worker after each final film (films made before this change have no pack).

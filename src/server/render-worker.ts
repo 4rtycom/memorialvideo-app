@@ -86,11 +86,12 @@ export async function runWorkerCycle(deps: WorkerDeps): Promise<'idle' | 'worked
 /* ---- production wiring (needs Supabase env, ffmpeg, a writable working directory) ---- */
 
 export async function productionDeps(): Promise<WorkerDeps> {
-  const [{ listTributes, getTribute, replaceRenderJobs }, render, storage, errorReport] = await Promise.all([
+  const [{ listTributes, getTribute, replaceRenderJobs }, render, storage, errorReport, normalize] = await Promise.all([
     import('./store'),
     import('./render'),
     import('./object-storage'),
     import('./error-report'),
+    import('./normalize-still'),
   ]);
   const root = path.join(process.cwd(), '.data');
   const jobFile = (jobId: string, suffix: string) => path.join(root, 'renders', `${jobId}${suffix}`);
@@ -129,12 +130,25 @@ export async function productionDeps(): Promise<WorkerDeps> {
         if (!object) continue;
         await mkdir(path.dirname(target), { recursive: true });
         await writeFile(target, object.bytes);
+        const type = (memory.contentType ?? '').toLowerCase();
+        if (type.startsWith('image/') && !type.includes('heic') && !type.includes('heif')) {
+          // Best-effort, same as local ingest: the encoder prefers the normalized copy when present.
+          await normalize.normalizeStillWithFfmpeg({
+            sourceAbsolute: target,
+            outputAbsolute: normalize.normalizedStillAbsolutePath(target),
+          });
+        }
       }
     },
     publish: async (tribute, job) => {
       if (!job.outputPath) throw new Error('no_output_path');
       const output = path.isAbsolute(job.outputPath) ? job.outputPath : path.join(process.cwd(), job.outputPath);
       await storage.uploadRenderObject(tribute.publicId, job.id, 'mp4', await readFile(output));
+      if (job.kind === 'final') {
+        const fresh = (await getTribute(tribute.publicId)) ?? tribute;
+        const pack = (await import('./ceremony-pack-local')).assembleCeremonyPackZip(fresh, await readFile(output));
+        await storage.uploadRenderObject(tribute.publicId, job.id, 'pack', Buffer.from(pack.bytes));
+      }
       if (job.posterPath) {
         const poster = path.isAbsolute(job.posterPath) ? job.posterPath : path.join(process.cwd(), job.posterPath);
         await storage.uploadRenderObject(tribute.publicId, job.id, 'poster', await readFile(poster));
