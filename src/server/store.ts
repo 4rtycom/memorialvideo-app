@@ -67,6 +67,8 @@ export const memoryAssetSchema = z.object({
   rightsConfirmed: z.boolean().optional(),
   /** Declared upload MIME — used to place short videos as TimelineContract video scenes. */
   contentType: z.string().max(120).optional(),
+  /** Byte size declared at authorize time; the hosted upload is verified against it. */
+  declaredByteSize: z.number().int().positive().max(40 * 1024 * 1024).optional(),
   /** Probed duration for video/mp4 (ms). Never invents length when absent. */
   durationMs: z.number().int().nonnegative().max(120_000).optional(),
   originalFilenameHint: z.string().max(80).optional(),
@@ -1214,6 +1216,7 @@ export async function addMemory(publicId: string, input: AddMemoryInput): Promis
     failureCode,
     imagePath: input.imagePath?.trim() || '/fixtures/memory-a.png',
     contentType: input.contentType?.trim().slice(0, 120) || undefined,
+    declaredByteSize: input.byteSize && input.byteSize > 0 ? input.byteSize : undefined,
     rightsConfirmed: input.rightsConfirmed === true ? true : undefined,
     durationMs:
       typeof input.durationMs === 'number' && Number.isFinite(input.durationMs)

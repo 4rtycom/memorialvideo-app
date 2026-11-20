@@ -8,9 +8,7 @@ import { creatorT } from '@/lib/creator-ui-messages';
 import { prepareUploadFile, isHeicFile } from '@/lib/prepare-upload-file';
 import {
   authorizeLocalUpload,
-  completeLocalUpload,
-  uploadFileLocalTus,
-  uploadIdFromUrl,
+  uploadAuthorizedFile,
 } from '@/lib/local-tus-upload';
 
 const FIXTURE_ROTATION = [
@@ -109,20 +107,12 @@ export function AddMemoryControl({
       year: String(new Date().getFullYear()),
       musicRightsConfirmed: audio ? true : undefined,
     });
-    if (!auth.uploadUrl) {
-      throw new Error('no_upload_url');
-    }
-    await uploadFileLocalTus({
+    await uploadAuthorizedFile({
+      auth,
       file: uploadFile,
-      uploadUrl: auth.uploadUrl,
-      chunkHintBytes: auth.chunkHintBytes,
       onProgress: (sent, total) => {
         patchItem(item.id, { pct: total > 0 ? Math.round((sent / total) * 100) : 0 });
       },
-    });
-    await completeLocalUpload({
-      uploadId: uploadIdFromUrl(auth.uploadUrl),
-      assetId: auth.assetId,
     });
   }
 

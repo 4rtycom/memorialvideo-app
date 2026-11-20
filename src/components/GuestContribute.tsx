@@ -9,9 +9,7 @@ import { creatorT } from '@/lib/creator-ui-messages';
 import { classifyInviteRedeemFailure, inviteRedeemMessage } from '@/lib/async-ui';
 import { prepareUploadFile, isHeicFile } from '@/lib/prepare-upload-file';
 import {
-  completeLocalUpload,
-  uploadFileLocalTus,
-  uploadIdFromUrl,
+  uploadAuthorizedFile,
   type AuthorizeResponse,
 } from '@/lib/local-tus-upload';
 
@@ -139,20 +137,15 @@ export function GuestContribute() {
           throw new Error(`authorize_${response.status}`);
         }
         const auth = (await response.json()) as AuthorizeResponse;
-        if (!auth.uploadUrl || !auth.assetId) {
+        if (!auth.assetId) {
           throw new Error('missing_upload');
         }
-        await uploadFileLocalTus({
+        await uploadAuthorizedFile({
+          auth,
           file: uploadFile,
-          uploadUrl: auth.uploadUrl,
-          chunkHintBytes: auth.chunkHintBytes,
           onProgress: (sent, total) => {
             setProgress(`${Math.round((sent / total) * 100)}%`);
           },
-        });
-        await completeLocalUpload({
-          uploadId: uploadIdFromUrl(auth.uploadUrl),
-          assetId: auth.assetId,
         });
         setPhase('thanks');
       } catch {

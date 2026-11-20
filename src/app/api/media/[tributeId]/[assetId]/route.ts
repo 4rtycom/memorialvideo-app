@@ -3,6 +3,7 @@ import { isProjectPublicId } from '@memorialvideo/domain';
 import { readAccountSession, withRequestOwner } from '@/server/account-session';
 import { creatorEnv } from '@/server/env';
 import { readMediaFile } from '@/server/media-storage';
+import { createSignedReadUrl, mediaBackend } from '@/server/object-storage';
 import { readActiveTributeId } from '@/server/session';
 import { getTribute } from '@/server/store';
 
@@ -28,6 +29,17 @@ export async function GET(_request: Request, { params }: Params) {
   const active = await readActiveTributeId();
   if (active !== tributeId) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
+  if (mediaBackend() === 'supabase') {
+    // Big videos cannot pass through a serverless response; hand the browser a short-lived link.
+    const signed = await createSignedReadUrl(tributeId, assetId);
+    if (!signed) {
+      return NextResponse.json({ error: 'not_found' }, { status: 404 });
+    }
+    return new NextResponse(null, {
+      status: 307,
+      headers: { Location: signed, 'Cache-Control': 'private, no-store' },
+    });
   }
   const media = await readMediaFile(tributeId, assetId);
   if (!media) {

@@ -12,6 +12,8 @@ import {
   mediaPublicPath,
   TUS_CHUNK_HINT,
 } from '@/server/media-storage';
+import { publicSupabaseConfig } from '@/lib/supabase/env';
+import { createSignedUpload, mediaBackend } from '@/server/object-storage';
 import { allowRequest } from '@/server/rate-limit';
 import { addMemory, guestSessionCookieName } from '@/server/store';
 
@@ -89,6 +91,24 @@ export async function POST(request: Request) {
     publicId: guest.tribute.publicId,
     assetId: memory.id,
   });
+
+  if (mediaBackend() === 'supabase') {
+    try {
+      const signed = await createSignedUpload(guest.tribute.publicId, memory.id);
+      return NextResponse.json(
+        {
+          assetId: memory.id,
+          mode: 'supabase_signed',
+          signedUrl: signed.signedUrl,
+          apiKey: publicSupabaseConfig()?.anonKey ?? null,
+          byteSize: parsed.data.byteSize,
+        },
+        { status: 201 },
+      );
+    } catch {
+      return NextResponse.json({ error: 'storage_unavailable' }, { status: 503 });
+    }
+  }
 
   const session = await createUploadSession({
     tributePublicId: guest.tribute.publicId,

@@ -1,3 +1,4 @@
+import { mediaBackend } from '@/server/object-storage';
 import { NextResponse } from 'next/server';
 import { checkoutProviderMode } from '@memorialvideo/domain';
 import { publicSupabaseConfig } from '@/lib/supabase/env';
@@ -44,6 +45,8 @@ export async function GET() {
     signInConfigured: Boolean(supabase),
     databaseConfigured,
     supabaseStorageTus: false,
+    /** 'supabase' = private bucket with signed uploads; 'local' = files on this machine's disk. */
+    mediaBackend: mediaBackend(env),
     localTus: persistence.kind === 'local_file',
     shareTokenPepper: Boolean(resolveShareTokenPepper(env)),
     dockerAvailable,
@@ -58,6 +61,8 @@ export async function GET() {
       xb005_stripe: !stripeConfigured,
       xb012_docker_supabase:
         !dockerAvailable || !supabase || persistence.xb012Persistence || !persistence.writable,
+      /** Hosted media storage is missing: uploads cannot survive on a read-only host. */
+      mediaStorage: env.APP_ENV !== 'local' && mediaBackend(env) !== 'supabase',
       xb011_deploy: true,
     },
   });

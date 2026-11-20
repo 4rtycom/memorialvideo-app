@@ -8,6 +8,7 @@ import {
 import { allowRequest } from '@/server/rate-limit';
 import { clearActiveTributeId, readActiveTributeId, setActiveTributeId } from '@/server/session';
 import { createTribute, deleteTribute, getTribute, listTributeSummaries } from '@/server/store';
+import { mediaBackend, removeTributeObjects } from '@/server/object-storage';
 import { purgeTributeFiles } from '@/server/tribute-files';
 
 export const runtime = 'nodejs';
@@ -107,6 +108,13 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'not_found' }, { status: 404 });
     }
     await purgeTributeFiles({ publicId: parsed.data.publicId, renderJobIds });
+    if (mediaBackend() === 'supabase') {
+      try {
+        await removeTributeObjects(parsed.data.publicId);
+      } catch {
+        // The record is gone; a failed cleanup is retried by the next delete or an operator sweep.
+      }
+    }
     if (activeId === parsed.data.publicId) {
       await clearActiveTributeId();
     }
