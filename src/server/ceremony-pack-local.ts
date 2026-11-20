@@ -18,6 +18,7 @@ import {
   parseTimelineContract,
   totalDurationFrames,
 } from '@memorialvideo/contracts';
+import { mediaBackend } from './object-storage';
 import { evaluateCreatorReadiness } from './readiness-local';
 import { resolveReadyFinalAbsolutePath } from './render';
 import { entitlementView, type Tribute } from './store';
@@ -71,6 +72,10 @@ export async function planCeremonyPackWithReadiness(tribute: Tribute | null): Pr
   readinessBlocking: number;
 }> {
   const base = planCeremonyPack(tribute);
+  if (tribute && base.canBuild && mediaBackend() === 'supabase') {
+    // The venue pack ZIP is assembled from a file on disk; hosted assembly is not built yet.
+    return { ...base, canBuild: false, reason: 'pack_unavailable_hosted', readinessBlocking: 0 };
+  }
   if (!tribute || !base.canBuild) {
     return { ...base, readinessBlocking: 0 };
   }

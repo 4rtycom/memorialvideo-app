@@ -1,8 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { Button, Card } from '@/components/ui';
+import { creatorT } from '@/lib/creator-ui-messages';
+import type { LaunchLanguage } from '@memorialvideo/contracts';
 
 type JobRow = {
   id: string;
@@ -20,12 +22,36 @@ type JobRow = {
   hasPoster?: boolean;
 };
 
-export function RenderJobPanel({ initialJobs }: { initialJobs: JobRow[] }) {
+const IN_FLIGHT = new Set(['QUEUED', 'PREPARING', 'RENDERING', 'VERIFYING']);
+
+export function RenderJobPanel({
+  initialJobs,
+  hosted = false,
+  locale = 'en',
+}: {
+  initialJobs: JobRow[];
+  hosted?: boolean;
+  locale?: LaunchLanguage;
+}) {
   const router = useRouter();
   const [jobs, setJobs] = useState(initialJobs);
   const [pending, startTransition] = useTransition();
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const inFlight = jobs.some((job) => IN_FLIGHT.has(job.status));
+  useEffect(() => {
+    if (!hosted || !inFlight) return undefined;
+    const timer = setInterval(async () => {
+      const listed = await fetch('/api/renders').catch(() => null);
+      if (listed?.ok) {
+        const data = (await listed.json()) as { jobs: JobRow[] };
+        setJobs(data.jobs);
+        if (!data.jobs.some((job) => IN_FLIGHT.has(job.status))) router.refresh();
+      }
+    }, 8000);
+    return () => clearInterval(timer);
+  }, [hosted, inFlight, router]);
 
   function enqueue(kind: 'preview' | 'final') {
     setError(null);
@@ -80,6 +106,39 @@ export function RenderJobPanel({ initialJobs }: { initialJobs: JobRow[] }) {
       }
       router.refresh();
     });
+  }
+
+  if (hosted) {
+    const latest = jobs[0];
+    const message = !latest
+      ? null
+      : latest.status === 'READY'
+        ? creatorT(locale, 'creator.render.ready')
+        : latest.status === 'QUEUED'
+          ? creatorT(locale, 'creator.render.waiting')
+          : latest.status === 'FAILED_RETRYABLE' || latest.status === 'FAILED_FINAL'
+            ? creatorT(locale, 'creator.render.failed')
+            : creatorT(locale, 'creator.render.working');
+    return (
+      <Card className="!p-6 mb-5">
+        <h3 className="serif text-[28px] m-0 mb-2">{creatorT(locale, 'creator.render.title')}</h3>
+        <div className="flex flex-wrap gap-3 mb-4">
+          <Button disabled={pending} onClick={() => enqueue('final')}>
+            {creatorT(locale, 'creator.render.start')}
+          </Button>
+        </div>
+        {message ? (
+          <p className="text-[color:var(--muted)] m-0" role="status">
+            {message}
+          </p>
+        ) : null}
+        {error ? (
+          <p className="text-[14px] text-[color:var(--accent)] mt-3" role="alert">
+            {error}
+          </p>
+        ) : null}
+      </Card>
+    );
   }
 
   return (

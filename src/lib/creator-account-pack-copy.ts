@@ -25,6 +25,12 @@ export const ACCOUNT_PACK_KEYS = [
   'creator.legal.cookies',
   'creator.legal.englishOnly',
   'creator.legal.contact',
+  'creator.render.title',
+  'creator.render.working',
+  'creator.render.ready',
+  'creator.render.failed',
+  'creator.render.waiting',
+  'creator.render.start',
 ] as const;
 
 export type AccountPackKey = (typeof ACCOUNT_PACK_KEYS)[number];
@@ -50,6 +56,12 @@ export const accountPackEnglish: AccountPackCatalog = {
   'creator.legal.cookies': 'Cookies',
   'creator.legal.englishOnly': 'This text is currently available in English only.',
   'creator.legal.contact': 'Contact',
+  'creator.render.title': 'Your film',
+  'creator.render.working': 'We are making your film. This can take a few minutes. You can close this page and come back later.',
+  'creator.render.ready': 'Your film is ready.',
+  'creator.render.failed': 'Something went wrong, but your memories are safe. We will try again automatically.',
+  'creator.render.waiting': 'Your film is waiting for its turn.',
+  'creator.render.start': "Make the film",
 };
 
 const nl: AccountPackCatalog = {
@@ -72,6 +84,12 @@ const nl: AccountPackCatalog = {
   'creator.legal.cookies': 'Cookies',
   'creator.legal.englishOnly': 'Deze tekst is op dit moment alleen in het Engels beschikbaar.',
   'creator.legal.contact': 'Contact',
+  'creator.render.title': 'Je film',
+  'creator.render.working': 'We maken je film. Dit kan een paar minuten duren. Je kunt deze pagina sluiten en later terugkomen.',
+  'creator.render.ready': 'Je film is klaar.',
+  'creator.render.failed': 'Er ging iets mis, maar je herinneringen zijn veilig. We proberen het automatisch opnieuw.',
+  'creator.render.waiting': 'Je film staat in de wachtrij.',
+  'creator.render.start': "Film maken",
 };
 
 const de: AccountPackCatalog = {
@@ -94,6 +112,12 @@ const de: AccountPackCatalog = {
   'creator.legal.cookies': 'Cookies',
   'creator.legal.englishOnly': 'Dieser Text ist derzeit nur auf Englisch verfügbar.',
   'creator.legal.contact': 'Kontakt',
+  'creator.render.title': 'Ihr Film',
+  'creator.render.working': 'Wir erstellen Ihren Film. Das kann einige Minuten dauern. Sie können diese Seite schließen und später wiederkommen.',
+  'creator.render.ready': 'Ihr Film ist fertig.',
+  'creator.render.failed': 'Etwas ist schiefgegangen, aber Ihre Erinnerungen sind sicher. Wir versuchen es automatisch erneut.',
+  'creator.render.waiting': 'Ihr Film wartet auf seinen Durchlauf.',
+  'creator.render.start': "Film erstellen",
 };
 
 const fr: AccountPackCatalog = {
@@ -116,6 +140,12 @@ const fr: AccountPackCatalog = {
   'creator.legal.cookies': 'Cookies',
   'creator.legal.englishOnly': 'Ce texte n’est actuellement disponible qu’en anglais.',
   'creator.legal.contact': 'Contact',
+  'creator.render.title': 'Votre film',
+  'creator.render.working': 'Nous préparons votre film. Cela peut prendre quelques minutes. Vous pouvez fermer cette page et revenir plus tard.',
+  'creator.render.ready': 'Votre film est prêt.',
+  'creator.render.failed': 'Un problème est survenu, mais vos souvenirs sont en sécurité. Nous réessaierons automatiquement.',
+  'creator.render.waiting': 'Votre film attend son tour.',
+  'creator.render.start': "Créer le film",
 };
 
 const es: AccountPackCatalog = {
@@ -138,6 +168,12 @@ const es: AccountPackCatalog = {
   'creator.legal.cookies': 'Cookies',
   'creator.legal.englishOnly': 'Este texto solo está disponible en inglés por ahora.',
   'creator.legal.contact': 'Contacto',
+  'creator.render.title': 'Tu película',
+  'creator.render.working': 'Estamos preparando tu película. Puede tardar unos minutos. Puedes cerrar esta página y volver más tarde.',
+  'creator.render.ready': 'Tu película está lista.',
+  'creator.render.failed': 'Algo salió mal, pero tus recuerdos están a salvo. Lo intentaremos de nuevo automáticamente.',
+  'creator.render.waiting': 'Tu película espera su turno.',
+  'creator.render.start': "Crear la película",
 };
 
 const pt: AccountPackCatalog = {
@@ -160,6 +196,12 @@ const pt: AccountPackCatalog = {
   'creator.legal.cookies': 'Cookies',
   'creator.legal.englishOnly': 'Este texto está atualmente disponível apenas em inglês.',
   'creator.legal.contact': 'Contacto',
+  'creator.render.title': 'O seu filme',
+  'creator.render.working': 'Estamos a preparar o seu filme. Pode demorar alguns minutos. Pode fechar esta página e voltar mais tarde.',
+  'creator.render.ready': 'O seu filme está pronto.',
+  'creator.render.failed': 'Algo correu mal, mas as suas memórias estão seguras. Vamos tentar novamente automaticamente.',
+  'creator.render.waiting': 'O seu filme aguarda a sua vez.',
+  'creator.render.start': "Criar o filme",
 };
 
 const it: AccountPackCatalog = {
@@ -182,6 +224,12 @@ const it: AccountPackCatalog = {
   'creator.legal.cookies': 'Cookie',
   'creator.legal.englishOnly': 'Questo testo è al momento disponibile solo in inglese.',
   'creator.legal.contact': 'Contatti',
+  'creator.render.title': 'Il tuo film',
+  'creator.render.working': 'Stiamo preparando il tuo film. Può richiedere qualche minuto. Puoi chiudere questa pagina e tornare più tardi.',
+  'creator.render.ready': 'Il tuo film è pronto.',
+  'creator.render.failed': 'Qualcosa è andato storto, ma i tuoi ricordi sono al sicuro. Riproveremo automaticamente.',
+  'creator.render.waiting': 'Il tuo film è in attesa del suo turno.',
+  'creator.render.start': "Crea il film",
 };
 
 const pl: AccountPackCatalog = {
@@ -204,6 +252,12 @@ const pl: AccountPackCatalog = {
   'creator.legal.cookies': 'Pliki cookie',
   'creator.legal.englishOnly': 'Ten tekst jest obecnie dostępny tylko po angielsku.',
   'creator.legal.contact': 'Kontakt',
+  'creator.render.title': 'Twój film',
+  'creator.render.working': 'Przygotowujemy Twój film. To może potrwać kilka minut. Możesz zamknąć tę stronę i wrócić później.',
+  'creator.render.ready': 'Twój film jest gotowy.',
+  'creator.render.failed': 'Coś poszło nie tak, ale Twoje wspomnienia są bezpieczne. Spróbujemy ponownie automatycznie.',
+  'creator.render.waiting': 'Twój film czeka na swoją kolej.',
+  'creator.render.start': "Utwórz film",
 };
 
 export const accountPackDrafts: Record<Exclude<LaunchLanguage, 'en'>, AccountPackCatalog> = {

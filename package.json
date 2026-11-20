@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "clean": "node -e \"require('node:fs').rmSync('.next',{recursive:true,force:true}); require('node:fs').rmSync('.data',{recursive:true,force:true})\""
+    "clean": "node -e \"require('node:fs').rmSync('.next',{recursive:true,force:true}); require('node:fs').rmSync('.data',{recursive:true,force:true})\"",
+    "worker:render": "tsx scripts/render-worker.ts"
   },
   "dependencies": {
     "@memorialvideo/config": "workspace:*",
@@ -41,6 +42,7 @@
     "@types/react-dom": "19.2.3",
     "eslint": "9.39.1",
     "tailwindcss": "4.1.13",
+    "tsx": "4.20.6",
     "typescript": "5.9.3",
     "typescript-eslint": "8.46.4",
     "vitest": "4.1.11"

@@ -10,6 +10,7 @@ import { RenderJobPanel } from '@/components/RenderJobPanel';
 import { ShareDownloadPanel } from '@/components/ShareDownloadPanel';
 import { Button, Eyebrow, Hero, Lede } from '@/components/ui';
 import { creatorT } from '@/lib/creator-ui-messages';
+import { mediaBackend } from '@/server/object-storage';
 import { shellProject } from '@/lib/tribute-view';
 import { planCeremonyPackWithReadiness } from '@/server/ceremony-pack-local';
 import { creatorEnv, isLocalCreatorEnv } from '@/server/env';
@@ -127,7 +128,7 @@ export default async function SharePage() {
             packRecommendation={packRecommendation}
           />
           <MoreControlDisclosure locale={locale} className="mt-5">
-            <RenderJobPanel initialJobs={jobs} />
+            <RenderJobPanel initialJobs={jobs} hosted={mediaBackend() === 'supabase'} locale={locale} />
           </MoreControlDisclosure>
         </>
       ) : (

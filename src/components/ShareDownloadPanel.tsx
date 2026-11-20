@@ -40,6 +40,8 @@ function familyDownloadReason(reason: string): string {
       return 'Finish a verified final film before downloading.';
     case 'readiness_blocking':
       return 'Clear blocking readiness items before the venue pack unlocks.';
+    case 'pack_unavailable_hosted':
+      return 'The venue pack is not available yet. You can still download the film.';
     case 'no_timeline':
       return 'Create the first film before downloading.';
     default:

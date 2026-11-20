@@ -10,9 +10,11 @@ import { creatorEnv, type ServerEnv } from '@/server/env';
  */
 
 export const MEDIA_BUCKET_DEFAULT = 'memories';
+export const RENDER_BUCKET_DEFAULT = 'renders';
 export const SIGNED_READ_SECONDS = 120;
+export const RENDER_FILE_LIMIT_BYTES = 2 * 1024 * 1024 * 1024;
 
-export type ObjectStorageConfig = { url: string; serviceKey: string; bucket: string };
+export type ObjectStorageConfig = { url: string; serviceKey: string; bucket: string; renderBucket: string };
 
 export function objectStorageConfig(env: ServerEnv = creatorEnv()): ObjectStorageConfig | null {
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
@@ -22,6 +24,7 @@ export function objectStorageConfig(env: ServerEnv = creatorEnv()): ObjectStorag
     url,
     serviceKey,
     bucket: process.env.SUPABASE_MEDIA_BUCKET?.trim() || MEDIA_BUCKET_DEFAULT,
+    renderBucket: process.env.SUPABASE_RENDER_BUCKET?.trim() || RENDER_BUCKET_DEFAULT,
   };
 }
 
@@ -38,7 +41,7 @@ export function objectKey(tributePublicId: string, assetId: string): string {
 }
 
 let cached: { key: string; client: SupabaseClient } | null = null;
-let bucketReady: string | null = null;
+const bucketsReady = new Set<string>();
 
 function client(config: ObjectStorageConfig): SupabaseClient {
   const key = `${config.url}|${config.serviceKey}`;
@@ -53,7 +56,7 @@ function client(config: ObjectStorageConfig): SupabaseClient {
 
 export function resetObjectStorageForTests(): void {
   cached = null;
-  bucketReady = null;
+  bucketsReady.clear();
 }
 
 function required(): ObjectStorageConfig {
@@ -62,18 +65,26 @@ function required(): ObjectStorageConfig {
   return config;
 }
 
-/** Create the private bucket once per process if it does not exist yet. */
-export async function ensureBucket(config: ObjectStorageConfig = required()): Promise<void> {
-  if (bucketReady === config.bucket) return;
-  const storage = client(config).storage;
-  const { error } = await storage.createBucket(config.bucket, {
-    public: false,
-    fileSizeLimit: 40 * 1024 * 1024,
-  });
+/** Create a private bucket once per process if it does not exist yet. */
+async function ensureNamedBucket(
+  config: ObjectStorageConfig,
+  name: string,
+  fileSizeLimit: number,
+): Promise<void> {
+  if (bucketsReady.has(name)) return;
+  const { error } = await client(config).storage.createBucket(name, { public: false, fileSizeLimit });
   if (error && !/already exists|duplicate/i.test(error.message)) {
     throw new Error(`bucket_unavailable:${error.message}`);
   }
-  bucketReady = config.bucket;
+  bucketsReady.add(name);
+}
+
+export async function ensureBucket(config: ObjectStorageConfig = required()): Promise<void> {
+  await ensureNamedBucket(config, config.bucket, 40 * 1024 * 1024);
+}
+
+export async function ensureRenderBucket(config: ObjectStorageConfig = required()): Promise<void> {
+  await ensureNamedBucket(config, config.renderBucket, RENDER_FILE_LIMIT_BYTES);
 }
 
 export async function createSignedUpload(
@@ -131,10 +142,8 @@ export async function createSignedReadUrl(
   return error || !data ? null : data.signedUrl;
 }
 
-/** Remove every object of one tribute. Returns how many were removed. */
-export async function removeTributeObjects(tributePublicId: string): Promise<number> {
-  const config = required();
-  const bucket = client(config).storage.from(config.bucket);
+async function removePrefix(bucketName: string, tributePublicId: string): Promise<number> {
+  const bucket = client(required()).storage.from(bucketName);
   let removed = 0;
   for (let page = 0; page < 20; page += 1) {
     const { data, error } = await bucket.list(tributePublicId, { limit: 100 });
@@ -146,4 +155,65 @@ export async function removeTributeObjects(tributePublicId: string): Promise<num
     if (data.length < 100) break;
   }
   return removed;
+}
+
+/** Remove every object of one tribute (uploads and finished films). Returns how many were removed. */
+export async function removeTributeObjects(tributePublicId: string): Promise<number> {
+  const config = required();
+  return (
+    (await removePrefix(config.bucket, tributePublicId)) +
+    (await removePrefix(config.renderBucket, tributePublicId))
+  );
+}
+
+/* ---- finished films and posters (bucket `renders`, written by the render worker) ---- */
+
+export function renderObjectKey(tributePublicId: string, jobId: string, kind: 'mp4' | 'poster'): string {
+  return `${tributePublicId}/${jobId}${kind === 'mp4' ? '.mp4' : '.poster.jpg'}`;
+}
+
+export async function uploadRenderObject(
+  tributePublicId: string,
+  jobId: string,
+  kind: 'mp4' | 'poster',
+  bytes: Buffer,
+): Promise<void> {
+  const config = required();
+  await ensureRenderBucket(config);
+  const { error } = await client(config)
+    .storage.from(config.renderBucket)
+    .upload(renderObjectKey(tributePublicId, jobId, kind), bytes, {
+      contentType: kind === 'mp4' ? 'video/mp4' : 'image/jpeg',
+      upsert: true,
+    });
+  if (error) throw new Error(`render_upload_failed:${error.message}`);
+}
+
+export async function createRenderReadUrl(
+  tributePublicId: string,
+  jobId: string,
+  kind: 'mp4' | 'poster',
+  options: { seconds?: number; downloadName?: string } = {},
+): Promise<string | null> {
+  const config = required();
+  const { data, error } = await client(config)
+    .storage.from(config.renderBucket)
+    .createSignedUrl(
+      renderObjectKey(tributePublicId, jobId, kind),
+      options.seconds ?? SIGNED_READ_SECONDS,
+      options.downloadName ? { download: options.downloadName } : undefined,
+    );
+  return error || !data ? null : data.signedUrl;
+}
+
+export async function downloadRenderObject(
+  tributePublicId: string,
+  jobId: string,
+  kind: 'mp4' | 'poster',
+): Promise<Buffer | null> {
+  const config = required();
+  const { data, error } = await client(config)
+    .storage.from(config.renderBucket)
+    .download(renderObjectKey(tributePublicId, jobId, kind));
+  return error || !data ? null : Buffer.from(await data.arrayBuffer());
 }

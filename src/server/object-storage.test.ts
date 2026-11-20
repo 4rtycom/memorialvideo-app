@@ -100,10 +100,11 @@ describe('object storage', () => {
     const page = (n: number) => Array.from({ length: n }, (_, i) => ({ name: `mem_${i}` }));
     bucketApi.list
       .mockResolvedValueOnce({ data: page(100), error: null })
-      .mockResolvedValueOnce({ data: page(3), error: null });
+      .mockResolvedValueOnce({ data: page(3), error: null })
+      .mockResolvedValueOnce({ data: page(2), error: null }); // renders bucket
     bucketApi.remove.mockResolvedValue({ error: null });
     const { removeTributeObjects } = await load();
-    expect(await removeTributeObjects('mv_aaaaaaaaaaaaaaaa')).toBe(103);
+    expect(await removeTributeObjects('mv_aaaaaaaaaaaaaaaa')).toBe(105);
     expect(bucketApi.remove.mock.calls[0]?.[0][0]).toBe('mv_aaaaaaaaaaaaaaaa/mem_0');
   });
 });
