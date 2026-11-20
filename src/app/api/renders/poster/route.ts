@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { NextResponse } from 'next/server';
 import { allowRequest } from '@/server/rate-limit';
-import { resolveOwnerPosterAbsolutePath } from '@/server/render';
+import { createRenderReadUrl, mediaBackend } from '@/server/object-storage';
+import { resolveOwnerPosterAbsolutePath, resolveOwnerPosterJob } from '@/server/render';
 
 export const runtime = 'nodejs';
 
@@ -17,6 +18,18 @@ export async function GET(request: Request) {
   }
   if (!allowRequest(`render-poster:${jobId}`, 40)) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
+  }
+
+  if (mediaBackend() === 'supabase') {
+    const job = await resolveOwnerPosterJob(jobId);
+    const signed = job ? await createRenderReadUrl(job.tributePublicId, jobId, 'poster') : null;
+    if (!signed) {
+      return NextResponse.json({ error: 'not_found' }, { status: 404 });
+    }
+    return new NextResponse(null, {
+      status: 307,
+      headers: { Location: signed, 'Cache-Control': 'private, no-store' },
+    });
   }
 
   const resolved = await resolveOwnerPosterAbsolutePath(jobId);

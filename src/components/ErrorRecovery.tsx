@@ -22,7 +22,7 @@ export function ErrorRecovery({
   return (
     <Card soft={tone === 'success'} className="!p-7">
       <div role="status">
-        <div className="text-[11px] font-bold text-[color:var(--accent)] mb-3">{label}</div>
+        <div className="text-[12px] font-bold text-[color:var(--accent)] mb-3">{label}</div>
         <h2 className="serif text-[30px] m-0 mb-3">{title}</h2>
         <p className="text-[color:var(--muted)] mb-6">{body}</p>
       </div>

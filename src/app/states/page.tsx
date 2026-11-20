@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+import { isLocalCreatorEnv } from '@/server/env';
 import { Button, Eyebrow, Hero, Lede } from "@/components/ui";
 import Link from "next/link";
 
@@ -42,6 +44,7 @@ const states = [
 ];
 
 export default function StatesPage() {
+  if (!isLocalCreatorEnv()) notFound();
   return (
     <div className="min-h-screen bg-white px-8 py-12">
       <Link href="/" className="text-[14px] text-[color:var(--muted)]">← Back to creator</Link>
@@ -51,7 +54,7 @@ export default function StatesPage() {
       <div className="state-grid">
         {states.map((s) => (
           <div key={s.label} className={`state-card ${s.tone === "success" ? "success" : ""}`}>
-            <div className="text-[11px] font-bold text-[color:var(--accent)] mb-3">{s.label}</div>
+            <div className="text-[12px] font-bold text-[color:var(--accent)] mb-3">{s.label}</div>
             <h2 className="serif text-[30px] m-0 mb-3">{s.title}</h2>
             <p className="text-[color:var(--muted)] mb-6">{s.body}</p>
             <Button>{s.cta}</Button>

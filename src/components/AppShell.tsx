@@ -7,6 +7,7 @@ import type { LaunchLanguage } from '@memorialvideo/contracts';
 import { BrandWordmark } from '@/components/BrandWordmark';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { SaveStatus } from '@/components/SaveStatus';
+import { supportEmail } from '@/lib/legal-content';
 import { creatorNavLabels, creatorT } from '@/lib/creator-ui-messages';
 import {
   ADVANCED_OPTIONAL,
@@ -147,6 +148,16 @@ export function AppShell({
         <main id="main" className="content" tabIndex={-1}>
           {children}
         </main>
+        <footer className="legal-footer">
+          <nav aria-label={creatorT(locale, 'creator.legal.eyebrow')}>
+            <Link href="/privacy">{creatorT(locale, 'creator.legal.privacy')}</Link>
+            <Link href="/terms">{creatorT(locale, 'creator.legal.terms')}</Link>
+            <Link href="/cookies">{creatorT(locale, 'creator.legal.cookies')}</Link>
+            {supportEmail() ? (
+              <a href={`mailto:${supportEmail()}`}>{creatorT(locale, 'creator.legal.contact')}</a>
+            ) : null}
+          </nav>
+        </footer>
       </div>
     </div>
   );

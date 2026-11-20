@@ -62,5 +62,23 @@ describe('ceremony pack', () => {
     expect(html).toContain('Resume film');
     expect(html).toContain('Fullscreen display');
     expect(html).toContain('Eulogy');
+    expect(html).not.toMatch(/https?:\/\//);
+    expect(html).toContain('<html lang="en">');
+  });
+
+  it('localizes the offline player, escapes labels and handles a missing film', () => {
+    const html = ceremonyOfflinePlayerHtml({
+      videoFileName: 'a.mp4',
+      lang: 'nl',
+      labels: { pause: 'Pauzeren <voor> toespraak', videoMissing: 'Niet gevonden' },
+    });
+    expect(html).toContain('<html lang="nl">');
+    expect(html).toContain('Pauzeren &lt;voor&gt; toespraak');
+    expect(html).toContain('Niet gevonden');
+    const hostile = ceremonyOfflinePlayerHtml({ videoFileName: 'a.mp4', cues: [{ title: 'x</script><b>' }] });
+    expect(hostile.match(/<\/script>/g)).toHaveLength(1);
+    expect(html).toContain("video.addEventListener('error'");
+    expect(html).toContain("e.key === 'k'");
+    expect(ceremonyOfflinePlayerHtml({ videoFileName: 'a.mp4', lang: '"><script>' })).toContain('<html lang="en">');
   });
 });

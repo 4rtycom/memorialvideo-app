@@ -116,7 +116,7 @@ export function MemoryLibraryFilters({ cards }: { cards: CreatorLibraryCard[] })
             <article key={m.id} className="memory-card">
               <div className="relative h-[136px]">
                 {m.contentType?.startsWith('audio/') ? (
-                  <div className="flex h-full items-center justify-center rounded-[10px] bg-[color:var(--paper)] text-[13px] text-[color:var(--muted)]">
+                  <div className="flex h-full items-center justify-center rounded-[10px] bg-[color:var(--paper)] text-[14px] text-[color:var(--muted)]">
                     Personal song
                   </div>
                 ) : m.contentType?.startsWith('video/') ? (
@@ -137,7 +137,7 @@ export function MemoryLibraryFilters({ cards }: { cards: CreatorLibraryCard[] })
           ))}
         </div>
       )}
-      <p className="text-[13px] text-[color:var(--muted)] mt-4" role="status">
+      <p className="text-[14px] text-[color:var(--muted)] mt-4" role="status">
         Showing {visible.length} of {cards.length}
         {filter !== 'all' ? ` · ${creatorFilterLabel(filter)}` : ''}
         {CREATOR_LIBRARY_FILTERS.includes(filter) ? '' : ''}

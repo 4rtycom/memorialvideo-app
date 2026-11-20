@@ -9,11 +9,11 @@ import { loadActiveTribute } from '@/server/session';
 
 export default async function SignInPage() {
   const tribute = await loadActiveTribute();
-  const shell = shellProject(tribute);
+  const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
+  const shell = shellProject(tribute, locale);
   const session = await readAuthSession();
   const configured = Boolean(publicSupabaseConfig());
   const passwordReady = Boolean(await resolveSessionSecret());
-  const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
 
   return (
     <AppShell

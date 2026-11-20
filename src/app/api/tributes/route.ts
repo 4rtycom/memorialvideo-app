@@ -7,7 +7,9 @@ import {
 } from '@/server/persistence';
 import { allowRequest } from '@/server/rate-limit';
 import { clearActiveTributeId, readActiveTributeId, setActiveTributeId } from '@/server/session';
-import { createTribute, deleteTribute, listTributeSummaries } from '@/server/store';
+import { createTribute, deleteTribute, getTribute, listTributeSummaries } from '@/server/store';
+import { mediaBackend, removeTributeObjects } from '@/server/object-storage';
+import { purgeTributeFiles } from '@/server/tribute-files';
 
 export const runtime = 'nodejs';
 
@@ -97,16 +99,28 @@ export async function DELETE(request: Request) {
   }
   try {
     const activeId = await readActiveTributeId();
+    const renderJobIds = await withRequestOwner(async () => {
+      const existing = await getTribute(parsed.data.publicId);
+      return existing ? existing.renderJobs.map((job) => job.id) : [];
+    });
     const removed = await withRequestOwner(() => deleteTribute(parsed.data.publicId));
     if (!removed) {
       return NextResponse.json({ error: 'not_found' }, { status: 404 });
+    }
+    await purgeTributeFiles({ publicId: parsed.data.publicId, renderJobIds });
+    if (mediaBackend() === 'supabase') {
+      try {
+        await removeTributeObjects(parsed.data.publicId);
+      } catch {
+        // The record is gone; a failed cleanup is retried by the next delete or an operator sweep.
+      }
     }
     if (activeId === parsed.data.publicId) {
       await clearActiveTributeId();
     }
     return NextResponse.json({
       deleted: true,
-      note: 'Local tribute removed from the durable JSON store. Opaque media files may remain until local cleanup.',
+      note: 'Tribute and its uploaded media, enhancements and renders were removed.',
     });
   } catch (error) {
     if (error instanceof PersistenceUnavailableError) {

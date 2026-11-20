@@ -3,6 +3,9 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// chmod-based read-only simulation has no effect for root (e.g. CI containers).
+const isRoot = typeof process.getuid === 'function' && process.getuid() === 0;
+
 vi.mock('next/headers', () => ({
   cookies: async () => ({
     get: () => undefined,
@@ -66,7 +69,7 @@ describe('creator persistence resolution', () => {
     });
   });
 
-  it('returns unavailable on read-only serverless hosts without KV or database', async () => {
+  it.skipIf(isRoot)('returns unavailable on read-only serverless hosts without KV or database', async () => {
     chmodSync(dataRoot, 0o555);
     process.env.VERCEL = '1';
     const persistence = await import('./persistence');
@@ -96,7 +99,7 @@ describe('creator persistence resolution', () => {
     });
   });
 
-  it('reports database preferred-but-unwired when only a service role is set and disk is not writable', async () => {
+  it.skipIf(isRoot)('reports database preferred-but-unwired when only a service role is set and disk is not writable', async () => {
     chmodSync(dataRoot, 0o555);
     process.env.VERCEL = '1';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-not-real';
@@ -123,7 +126,7 @@ describe('creator persistence resolution', () => {
     });
   });
 
-  it('local_file probe acknowledges a real write round-trip', async () => {
+  it.skipIf(isRoot)('local_file probe acknowledges a real write round-trip', async () => {
     const persistence = await import('./persistence');
     const probe = await persistence.probePersistenceWrite();
     expect(probe.ok).toBe(true);
@@ -170,7 +173,7 @@ describe('POST /api/tributes persistence failure mode', () => {
     vi.unstubAllGlobals();
   });
 
-  it('createTribute throws persistence_unavailable instead of a raw FS stack', async () => {
+  it.skipIf(isRoot)('createTribute throws persistence_unavailable instead of a raw FS stack', async () => {
     const store = await import('./store');
     const persistence = await import('./persistence');
     await expect(store.createTribute({ displayName: 'Smoke Person' })).rejects.toBeInstanceOf(
@@ -178,7 +181,7 @@ describe('POST /api/tributes persistence failure mode', () => {
     );
   });
 
-  it('returns honest 503 persistence_unavailable JSON instead of a raw 500', async () => {
+  it.skipIf(isRoot)('returns honest 503 persistence_unavailable JSON instead of a raw 500', async () => {
     const route = await import('../app/api/tributes/route');
     const response = await route.POST(
       new Request('http://127.0.0.1:3002/api/tributes', {

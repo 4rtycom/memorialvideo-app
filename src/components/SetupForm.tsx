@@ -20,6 +20,7 @@ export function SetupForm({ locale = 'en' }: { locale?: LaunchLanguage }) {
   const [bornLabel, setBornLabel] = useState('');
   const [rememberedLabel, setRememberedLabel] = useState('');
   const [about, setAbout] = useState('');
+  const nameReady = displayName.trim().length > 0;
 
   function createTribute(payload: {
     displayName: string;
@@ -74,6 +75,9 @@ export function SetupForm({ locale = 'en' }: { locale?: LaunchLanguage }) {
 
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (!nameReady) {
+      return;
+    }
     createTribute({
       displayName,
       // Persist English prefixes so lifeSpanLabel can strip them to years.
@@ -104,6 +108,7 @@ export function SetupForm({ locale = 'en' }: { locale?: LaunchLanguage }) {
             placeholder={creatorT(locale, 'creator.setup.namePlaceholder')}
             required
             maxLength={160}
+            aria-describedby={nameReady ? undefined : 'name-hint'}
           />
           <label className="block font-medium mb-3">{creatorT(locale, 'creator.setup.dates')}</label>
           <div className="grid gap-3 sm:grid-cols-2 mb-6">
@@ -135,7 +140,7 @@ export function SetupForm({ locale = 'en' }: { locale?: LaunchLanguage }) {
             placeholder={creatorT(locale, 'creator.setup.aboutPlaceholder')}
             maxLength={500}
           />
-          <p className="text-[13px] text-[color:var(--muted)] m-0">
+          <p className="text-[14px] text-[color:var(--muted)] m-0">
             {creatorT(locale, 'creator.setup.aboutHint')}
           </p>
           {error ? (
@@ -146,21 +151,37 @@ export function SetupForm({ locale = 'en' }: { locale?: LaunchLanguage }) {
         </Card>
         <Card soft className="!p-4">
           <div className="relative h-[302px] rounded-[9px] overflow-hidden mb-5">
-            <Image src="/fixtures/setup-eleanor.png" alt="" fill className="object-cover" sizes="315px" />
+            <Image src="/brand/soft-light.svg" unoptimized alt="" fill className="object-cover" sizes="315px" />
           </div>
           <h3 className="serif text-[33px] m-0 mb-2">{creatorT(locale, 'creator.setup.asideTitle')}</h3>
           <p className="text-[color:var(--muted)] m-0">{creatorT(locale, 'creator.setup.asideBody')}</p>
         </Card>
 
         <div className="lg:col-span-2 mt-3 flex flex-wrap items-center justify-between gap-4">
-          <p className="text-[13px] text-[color:var(--muted)] m-0">
-            {creatorT(locale, 'creator.setup.privacy')}
-          </p>
-          <Button type="submit" className={pending ? 'opacity-70' : ''} disabled={pending}>
-            {pending
-              ? creatorT(locale, 'creator.common.saving')
-              : creatorT(locale, 'creator.common.continue')}
-          </Button>
+          <div>
+            <p className="text-[14px] text-[color:var(--muted)] m-0">
+              {creatorT(locale, 'creator.setup.privacy')}
+            </p>
+            {nameReady ? null : (
+              <p className="text-[14px] text-[color:var(--muted)] m-0 mt-1" id="name-hint">
+                {creatorT(locale, 'creator.setup.nameHint')}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button href="/" variant="ghost">
+              {creatorT(locale, 'creator.setup.back')}
+            </Button>
+            <Button
+              type="submit"
+              className={pending || !nameReady ? 'opacity-70' : ''}
+              disabled={pending || !nameReady}
+            >
+              {pending
+                ? creatorT(locale, 'creator.common.saving')
+                : creatorT(locale, 'creator.common.continue')}
+            </Button>
+          </div>
         </div>
       </form>
     </>

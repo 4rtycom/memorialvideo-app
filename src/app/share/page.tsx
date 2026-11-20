@@ -10,6 +10,7 @@ import { RenderJobPanel } from '@/components/RenderJobPanel';
 import { ShareDownloadPanel } from '@/components/ShareDownloadPanel';
 import { Button, Eyebrow, Hero, Lede } from '@/components/ui';
 import { creatorT } from '@/lib/creator-ui-messages';
+import { mediaBackend } from '@/server/object-storage';
 import { shellProject } from '@/lib/tribute-view';
 import { planCeremonyPackWithReadiness } from '@/server/ceremony-pack-local';
 import { creatorEnv, isLocalCreatorEnv } from '@/server/env';
@@ -21,13 +22,18 @@ import { summarizeShareList } from '@/server/share-list';
 import { entitlementView } from '@/server/store';
 import { isStripeMemorialPackConfigured } from '@/server/stripe-checkout';
 import { parseTimelineContract } from '@memorialvideo/contracts';
+import { pageTitle } from '@/server/page-title';
+
+export async function generateMetadata() {
+  return pageTitle('creator.nav.share');
+}
 
 export default async function SharePage() {
   const active = await loadActiveTribute();
   const synced = active ? await syncConsumerPackForFilmDuration(active.publicId) : null;
   const tribute = synced?.tribute ?? active;
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
-  const shell = shellProject(tribute);
+  const shell = shellProject(tribute, locale);
   const entitlement = entitlementView(tribute);
   const localFulfillAllowed = isLocalCreatorEnv();
   const stripeConfigured = isStripeMemorialPackConfigured();
@@ -106,10 +112,11 @@ export default async function SharePage() {
             timeline={timeline}
             origin={origin}
             speechPauses={speechPauses}
+            locale={locale}
           />
           <div className="mb-5">
             <Button href="/ceremony" variant="secondary">
-              Open full Ceremony Player
+              {creatorT(locale, 'creator.film.ceremonyTitle')}
             </Button>
           </div>
           <MemorialPackPanel
@@ -121,23 +128,23 @@ export default async function SharePage() {
             packRecommendation={packRecommendation}
           />
           <MoreControlDisclosure locale={locale} className="mt-5">
-            <RenderJobPanel initialJobs={jobs} />
+            <RenderJobPanel initialJobs={jobs} hosted={mediaBackend() === 'supabase'} locale={locale} />
           </MoreControlDisclosure>
         </>
       ) : (
         <ErrorRecovery
-          label="EMPTY WORKSPACE"
-          title="Create a tribute first"
-          body="Then prepare the venue pack and take the film to the funeral service."
+          label={creatorT(locale, 'creator.common.emptyLabel')}
+          title={creatorT(locale, 'creator.share.emptyTitle')}
+          body={creatorT(locale, 'creator.share.emptyBody')}
           primaryHref="/setup"
-          primaryLabel="Begin setup  ↗"
+          primaryLabel={creatorT(locale, 'creator.common.beginSetup')}
           secondaryHref="/workspace"
-          secondaryLabel="Open workspace"
+          secondaryLabel={creatorT(locale, 'creator.home.openWorkspace')}
           tone="success"
         />
       )}
       {!tribute ? null : !entitlement.active ? (
-        <p className="text-[13px] text-[color:var(--muted)] mt-4">
+        <p className="text-[14px] text-[color:var(--muted)] mt-4">
           <Button href="/share" variant="ghost">
             Refresh after Memorial Pack
           </Button>

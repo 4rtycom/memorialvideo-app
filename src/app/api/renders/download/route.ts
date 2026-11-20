@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { planServedByteRange, sliceBytes } from '@/server/byte-range';
 import { allowRequest } from '@/server/rate-limit';
 import { planDownloadFromJobs, resolveReadyFinalAbsolutePath } from '@/server/render';
+import { createRenderReadUrl, mediaBackend } from '@/server/object-storage';
 import { loadActiveTribute } from '@/server/session';
 import { getTribute } from '@/server/store';
 
@@ -30,6 +31,20 @@ export async function GET(request: Request) {
       { error: 'not_ready', reason: plan.reason },
       { status: 409 },
     );
+  }
+  if (mediaBackend() === 'supabase') {
+    // The finished film lives in Storage; a serverless response cannot carry a full-length MP4.
+    const signed = await createRenderReadUrl(active.publicId, plan.readyJobId, 'mp4', {
+      seconds: 300,
+      downloadName: 'memorial-ceremony.mp4',
+    });
+    if (!signed) {
+      return NextResponse.json({ error: 'output_missing' }, { status: 404 });
+    }
+    return new NextResponse(null, {
+      status: 307,
+      headers: { Location: signed, 'Cache-Control': 'private, no-store' },
+    });
   }
   const absolute = await resolveReadyFinalAbsolutePath(tribute);
   if (!absolute || !absolute.endsWith('.mp4')) {

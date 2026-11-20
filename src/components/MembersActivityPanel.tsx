@@ -112,7 +112,7 @@ export function MembersActivityPanel({
           </Button>
         </div>
         {error ? (
-          <p className="text-[13px] text-[color:var(--accent)] mb-3" role="alert">
+          <p className="text-[14px] text-[color:var(--accent)] mb-3" role="alert">
             {error}
           </p>
         ) : null}
@@ -136,7 +136,7 @@ export function MembersActivityPanel({
         <p className="text-[color:var(--muted)] mb-4">
           Metadata-only history — no emails, tokens, filenames, or captions.
         </p>
-        <ul className="list-none p-0 m-0 grid gap-2 text-[13px] text-[color:var(--muted)]">
+        <ul className="list-none p-0 m-0 grid gap-2 text-[14px] text-[color:var(--muted)]">
           {activity.length === 0 ? (
             <li>No activity yet.</li>
           ) : (

@@ -532,6 +532,49 @@ export async function resolveOwnerPosterAbsolutePath(
   return null;
 }
 
+/** Hosted variant: the poster is a Storage object, so only the job facts are checked. */
+export async function resolveOwnerPosterJob(
+  jobId: string,
+): Promise<{ tributePublicId: string } | null> {
+  if (!jobId.startsWith('rjob_') || jobId.length > 80) {
+    return null;
+  }
+  for (const tribute of await listTributes()) {
+    const job = tribute.renderJobs.find((candidate) => candidate.id === jobId);
+    if (!job) continue;
+    return job.status === 'READY' && job.outputVerified && job.posterPath
+      ? { tributePublicId: tribute.publicId }
+      : null;
+  }
+  return null;
+}
+
+/** Put a failed job back in the queue for another attempt (used by the worker's automatic retries). */
+export async function requeueFailedJob(publicId: string, jobId: string): Promise<boolean> {
+  const tribute = await getTribute(publicId);
+  const job = tribute?.renderJobs.find((candidate) => candidate.id === jobId);
+  if (!tribute || !job || job.status !== 'FAILED_RETRYABLE') {
+    return false;
+  }
+  const now = new Date().toISOString();
+  const jobs = tribute.renderJobs.map((candidate) =>
+    candidate.id === jobId
+      ? {
+          ...candidate,
+          status: 'QUEUED' as const,
+          attemptCount: candidate.attemptCount + 1,
+          updatedAt: now,
+          lastHeartbeatAt: now,
+          qcFailures: [],
+          failureReason: null,
+          outputVerified: false,
+          posterPath: null,
+        }
+      : candidate,
+  );
+  return (await replaceRenderJobs(publicId, jobs)) !== null;
+}
+
 export async function resolveReadyFinalPosterAbsolutePath(
   tribute: Tribute,
 ): Promise<string | null> {

@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+import { isLocalCreatorEnv } from '@/server/env';
 import Image from 'next/image';
 import Link from 'next/link';
 import { BrandWordmark } from '@/components/BrandWordmark';
@@ -14,6 +16,7 @@ const tabs = [
 ] as const;
 
 export default async function MobileHomePage() {
+  if (!isLocalCreatorEnv()) notFound();
   const tribute = await loadActiveTribute();
   const shell = shellProject(tribute);
   const copy = mobileHomeCopy(tribute);
@@ -43,7 +46,7 @@ export default async function MobileHomePage() {
         <Link href={copy.primaryHref} className="btn btn-primary btn-block mt-6">
           {copy.primaryLabel}
         </Link>
-        <p className="text-center font-medium text-[13px] mt-6 mb-0">
+        <p className="text-center font-medium text-[14px] mt-6 mb-0">
           {tribute ? (
             <>
               <Link href="/memories">Add memories</Link>

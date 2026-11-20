@@ -1,10 +1,15 @@
+import type { LaunchLanguage } from '@memorialvideo/contracts';
+import { creatorT } from '@/lib/creator-ui-messages';
 import type { Tribute } from '@/server/store';
 import { memoryCount, readyMemoryCount } from '@/server/store';
 import { lifeSpanLabel } from '@/server/tribute-helpers';
 import { project as fixtureProject } from './copy';
 
 /** Shell/chrome view model — live tribute when present; never invent Eleanor. */
-export function shellProject(tribute: Tribute | null): {
+export function shellProject(
+  tribute: Tribute | null,
+  locale: LaunchLanguage = 'en',
+): {
   brand: string;
   title: string;
   person: string;
@@ -14,7 +19,7 @@ export function shellProject(tribute: Tribute | null): {
   if (!tribute) {
     return {
       brand: fixtureProject.brand,
-      title: 'Your remembrance',
+      title: creatorT(locale, 'creator.shell.title'),
       person: '',
       years: '',
       ownerInitial: 'Y',
@@ -22,7 +27,10 @@ export function shellProject(tribute: Tribute | null): {
   }
   return {
     brand: fixtureProject.brand,
-    title: `${possessive(tribute.displayName)} remembrance`,
+    title:
+      locale === 'en'
+        ? `${possessive(tribute.displayName)} remembrance`
+        : creatorT(locale, 'creator.shell.titleNamed').replace('{name}', tribute.displayName),
     person: tribute.displayName,
     years: lifeSpanLabel(tribute),
     ownerInitial: tribute.ownerInitial || 'Y',
@@ -37,7 +45,11 @@ export function possessive(name: string): string {
   return trimmed.endsWith('s') ? `${trimmed}'` : `${trimmed}'s`;
 }
 
-export function overviewCopy(tribute: Tribute | null): {
+export function overviewCopy(
+  tribute: Tribute | null,
+  locale: LaunchLanguage = 'en',
+  storageWritable = true,
+): {
   hero: string;
   lede: string;
   cardEyebrow: string;
@@ -46,14 +58,16 @@ export function overviewCopy(tribute: Tribute | null): {
   progressLabel: string;
   progressWidth: string;
 } {
+  // Never promise "saved along the way" while storage is not writable.
+  const savedLine = storageWritable ? ` ${creatorT(locale, 'creator.home.savedAlong')}` : '';
   if (!tribute) {
     return {
-      hero: 'Your stories, beautifully kept.',
-      lede: 'Begin a private memorial video. Everything you add is saved along the way.',
-      cardEyebrow: 'START HERE',
-      storyTitle: 'Begin a memorial video',
-      storyMeta: 'A calm place for one life story',
-      progressLabel: 'No tribute open yet',
+      hero: creatorT(locale, 'creator.home.hero'),
+      lede: `${creatorT(locale, 'creator.home.ledeBegin')}${savedLine}`,
+      cardEyebrow: creatorT(locale, 'creator.home.cardEyebrowStart'),
+      storyTitle: creatorT(locale, 'creator.home.storyBegin'),
+      storyMeta: creatorT(locale, 'creator.home.storyMetaNone'),
+      progressLabel: creatorT(locale, 'creator.home.progressNone'),
       progressWidth: '8%',
     };
   }
@@ -61,17 +75,24 @@ export function overviewCopy(tribute: Tribute | null): {
   const readyCount = readyMemoryCount(tribute);
   const ready = tribute.firstFilmStage === 'ready_to_review';
   return {
-    hero: 'Your stories, beautifully kept.',
-    lede: 'Continue where you left off. Everything is saved along the way.',
-    cardEyebrow: 'YOUR ACTIVE MEMORIAL VIDEO',
-    storyTitle: `${possessive(tribute.displayName)} story`,
+    hero: creatorT(locale, 'creator.home.hero'),
+    lede: `${creatorT(locale, 'creator.home.ledeContinue')}${savedLine}`,
+    cardEyebrow: creatorT(locale, 'creator.home.cardEyebrowActive'),
+    storyTitle:
+      locale === 'en'
+        ? `${possessive(tribute.displayName)} story`
+        : creatorT(locale, 'creator.home.storyOf').replace('{name}', tribute.displayName),
     storyMeta:
       readyCount === 0
         ? count === 0
-          ? 'Ready for the first memories'
-          : 'Memories are still preparing'
-        : `A film made from ${readyCount} cherished ${readyCount === 1 ? 'memory' : 'memories'}`,
-    progressLabel: ready ? 'Your first film is ready to review' : 'Your workspace is waiting',
+          ? creatorT(locale, 'creator.home.metaFirst')
+          : creatorT(locale, 'creator.home.metaPreparing')
+        : readyCount === 1
+          ? creatorT(locale, 'creator.home.metaFilmOne')
+          : creatorT(locale, 'creator.home.metaFilmMany').replace('{count}', String(readyCount)),
+    progressLabel: ready
+      ? creatorT(locale, 'creator.home.progressReady')
+      : creatorT(locale, 'creator.home.progressWaiting'),
     progressWidth: ready ? '70%' : readyCount > 0 ? '40%' : '15%',
   };
 }
@@ -95,7 +116,7 @@ export function mobileHomeCopy(tribute: Tribute | null): {
       meta: 'No tribute open yet',
       filmTitle: 'Your remembrance',
       primaryHref: '/setup',
-      primaryLabel: 'Begin setup  ↗',
+      primaryLabel: 'Begin setup',
       posterSrc: '/fixtures/workspace-family.png',
     };
   }
@@ -117,7 +138,7 @@ export function mobileHomeCopy(tribute: Tribute | null): {
       : `${count} ${memoryWord} collected  ·  Workspace waiting`,
     filmTitle: `${possessive(tribute.displayName)} remembrance`,
     primaryHref: ready ? '/film' : '/memories',
-    primaryLabel: ready ? '▶  Watch the first film' : 'Add memories  ↗',
+    primaryLabel: ready ? '▶  Watch the first film' : 'Add memories',
     posterSrc,
   };
 }

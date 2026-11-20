@@ -10,7 +10,7 @@ import { loadActiveTribute } from '@/server/session';
 export default async function EnhancePage() {
   const tribute = await loadActiveTribute();
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
-  const shell = shellProject(tribute);
+  const shell = shellProject(tribute, locale);
   const memories = (tribute?.memories ?? [])
     .filter((m) => m.ingestStatus === 'READY')
     .map((m) => ({ id: m.id, title: m.title, imagePath: m.imagePath }));

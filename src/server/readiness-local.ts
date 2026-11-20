@@ -1,3 +1,4 @@
+import { mediaBackend } from './object-storage';
 import {
   BETA_MUSIC_CATALOG,
   canProceedWithCeremonyPack,
@@ -28,7 +29,10 @@ export async function evaluateCreatorReadiness(tribute: Tribute): Promise<{
     (job) => job.kind === 'final' && job.status === 'READY' && job.outputVerified,
   );
   let outputQc: { ready: boolean; failures: string[] } | null = null;
-  if (readyFinal?.outputPath) {
+  if (readyFinal && mediaBackend() === 'supabase') {
+    // The worker already ran Output QC before marking READY; the file is not on this host's disk.
+    outputQc = { ready: true, failures: [] };
+  } else if (readyFinal?.outputPath) {
     const probe = await probeLocalOutput(readyFinal.outputPath);
     const timeline = tribute.timeline ? parseTimelineContract(tribute.timeline) : null;
     const expectedDuration = timeline

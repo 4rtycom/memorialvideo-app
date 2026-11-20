@@ -4,6 +4,9 @@ import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+// chmod-based read-only simulation has no effect for root (e.g. CI containers).
+const isRoot = typeof process.getuid === 'function' && process.getuid() === 0;
+
 /**
  * Gate A / MV-AUD-002 journey proof:
  * create → upload → save → reload → sign out → sign in → resume.
@@ -198,7 +201,7 @@ describe('Gate A hosted persistence journey', () => {
     expect(kv.size).toBe(0);
   });
 
-  it('probe fails honestly when no durable backend is writable', async () => {
+  it.skipIf(isRoot)('probe fails honestly when no durable backend is writable', async () => {
     const { chmodSync } = await import('node:fs');
     chmodSync(dataRoot, 0o555);
     process.env.VERCEL = '1';

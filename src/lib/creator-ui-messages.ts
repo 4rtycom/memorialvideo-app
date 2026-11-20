@@ -6,6 +6,22 @@ import {
   surfaceEnglish,
 } from '@/lib/creator-surface-copy';
 import {
+  CEREMONY_COPY_KEYS,
+  ceremonyDrafts,
+  ceremonyEnglish,
+} from '@/lib/creator-ceremony-copy';
+import {
+  ACCOUNT_PACK_KEYS,
+  accountPackDrafts,
+  accountPackEnglish,
+} from '@/lib/creator-account-pack-copy';
+import {
+  UPLOAD_QUEUE_KEYS,
+  uploadQueueDrafts,
+  uploadQueueEnglish,
+} from '@/lib/creator-upload-copy';
+import { HOME_COPY_KEYS, homeDrafts, homeEnglish } from '@/lib/creator-home-copy';
+import {
   REMAINING_SURFACE_KEYS,
   remainingDrafts,
   remainingEnglish,
@@ -169,6 +185,10 @@ export const CREATOR_UI_KEYS = [
   ...CRITICAL_CREATION_KEYS,
   ...SURFACE_CREATION_KEYS,
   ...REMAINING_SURFACE_KEYS,
+  ...HOME_COPY_KEYS,
+  ...CEREMONY_COPY_KEYS,
+  ...UPLOAD_QUEUE_KEYS,
+  ...ACCOUNT_PACK_KEYS,
 ] as const;
 
 /** Locale release status for creator UI catalogs. Non-en stays draft until XB-004. */
@@ -270,9 +290,8 @@ const enCore = {
   'creator.pack.missing': 'Unlock ceremony-ready download and private sharing for this tribute.',
   'creator.pack.activateLocal': 'Activate Memorial Pack (local)',
   'creator.pack.buyStripe': 'Purchase pack',
-  'creator.pack.stripeUnavailable': 'Memorial Pack checkout is unavailable (XB-005).',
-  'creator.pack.stripeUnavailableBody':
-    'Stripe is not configured on this host (secret, webhook, and three pack Price IDs). Checkout cannot invent a paid entitlement. Set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_MEMORIAL_TRIBUTE, STRIPE_PRICE_LIFE_STORY, and STRIPE_PRICE_FOREVER_LEGACY — or use local fulfill only when APP_ENV=local.',
+  'creator.pack.stripeUnavailable': 'Buying a Memorial Pack is not available right now.',
+  'creator.pack.stripeUnavailableBody': 'Nothing has been charged. Please come back later.',
   'creator.pack.retry': 'Try again',
   'creator.pack.checkoutFailed': 'Memorial Pack checkout could not start. Please try again.',
   'creator.pack.localOnlyNote':
@@ -391,6 +410,10 @@ const en: Catalog = {
   ...criticalEnglish,
   ...surfaceEnglish,
   ...remainingEnglish,
+  ...homeEnglish,
+  ...ceremonyEnglish,
+  ...uploadQueueEnglish,
+  ...accountPackEnglish,
 };
 
 /** Draft translations — status remains draft until XB-004 native review. */
@@ -418,7 +441,7 @@ const drafts: Record<Exclude<LaunchLanguage, 'en'>, Partial<Catalog>> = {
     'creator.save.saved': 'Opgeslagen',
     'creator.save.failed': 'Kon niet opslaan — probeer opnieuw',
     'creator.save.offline': 'Offline — wijzigingen niet opgeslagen',
-    'creator.save.retry': 'Opnieuw',
+    'creator.save.retry': 'Opnieuw proberen',
     'creator.locale.label': 'Taal',
     'creator.share.eyebrow': 'KLAAR VOOR DE DIENST',
     'creator.share.hero': 'Neem de film mee naar de locatie.',
@@ -973,6 +996,10 @@ function catalogFor(language: LaunchLanguage): Catalog {
     ...criticalDrafts[language],
     ...surfaceDrafts[language],
     ...remainingDrafts[language],
+    ...homeDrafts[language],
+    ...ceremonyDrafts[language],
+    ...uploadQueueDrafts[language],
+    ...accountPackDrafts[language],
   };
 }
 

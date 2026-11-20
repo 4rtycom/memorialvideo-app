@@ -3,8 +3,12 @@ export const CLIENT_TUS_CHUNK_BYTES = 6 * 1024 * 1024;
 
 export type AuthorizeResponse = {
   assetId: string;
-  mode: 'local_tus';
+  mode: 'local_tus' | 'supabase_signed';
+  /** local_tus: where chunks are PATCHed. */
   uploadUrl?: string;
+  /** supabase_signed: single-use signed Storage URL the browser PUTs the file to. */
+  signedUrl?: string;
+  apiKey?: string | null;
   chunkHintBytes?: number;
   byteSize?: number;
   blocker?: string;
@@ -84,4 +88,56 @@ export async function completeLocalUpload(input: {
 export function uploadIdFromUrl(uploadUrl: string): string {
   const parts = uploadUrl.split('/');
   return parts[parts.length - 1] ?? '';
+}
+
+/** PUT a file to a Supabase signed upload URL with progress (fetch has no upload progress events). */
+export function uploadFileSigned(input: {
+  file: File;
+  signedUrl: string;
+  apiKey?: string | null;
+  onProgress?: (sent: number, total: number) => void;
+}): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', input.signedUrl);
+    if (input.apiKey) {
+      xhr.setRequestHeader('apikey', input.apiKey);
+      xhr.setRequestHeader('authorization', `Bearer ${input.apiKey}`);
+    }
+    xhr.setRequestHeader('x-upsert', 'false');
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) input.onProgress?.(event.loaded, event.total);
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        input.onProgress?.(input.file.size, input.file.size);
+        resolve();
+      } else {
+        reject(new Error(`signed_put_${xhr.status}`));
+      }
+    };
+    xhr.onerror = () => reject(new Error('signed_put_network'));
+    const body = new FormData();
+    body.append('cacheControl', '3600');
+    body.append('', input.file);
+    xhr.send(body);
+  });
+}
+
+/** Upload by whichever mode authorize chose, then tell the server to verify and attach the bytes. */
+export async function uploadAuthorizedFile(input: {
+  auth: AuthorizeResponse;
+  file: File;
+  onProgress?: (sent: number, total: number) => void;
+}): Promise<CompleteUploadResponse> {
+  const { auth, file, onProgress } = input;
+  if (auth.mode === 'supabase_signed') {
+    if (!auth.signedUrl) throw new Error('no_upload_url');
+    await uploadFileSigned({ file, signedUrl: auth.signedUrl, apiKey: auth.apiKey, onProgress });
+    // Hosted uploads have no session id; the server finds the upload by asset id.
+    return completeLocalUpload({ uploadId: auth.assetId, assetId: auth.assetId });
+  }
+  if (!auth.uploadUrl) throw new Error('no_upload_url');
+  await uploadFileLocalTus({ file, uploadUrl: auth.uploadUrl, chunkHintBytes: auth.chunkHintBytes, onProgress });
+  return completeLocalUpload({ uploadId: uploadIdFromUrl(auth.uploadUrl), assetId: auth.assetId });
 }

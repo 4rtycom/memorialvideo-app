@@ -10,7 +10,7 @@ import { loadActiveTribute } from '@/server/session';
 export default async function ReviewPage() {
   const tribute = await loadActiveTribute();
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
-  const shell = shellProject(tribute);
+  const shell = shellProject(tribute, locale);
   const incoming = (tribute?.memories ?? [])
     .filter((m) => m.source === 'contributor')
     .map((m) => {
@@ -54,7 +54,7 @@ export default async function ReviewPage() {
       </Card>
 
       <ContributorReviewList items={incoming} locale={locale} />
-      <p className="text-[13px] text-[color:var(--muted)] mt-6">
+      <p className="text-[14px] text-[color:var(--muted)] mt-6">
         {creatorT(locale, 'creator.review.duplicatesNote')}
       </p>
     </AppShell>

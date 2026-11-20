@@ -1,6 +1,10 @@
 'use client';
 
-import type { CeremonySpeechPause, TimelineContract } from '@memorialvideo/contracts';
+import type {
+  CeremonySpeechPause,
+  LaunchLanguage,
+  TimelineContract,
+} from '@memorialvideo/contracts';
 import {
   formatTimelineClock,
   totalDurationFrames,
@@ -14,6 +18,8 @@ import type { PlayerRef } from '@remotion/player';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RemotionCinemaPlayer } from '@/components/RemotionCinemaPlayer';
 import { Button } from '@/components/ui';
+import { ceremonyButtonEmphasis } from '@/lib/ceremony-emphasis';
+import { creatorT } from '@/lib/creator-ui-messages';
 
 type HoldState =
   | { active: false }
@@ -29,7 +35,9 @@ export function CeremonyPlayer({
   origin,
   speechPauses = [],
   compact = false,
+  locale = 'en',
 }: {
+  locale?: LaunchLanguage;
   timeline: TimelineContract | null;
   origin: string;
   speechPauses?: readonly CeremonySpeechPause[] | null;
@@ -43,6 +51,16 @@ export function CeremonyPlayer({
   const [hold, setHold] = useState<HoldState>({ active: false });
   /** Frames already consumed for auto-pause so we do not re-trigger on resume. */
   const clearedAutoPauseRef = useRef<number>(-1);
+  /** Latest keyboard handler; the document listener below always calls the current one. */
+  const keyHandlerRef = useRef<((event: KeyboardEvent) => void) | null>(null);
+
+  useEffect(() => {
+    function onDocumentKeyDown(event: KeyboardEvent) {
+      keyHandlerRef.current?.(event);
+    }
+    document.addEventListener('keydown', onDocumentKeyDown);
+    return () => document.removeEventListener('keydown', onDocumentKeyDown);
+  }, []);
 
   const order = useMemo(() => {
     if (!timeline) return [] as CeremonyRunningOrderItem[];
@@ -97,10 +115,8 @@ export function CeremonyPlayer({
   if (!timeline) {
     return (
       <div className="card !p-6 mb-5" data-testid="ceremony-player-empty">
-        <h3 className="serif text-[28px] m-0 mb-2">Ceremony Player</h3>
-        <p className="text-[color:var(--muted)] m-0">
-          Arrange the first film, then rehearse pause and resume for live words at the service.
-        </p>
+        <h3 className="serif text-[28px] m-0 mb-2">{creatorT(locale, 'creator.film.ceremonyTitle')}</h3>
+        <p className="text-[color:var(--muted)] m-0">{creatorT(locale, 'creator.film.ceremonyEmpty')}</p>
       </div>
     );
   }
@@ -109,6 +125,7 @@ export function CeremonyPlayer({
   const total = formatTimelineClock(totalFrames, timeline.fps);
   const clock = formatTimelineClock(frame, timeline.fps);
   const fps = timeline.fps;
+  const emphasis = ceremonyButtonEmphasis({ playing, holdActive: hold.active });
 
   function pauseForSpeech(manual = true) {
     playerRef.current?.pause();
@@ -116,8 +133,8 @@ export function CeremonyPlayer({
     if (manual) {
       setHold({
         active: true,
-        title: 'Waiting for live words',
-        note: 'Press Resume film when the room is ready.',
+        title: creatorT(locale, 'creator.ceremony.holdTitle'),
+        note: creatorT(locale, 'creator.ceremony.holdNote'),
         cueId: null,
       });
     }
@@ -154,7 +171,7 @@ export function CeremonyPlayer({
       setHold({
         active: true,
         title: item.title,
-        note: item.waitingNote || 'Cued. Resume when ready.',
+        note: item.waitingNote || creatorT(locale, 'creator.ceremony.cuedNote'),
         cueId: item.id,
       });
     } else {
@@ -175,6 +192,40 @@ export function CeremonyPlayer({
       // Fullscreen may be blocked on some venue browsers — operator can still use the panel.
     }
   }
+
+  keyHandlerRef.current = (event: KeyboardEvent) => {
+    // Never fight the browser or assistive tech: skip shortcut combos and form fields.
+    if (event.ctrlKey || event.metaKey || event.altKey || event.defaultPrevented) {
+      return;
+    }
+    const target = event.target as HTMLElement | null;
+    if (
+      target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable)
+    ) {
+      return;
+    }
+    const onControl = Boolean(target?.closest('button, a, [role="button"], [role="tab"]'));
+    // Space activates a focused control natively — only take it when focus is elsewhere.
+    if ((event.key === ' ' && !onControl) || event.key === 'k' || event.key === 'K') {
+      event.preventDefault();
+      if (hold.active || !playing) resumeFilm();
+      else pauseForSpeech(true);
+      return;
+    }
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      seekRelative(-10);
+      return;
+    }
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      seekRelative(10);
+    }
+  };
 
   const display = (
     <div
@@ -197,8 +248,8 @@ export function CeremonyPlayer({
           aria-live="polite"
           data-testid="ceremony-speech-hold"
         >
-          <p className="text-[11px] font-bold tracking-[0.08em] text-[color:var(--accent)] m-0 mb-3">
-            LIVE WORDS
+          <p className="text-[12px] font-bold tracking-[0.08em] text-[color:var(--accent)] m-0 mb-3">
+            {creatorT(locale, 'creator.ceremony.liveWords')}
           </p>
           <h2 className="serif text-white text-[clamp(1.5rem,4vw,2.75rem)] font-normal m-0 mb-3">
             {hold.title}
@@ -212,59 +263,40 @@ export function CeremonyPlayer({
   const controls = (
     <div
       data-testid="ceremony-operator-controls"
-      onKeyDown={(event) => {
-        const target = event.target as HTMLElement | null;
-        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
-          return;
-        }
-        const onControl = Boolean(target?.closest('button, a, [role="button"]'));
-        // Space activates the focused control natively — only steal it off-control.
-        if ((event.key === ' ' && !onControl) || event.key === 'k' || event.key === 'K') {
-          event.preventDefault();
-          if (hold.active || !playing) resumeFilm();
-          else pauseForSpeech(true);
-          return;
-        }
-        if (event.key === 'ArrowLeft') {
-          event.preventDefault();
-          seekRelative(-10);
-          return;
-        }
-        if (event.key === 'ArrowRight') {
-          event.preventDefault();
-          seekRelative(10);
-        }
-      }}
     >
-      <p className="text-[11px] font-bold tracking-[0.08em] text-[color:var(--accent)] m-0 mb-2">
-        OPERATOR
+      <p className="text-[12px] font-bold tracking-[0.08em] text-[color:var(--accent)] m-0 mb-2">
+        {creatorT(locale, 'creator.ceremony.operator')}
       </p>
-      <h3 className={`serif m-0 mb-2 ${compact ? 'text-[24px]' : 'text-[28px]'}`}>Ceremony Player</h3>
+      <h3 className={`serif m-0 mb-2 ${compact ? 'text-[24px]' : 'text-[28px]'}`}>
+        {creatorT(locale, 'creator.film.ceremonyTitle')}
+      </h3>
       <p className="text-[color:var(--muted)] text-[14px] mb-4">
-        {speechCues.length > 0
-          ? `${speechCues.length} speech pause${speechCues.length === 1 ? '' : 's'} marked — the film holds automatically; resume when the room is ready.`
-          : 'Add speech pauses under Music & Moments, or pause manually for live words.'}
+        {speechCues.length === 1
+          ? creatorT(locale, 'creator.ceremony.cuesOne')
+          : speechCues.length > 1
+            ? creatorT(locale, 'creator.ceremony.cuesMany').replace('{count}', String(speechCues.length))
+            : creatorT(locale, 'creator.ceremony.cuesNone')}
       </p>
-      <p className="sr-only">
-        Keyboard: Space or K pauses or resumes, Left and Right arrows seek ten seconds.
+      <p className="text-[14px] text-[color:var(--muted)] mb-4">
+        {creatorT(locale, 'creator.ceremony.keyboardHint')}
       </p>
       <div className="flex flex-wrap gap-3 mb-4">
         <Button
           type="button"
-          variant={hold.active || !playing ? 'primary' : 'secondary'}
+          variant={emphasis.pause}
           onClick={() => pauseForSpeech(true)}
           aria-keyshortcuts="Space K"
         >
-          Pause for speech
+          {creatorT(locale, 'creator.ceremony.pause')}
         </Button>
-        <Button type="button" variant={playing ? 'primary' : 'secondary'} onClick={resumeFilm} aria-keyshortcuts="Space K">
-          Resume film
+        <Button type="button" variant={emphasis.resume} onClick={resumeFilm} aria-keyshortcuts="Space K">
+          {creatorT(locale, 'creator.ceremony.resume')}
         </Button>
         <Button type="button" variant="ghost" onClick={() => seekRelative(-10)} aria-keyshortcuts="ArrowLeft">
-          Back 10s
+          {creatorT(locale, 'creator.ceremony.back10')}
         </Button>
         <Button type="button" variant="ghost" onClick={() => seekRelative(10)} aria-keyshortcuts="ArrowRight">
-          Skip 10s
+          {creatorT(locale, 'creator.ceremony.skip10')}
         </Button>
         <Button
           type="button"
@@ -278,36 +310,44 @@ export function CeremonyPlayer({
             setHold({ active: false });
           }}
         >
-          Restart
+          {creatorT(locale, 'creator.ceremony.restart')}
         </Button>
         <Button type="button" variant="ghost" onClick={() => void toggleFullscreen()}>
-          Fullscreen display
+          {creatorT(locale, 'creator.ceremony.fullscreen')}
         </Button>
       </div>
-      <p className="text-[13px] text-[color:var(--muted)] m-0 mb-3">
+      <p className="text-[14px] text-[color:var(--muted)] m-0 mb-3">
         {clock} · {total}
-        {hold.active ? ' · holding for live words' : playing ? ' · playing' : ' · paused'}
+        {` · ${
+          hold.active
+            ? creatorT(locale, 'creator.ceremony.statusHolding')
+            : playing
+              ? creatorT(locale, 'creator.ceremony.statusPlaying')
+              : creatorT(locale, 'creator.ceremony.statusPaused')
+        }`}
       </p>
       {order.length > 0 ? (
-        <ul className="list-none p-0 m-0 grid gap-2 text-[13px]" data-testid="ceremony-running-order">
+        <ul className="list-none p-0 m-0 grid gap-2 text-[14px]" data-testid="ceremony-running-order">
           {order.map((item) => (
             <li key={item.id} className="flex flex-wrap items-center gap-3">
               <span className="text-[color:var(--muted)] min-w-[3.5rem]">{item.startLabel}</span>
               <span>
                 {item.kind === 'speech_pause' ? (
-                  <span className="text-[color:var(--accent)]">Live words · </span>
+                  <span className="text-[color:var(--accent)]">
+                    {creatorT(locale, 'creator.ceremony.liveWordsInline')} ·{' '}
+                  </span>
                 ) : null}
                 {item.title}
               </span>
               <Button type="button" variant="ghost" onClick={() => cueTo(item)}>
-                Cue here
+                {creatorT(locale, 'creator.ceremony.cueHere')}
               </Button>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-[13px] text-[color:var(--muted)] m-0">
-          No chapter or speech markers yet — pause anywhere during the service.
+        <p className="text-[14px] text-[color:var(--muted)] m-0">
+          {creatorT(locale, 'creator.ceremony.noMarkers')}
         </p>
       )}
     </div>
