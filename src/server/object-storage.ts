@@ -190,6 +190,38 @@ export async function sweepOrphanUploads(
   return removeError ? 0 : stale.length;
 }
 
+/**
+ * Remove storage folders of tributes that no longer exist (a delete whose storage cleanup failed).
+ * Conservative: only `mv_<16 hex>` folders, only when every object in them is older than `olderThanMs`,
+ * and never when the caller knows no tributes at all (an empty store read must not wipe storage).
+ */
+export async function sweepDeletedTributeFolders(
+  knownPublicIds: ReadonlySet<string>,
+  olderThanMs: number,
+): Promise<number> {
+  if (knownPublicIds.size === 0) return 0;
+  const config = required();
+  const cutoff = Date.now() - olderThanMs;
+  let removed = 0;
+  for (const bucketName of [config.bucket, config.renderBucket]) {
+    const bucket = client(config).storage.from(bucketName);
+    const { data: roots, error } = await bucket.list('', { limit: 100 });
+    if (error || !roots) continue;
+    for (const folder of roots) {
+      if (!/^mv_[a-f0-9]{16}$/i.test(folder.name) || knownPublicIds.has(folder.name)) continue;
+      const { data: items } = await bucket.list(folder.name, { limit: 100 });
+      if (!items || items.length === 0) continue;
+      const allOld = items.every((item) => {
+        const created = item.created_at ? Date.parse(item.created_at) : Number.NaN;
+        return Number.isFinite(created) && created < cutoff;
+      });
+      if (!allOld) continue;
+      removed += await removePrefix(bucketName, folder.name);
+    }
+  }
+  return removed;
+}
+
 /* ---- finished films and posters (bucket `renders`, written by the render worker) ---- */
 
 export type RenderObjectKind = 'mp4' | 'poster' | 'pack';

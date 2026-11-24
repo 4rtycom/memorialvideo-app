@@ -112,7 +112,7 @@ export async function DELETE(request: Request) {
       try {
         await removeTributeObjects(parsed.data.publicId);
       } catch {
-        // The record is gone; a failed cleanup is retried by the next delete or an operator sweep.
+        // The record is gone; the daily /api/cron/sweep-uploads job removes leftover storage folders of deleted tributes.
       }
     }
     if (activeId === parsed.data.publicId) {

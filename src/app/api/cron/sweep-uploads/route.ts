@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { creatorEnv } from '@/server/env';
-import { mediaBackend, sweepOrphanUploads } from '@/server/object-storage';
+import { mediaBackend, sweepDeletedTributeFolders, sweepOrphanUploads } from '@/server/object-storage';
 import { listTributeAssetIndex } from '@/server/store';
 
 export const runtime = 'nodejs';
@@ -17,8 +17,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: true, removed: 0, skipped: 'local_media' });
   }
   let removed = 0;
-  for (const tribute of await listTributeAssetIndex()) {
+  const index = await listTributeAssetIndex();
+  for (const tribute of index) {
     removed += await sweepOrphanUploads(tribute.publicId, tribute.assetIds, ONE_DAY_MS);
   }
+  removed += await sweepDeletedTributeFolders(new Set(index.map((t) => t.publicId)), 7 * ONE_DAY_MS);
   return NextResponse.json({ ok: true, removed }, { headers: { 'Cache-Control': 'no-store' } });
 }
