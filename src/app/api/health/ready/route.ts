@@ -2,6 +2,7 @@ import { mediaBackend } from '@/server/object-storage';
 import { NextResponse } from 'next/server';
 import { checkoutProviderMode } from '@memorialvideo/domain';
 import { publicSupabaseConfig } from '@/lib/supabase/env';
+import { isEmailConfigured } from '@/server/email';
 import { creatorEnv } from '@/server/env';
 import { detectLocalEncoder } from '@/server/local-encode';
 import { isDatabasePersistenceConfigured, resolvePersistence } from '@/server/persistence';
@@ -43,6 +44,7 @@ export async function GET() {
     checkoutProviderMode: mode,
     stripeConfigured,
     signInConfigured: Boolean(supabase),
+    emailConfigured: isEmailConfigured(env),
     databaseConfigured,
     supabaseStorageTus: false,
     /** 'supabase' = private bucket with signed uploads; 'local' = files on this machine's disk. */

@@ -93,3 +93,49 @@ export async function authenticateAccount(email: string, password: string): Prom
   }
   return { ok: true, accountId: account.id };
 }
+
+const RESET_MINUTES = 30;
+
+function hashResetToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+/** Mint a one-time reset token for the account behind this address (null when there is none). */
+export async function createPasswordReset(email: string): Promise<{ token: string } | null> {
+  if (!isAcceptableEmail(email)) {
+    return null;
+  }
+  const emailHash = hashEmail(email);
+  const store = await loadCreatorStore();
+  const account = Object.values(store.accounts).find((candidate) => candidate.emailHash === emailHash);
+  if (!account) {
+    return null;
+  }
+  const token = randomBytes(32).toString('base64url');
+  store.accounts[account.id] = {
+    ...account,
+    resetTokenHash: hashResetToken(token),
+    resetExpiresAt: new Date(Date.now() + RESET_MINUTES * 60_000).toISOString(),
+  };
+  await saveCreatorStore(store);
+  return { token };
+}
+
+/** Finish a reset: the token works once, then the new password is active. */
+export async function completePasswordReset(token: string, password: string): Promise<AccountResult> {
+  if (token.length < 20 || token.length > 200 || !isAcceptablePassword(password)) {
+    return { ok: false, reason: 'invalid' };
+  }
+  const tokenHash = hashResetToken(token);
+  const passwordHash = await hashPassword(password);
+  const store = await loadCreatorStore();
+  const account = Object.values(store.accounts).find(
+    (candidate) => candidate.resetTokenHash && candidate.resetTokenHash === tokenHash,
+  );
+  if (!account || !account.resetExpiresAt || Date.parse(account.resetExpiresAt) < Date.now()) {
+    return { ok: false, reason: 'invalid_credentials' };
+  }
+  store.accounts[account.id] = { ...account, passwordHash, resetTokenHash: null, resetExpiresAt: null };
+  await saveCreatorStore(store);
+  return { ok: true, accountId: account.id };
+}

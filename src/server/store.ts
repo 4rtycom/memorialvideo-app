@@ -451,6 +451,9 @@ export const accountSchema = z.object({
   emailHash: z.string().regex(/^[a-f0-9]{64}$/),
   passwordHash: z.string().min(20).max(300),
   createdAt: z.string().min(10).max(40),
+  /** SHA-256 of the one-time password-reset token (the token itself is only ever emailed). */
+  resetTokenHash: z.string().regex(/^[a-f0-9]{64}$/).nullable().optional(),
+  resetExpiresAt: z.string().min(10).max(40).nullable().optional(),
 });
 
 export type CreatorAccount = z.infer<typeof accountSchema>;

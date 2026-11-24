@@ -26,3 +26,11 @@ export function clientKey(request: Request): string {
   for (let i = 0; i < forwarded.length; i += 1) h = ((h * 33) ^ forwarded.charCodeAt(i)) >>> 0;
   return h.toString(36);
 }
+
+/** Non-reversible key for a subject such as an email address (so limits apply per account). */
+export function subjectKey(subject: string): string {
+  let h = 5381;
+  const value = subject.trim().toLowerCase();
+  for (let i = 0; i < value.length; i += 1) h = ((h * 33) ^ value.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
