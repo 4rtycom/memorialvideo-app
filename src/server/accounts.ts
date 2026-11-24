@@ -1,6 +1,7 @@
 import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { loadCreatorStore, saveCreatorStore, type CreatorAccount } from './store';
+import { withStoreLock } from './store-lock';
 
 const scrypt = promisify(scryptCallback);
 
@@ -56,7 +57,7 @@ export type AccountResult =
   | { ok: true; accountId: string }
   | { ok: false; reason: 'invalid' | 'exists' | 'invalid_credentials' };
 
-export async function registerAccount(email: string, password: string): Promise<AccountResult> {
+async function registerAccountUnlocked(email: string, password: string): Promise<AccountResult> {
   if (!isAcceptableEmail(email) || !isAcceptablePassword(password)) {
     return { ok: false, reason: 'invalid' };
   }
@@ -101,7 +102,7 @@ function hashResetToken(token: string): string {
 }
 
 /** Mint a one-time reset token for the account behind this address (null when there is none). */
-export async function createPasswordReset(email: string): Promise<{ token: string } | null> {
+async function createPasswordResetUnlocked(email: string): Promise<{ token: string } | null> {
   if (!isAcceptableEmail(email)) {
     return null;
   }
@@ -122,7 +123,7 @@ export async function createPasswordReset(email: string): Promise<{ token: strin
 }
 
 /** Finish a reset: the token works once, then the new password is active. */
-export async function completePasswordReset(token: string, password: string): Promise<AccountResult> {
+async function completePasswordResetUnlocked(token: string, password: string): Promise<AccountResult> {
   if (token.length < 20 || token.length > 200 || !isAcceptablePassword(password)) {
     return { ok: false, reason: 'invalid' };
   }
@@ -138,4 +139,16 @@ export async function completePasswordReset(token: string, password: string): Pr
   store.accounts[account.id] = { ...account, passwordHash, resetTokenHash: null, resetExpiresAt: null };
   await saveCreatorStore(store);
   return { ok: true, accountId: account.id };
+}
+
+export function registerAccount(...args: Parameters<typeof registerAccountUnlocked>): ReturnType<typeof registerAccountUnlocked> {
+  return withStoreLock(() => registerAccountUnlocked(...args));
+}
+
+export function createPasswordReset(...args: Parameters<typeof createPasswordResetUnlocked>): ReturnType<typeof createPasswordResetUnlocked> {
+  return withStoreLock(() => createPasswordResetUnlocked(...args));
+}
+
+export function completePasswordReset(...args: Parameters<typeof completePasswordResetUnlocked>): ReturnType<typeof completePasswordResetUnlocked> {
+  return withStoreLock(() => completePasswordResetUnlocked(...args));
 }

@@ -37,6 +37,7 @@ import {
 } from '@memorialvideo/contracts';
 import { peopleProcessingAllowed, resolveCreatorThemeKey } from '@memorialvideo/domain';
 import { z } from 'zod';
+import { withStoreLock } from './store-lock';
 import { creatorEnv } from './env';
 import { isIngestTerminal, isVideoMemory, nextIngestStatus } from './ingest';
 import { mediaFilePath } from './media-storage';
@@ -741,7 +742,7 @@ export type CreateTributeInput = {
   locale?: Tribute['locale'];
 };
 
-export async function createTribute(input: CreateTributeInput): Promise<Tribute> {
+async function createTributeUnlocked(input: CreateTributeInput): Promise<Tribute> {
   const now = new Date().toISOString();
   const publicId = createProjectPublicId();
   if (!isProjectPublicId(publicId)) {
@@ -826,7 +827,7 @@ export async function listTributes(): Promise<Tribute[]> {
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
-export async function updateTribute(
+async function updateTributeUnlocked(
   publicId: string,
   patch: Partial<
     Pick<
@@ -908,7 +909,7 @@ export async function updateTribute(
  * Atomically persist a Ceremony Music plan onto the TimelineContract AudioMix.
  * Single version bump — avoids film-choice rewrite racing with saveTimeline.
  */
-export async function persistCeremonyMusicApply(input: {
+async function persistCeremonyMusicApplyUnlocked(input: {
   publicId: string;
   plan: CeremonyMusicPlan;
   timeline: TimelineContract;
@@ -954,7 +955,7 @@ export async function persistCeremonyMusicApply(input: {
   return { ok: true, tribute: next };
 }
 
-export async function persistGuidedAudioPending(
+async function persistGuidedAudioPendingUnlocked(
   publicId: string,
   mix: AudioMixContract,
 ): Promise<{ ok: true; tribute: Tribute } | { ok: false; reason: 'not_found' }> {
@@ -976,7 +977,7 @@ export async function persistGuidedAudioPending(
   return { ok: true, tribute: next };
 }
 
-export async function persistGuidedAudioApply(input: {
+async function persistGuidedAudioApplyUnlocked(input: {
   publicId: string;
   timeline: TimelineContract;
 }): Promise<{ ok: true; tribute: Tribute } | { ok: false; reason: 'not_found' }> {
@@ -1054,7 +1055,7 @@ export function peopleIntelOverview(tribute: Tribute) {
   };
 }
 
-export async function updatePeopleConsent(
+async function updatePeopleConsentUnlocked(
   publicId: string,
   action: 'grant_local' | 'revoke' | 'delete_derived',
   expectedVersion?: number,
@@ -1128,7 +1129,7 @@ export async function updatePeopleConsent(
   return { ok: true, tribute: next, overview: peopleIntelOverview(next) };
 }
 
-export async function upsertPeopleProfile(
+async function upsertPeopleProfileUnlocked(
   publicId: string,
   input: { displayLabel: string; approvedForStory?: boolean; approvedForFilm?: boolean },
 ): Promise<
@@ -1190,7 +1191,7 @@ export type AddMemoryInput = {
   reviewState?: 'pending' | 'accepted' | 'declined';
 };
 
-export async function addMemory(publicId: string, input: AddMemoryInput): Promise<MemoryAsset | null> {
+async function addMemoryUnlocked(publicId: string, input: AddMemoryInput): Promise<MemoryAsset | null> {
   const store = await readStore();
   const existing = store.tributes[publicId];
   if (!existing) {
@@ -1261,7 +1262,7 @@ export async function addMemory(publicId: string, input: AddMemoryInput): Promis
  * On PROCESSING → READY for stills: orient + cap long edge into a durable sibling JPEG.
  * HEIC is converted to JPEG at upload complete; videos skip still normalize.
  */
-export async function advanceIngestJobs(publicId: string): Promise<{
+async function advanceIngestJobsUnlocked(publicId: string): Promise<{
   tribute: Tribute | null;
   advanced: number;
 }> {
@@ -1324,7 +1325,7 @@ export async function advanceIngestJobs(publicId: string): Promise<{
   return { tribute: next, advanced };
 }
 
-export async function attachMemoryBytes(
+async function attachMemoryBytesUnlocked(
   publicId: string,
   memoryId: string,
   input: { imagePath: string; contentType?: string; durationMs?: number; checksumSha256?: string },
@@ -1375,7 +1376,7 @@ export async function attachMemoryBytes(
   return updated;
 }
 
-export async function markMemoryRejected(
+async function markMemoryRejectedUnlocked(
   publicId: string,
   memoryId: string,
   failureCode: AssetUiFailureCode = 'rejected',
@@ -1423,7 +1424,7 @@ export type SaveTimelineResult =
  * Persist TimelineContract with optimistic concurrency (Prompt 21).
  * Requires expectedVersion; never silently overwrites a newer revision.
  */
-export async function saveTimeline(
+async function saveTimelineUnlocked(
   publicId: string,
   timeline: TimelineContract,
   input: { expectedVersion?: number; clientUpdatedAt?: string } = {},
@@ -1500,7 +1501,7 @@ export async function saveTimeline(
   return { ok: true, tribute: next };
 }
 
-export async function undoTimeline(
+async function undoTimelineUnlocked(
   publicId: string,
   expectedVersion: number,
 ): Promise<SaveTimelineResult> {
@@ -1545,7 +1546,7 @@ export async function undoTimeline(
   return { ok: true, tribute: next };
 }
 
-export async function retryFailedMemory(
+async function retryFailedMemoryUnlocked(
   publicId: string,
   memoryId: string,
 ): Promise<MemoryAsset | null> {
@@ -1606,7 +1607,7 @@ export type FirstFilmStage =
  * Explicit, durable first-film stage advance — no setTimeout fake processing.
  * On ready_to_review, publishes a validated TimelineContract snapshot.
  */
-export async function advanceFirstFilm(
+async function advanceFirstFilmUnlocked(
   publicId: string,
 ): Promise<
   | { ok: true; tribute: Tribute; stage: FirstFilmStage }
@@ -1728,7 +1729,7 @@ export function entitlementView(tribute: Tribute | null): EntitlementView {
   };
 }
 
-export async function fulfillLocalMemorialPack(publicId: string): Promise<
+async function fulfillLocalMemorialPackUnlocked(publicId: string): Promise<
   | { ok: true; tribute: Tribute }
   | { ok: false; reason: 'not_local' | 'not_found' | 'already_active' }
 > {
@@ -1769,7 +1770,7 @@ export async function fulfillLocalMemorialPack(publicId: string): Promise<
   return { ok: true, tribute: next };
 }
 
-export async function createPendingCheckoutOrder(input: {
+async function createPendingCheckoutOrderUnlocked(input: {
   orderId: string;
   projectPublicId: string;
   consumerPackId?: 'memorial-tribute' | 'life-story' | 'forever-legacy' | null;
@@ -1802,7 +1803,7 @@ export async function createPendingCheckoutOrder(input: {
   return { ok: true, order, alreadyPaid: false };
 }
 
-export async function attachCheckoutSessionId(
+async function attachCheckoutSessionIdUnlocked(
   orderId: string,
   providerCheckoutId: string,
 ): Promise<CheckoutOrder | null> {
@@ -1824,7 +1825,7 @@ export async function attachCheckoutSessionId(
  * Idempotent Stripe webhook fulfillment — grants Memorial Pack via domain ceremony policy.
  * Never grants from browser redirect alone.
  */
-export async function applyStripeCheckoutCommerce(input: {
+async function applyStripeCheckoutCommerceUnlocked(input: {
   providerEventId: string;
   eventType: CommerceEventType;
   orderId: string;
@@ -1934,7 +1935,7 @@ export async function applyStripeCheckoutCommerce(input: {
 /**
  * Eleanor fixture seed — local APP_ENV only. Never returned as a default production tribute.
  */
-export async function seedEleanorFixture(): Promise<
+async function seedEleanorFixtureUnlocked(): Promise<
   | { ok: true; tribute: Tribute }
   | { ok: false; reason: 'not_local' }
 > {
@@ -2027,7 +2028,7 @@ export function hasInFlightIngest(tribute: Tribute): boolean {
   });
 }
 
-export async function persistContributorInvite(
+async function persistContributorInviteUnlocked(
   publicId: string,
   invite: StoredContributorInvite,
 ): Promise<Tribute | null> {
@@ -2066,7 +2067,7 @@ export async function persistContributorInvite(
  * Prompt 06 / MV-072 — owner lock/open for contributor collection.
  * Uses domain `nextCollectionStatus`; guest redeem already denies LOCKED.
  */
-export async function setTributeCollectionStatus(
+async function setTributeCollectionStatusUnlocked(
   publicId: string,
   action: 'open' | 'lock',
 ): Promise<{ tribute: Tribute; collectionStatus: CollectionStatus } | null> {
@@ -2099,7 +2100,7 @@ export async function setTributeCollectionStatus(
   return { tribute: next, collectionStatus };
 }
 
-export async function revokeContributorInvite(
+async function revokeContributorInviteUnlocked(
   publicId: string,
   inviteId: string,
 ): Promise<Tribute | null> {
@@ -2146,7 +2147,7 @@ export async function findInviteByTokenHash(
   return null;
 }
 
-export async function incrementInviteUse(
+async function incrementInviteUseUnlocked(
   publicId: string,
   inviteId: string,
 ): Promise<StoredContributorInvite | null> {
@@ -2181,7 +2182,7 @@ export async function incrementInviteUse(
   return updated;
 }
 
-export async function createGuestSession(input: {
+async function createGuestSessionUnlocked(input: {
   inviteId: string;
   tributePublicId: string;
   expiresAt: string;
@@ -2215,7 +2216,7 @@ export async function getGuestSession(sessionId: string): Promise<GuestSession |
   return session;
 }
 
-export async function persistPrivateShare(
+async function persistPrivateShareUnlocked(
   publicId: string,
   share: StoredPrivateShare,
 ): Promise<Tribute | null> {
@@ -2236,7 +2237,7 @@ export async function persistPrivateShare(
   return next;
 }
 
-export async function revokePrivateShare(
+async function revokePrivateShareUnlocked(
   publicId: string,
   shareId: string,
 ): Promise<Tribute | null> {
@@ -2283,7 +2284,7 @@ export async function findShareByTokenHash(
   return null;
 }
 
-export async function setMemoryReviewState(
+async function setMemoryReviewStateUnlocked(
   publicId: string,
   memoryId: string,
   reviewState: 'accepted' | 'declined',
@@ -2321,7 +2322,7 @@ export async function setMemoryReviewState(
   return updated;
 }
 
-export async function replaceRenderJobs(
+async function replaceRenderJobsUnlocked(
   publicId: string,
   renderJobs: StoredRenderJob[],
   extras: Partial<Pick<Tribute, 'finalRendersUsed' | 'activity'>> = {},
@@ -2344,7 +2345,7 @@ export async function replaceRenderJobs(
   return next;
 }
 
-export async function updateCeremonyChecklist(
+async function updateCeremonyChecklistUnlocked(
   publicId: string,
   patch: Partial<Pick<CeremonyChecklist, 'downloadDevice' | 'testVenue' | 'soundtrackCleared'>>,
 ): Promise<Tribute | null> {
@@ -2378,7 +2379,7 @@ export async function updateCeremonyChecklist(
   return next;
 }
 
-export async function addMember(
+async function addMemberUnlocked(
   publicId: string,
   input: { label: string; role: 'editor' | 'viewer' },
 ): Promise<StoredMember | null> {
@@ -2417,7 +2418,7 @@ export async function addMember(
   return member;
 }
 
-export async function revokeMember(publicId: string, memberId: string): Promise<StoredMember | null> {
+async function revokeMemberUnlocked(publicId: string, memberId: string): Promise<StoredMember | null> {
   const store = await readStore();
   const existing = store.tributes[publicId];
   if (!existing) {
@@ -2510,7 +2511,7 @@ export async function ensureStoryChapters(publicId: string): Promise<Tribute | n
   return updateTribute(publicId, { storyChapters: chapters });
 }
 
-export async function requestLocalEnhancement(
+async function requestLocalEnhancementUnlocked(
   publicId: string,
   memoryId: string,
 ): Promise<
@@ -2553,7 +2554,7 @@ export async function requestLocalEnhancement(
  * Advance one enhancement request. Local ffmpeg pixel-ops may produce ready_local.
  * Generative reconstruction stays unavailable and is never marked COMPLETE.
  */
-export async function advanceEnhancementOnce(publicId: string): Promise<{
+async function advanceEnhancementOnceUnlocked(publicId: string): Promise<{
   advanced: Tribute['enhancementRequests'][number] | null;
   note: string;
 }> {
@@ -2644,7 +2645,7 @@ export type ApplyEnhancementToFilmResult =
  * Sets encode-safe `/api/enhancement/variant/{id}` src + enhancementVariantId.
  * Original memory bytes stay immutable. Generative Finish stays not COMPLETE.
  */
-export async function applyEnhancementToFilm(
+async function applyEnhancementToFilmUnlocked(
   publicId: string,
   requestId: string,
 ): Promise<ApplyEnhancementToFilmResult> {
@@ -2785,7 +2786,7 @@ export type RevertEnhancementFromFilmResult =
  * Reversible film bind: restore original memory src and clear enhancementVariantId.
  * Original bytes were never overwritten. Generative restoration stays unavailable.
  */
-export async function revertEnhancementFromFilm(
+async function revertEnhancementFromFilmUnlocked(
   publicId: string,
   requestId: string,
 ): Promise<RevertEnhancementFromFilmResult> {
@@ -2905,7 +2906,7 @@ export type RejectEnhancementResult =
  * Family rejects a local improvement. If it was bound into the film, restore originals first.
  * Does not invent generative alternatives.
  */
-export async function rejectEnhancementRequest(
+async function rejectEnhancementRequestUnlocked(
   publicId: string,
   requestId: string,
 ): Promise<RejectEnhancementResult> {
@@ -3009,7 +3010,7 @@ export async function advanceEnhancementUntilSettled(
   };
 }
 
-export async function deleteTribute(publicId: string): Promise<boolean> {
+async function deleteTributeUnlocked(publicId: string): Promise<boolean> {
   const store = await readStore();
   const existing = store.tributes[publicId];
   if (!existing || !actorAllowsTribute(existing.ownerAccountId)) {
@@ -3062,7 +3063,7 @@ export async function listTributeSummaries(): Promise<
  * Persist collab inbox fields (placement / decisions / tasks) with optional
  * timeline publish for family-confirmed placement apply/revert.
  */
-export async function persistCollaborationState(input: {
+async function persistCollaborationStateUnlocked(input: {
   publicId: string;
   placementSuggestions?: StoredPlacementSuggestion[];
   collaborationDecisions?: StoredCollaborationDecision[];
@@ -3125,3 +3126,161 @@ export async function listTributeAssetIndex(): Promise<Array<{ publicId: string;
     };
   });
 }
+
+/* ---- serialised store changes: each public mutator runs under the store lock ---- */
+export function createTribute(...args: Parameters<typeof createTributeUnlocked>): ReturnType<typeof createTributeUnlocked> {
+  return withStoreLock(() => createTributeUnlocked(...args));
+}
+
+export function updateTribute(...args: Parameters<typeof updateTributeUnlocked>): ReturnType<typeof updateTributeUnlocked> {
+  return withStoreLock(() => updateTributeUnlocked(...args));
+}
+
+export function persistCeremonyMusicApply(...args: Parameters<typeof persistCeremonyMusicApplyUnlocked>): ReturnType<typeof persistCeremonyMusicApplyUnlocked> {
+  return withStoreLock(() => persistCeremonyMusicApplyUnlocked(...args));
+}
+
+export function persistGuidedAudioPending(...args: Parameters<typeof persistGuidedAudioPendingUnlocked>): ReturnType<typeof persistGuidedAudioPendingUnlocked> {
+  return withStoreLock(() => persistGuidedAudioPendingUnlocked(...args));
+}
+
+export function persistGuidedAudioApply(...args: Parameters<typeof persistGuidedAudioApplyUnlocked>): ReturnType<typeof persistGuidedAudioApplyUnlocked> {
+  return withStoreLock(() => persistGuidedAudioApplyUnlocked(...args));
+}
+
+export function updatePeopleConsent(...args: Parameters<typeof updatePeopleConsentUnlocked>): ReturnType<typeof updatePeopleConsentUnlocked> {
+  return withStoreLock(() => updatePeopleConsentUnlocked(...args));
+}
+
+export function upsertPeopleProfile(...args: Parameters<typeof upsertPeopleProfileUnlocked>): ReturnType<typeof upsertPeopleProfileUnlocked> {
+  return withStoreLock(() => upsertPeopleProfileUnlocked(...args));
+}
+
+export function addMemory(...args: Parameters<typeof addMemoryUnlocked>): ReturnType<typeof addMemoryUnlocked> {
+  return withStoreLock(() => addMemoryUnlocked(...args));
+}
+
+export function advanceIngestJobs(...args: Parameters<typeof advanceIngestJobsUnlocked>): ReturnType<typeof advanceIngestJobsUnlocked> {
+  return withStoreLock(() => advanceIngestJobsUnlocked(...args));
+}
+
+export function attachMemoryBytes(...args: Parameters<typeof attachMemoryBytesUnlocked>): ReturnType<typeof attachMemoryBytesUnlocked> {
+  return withStoreLock(() => attachMemoryBytesUnlocked(...args));
+}
+
+export function markMemoryRejected(...args: Parameters<typeof markMemoryRejectedUnlocked>): ReturnType<typeof markMemoryRejectedUnlocked> {
+  return withStoreLock(() => markMemoryRejectedUnlocked(...args));
+}
+
+export function saveTimeline(...args: Parameters<typeof saveTimelineUnlocked>): ReturnType<typeof saveTimelineUnlocked> {
+  return withStoreLock(() => saveTimelineUnlocked(...args));
+}
+
+export function undoTimeline(...args: Parameters<typeof undoTimelineUnlocked>): ReturnType<typeof undoTimelineUnlocked> {
+  return withStoreLock(() => undoTimelineUnlocked(...args));
+}
+
+export function retryFailedMemory(...args: Parameters<typeof retryFailedMemoryUnlocked>): ReturnType<typeof retryFailedMemoryUnlocked> {
+  return withStoreLock(() => retryFailedMemoryUnlocked(...args));
+}
+
+export function advanceFirstFilm(...args: Parameters<typeof advanceFirstFilmUnlocked>): ReturnType<typeof advanceFirstFilmUnlocked> {
+  return withStoreLock(() => advanceFirstFilmUnlocked(...args));
+}
+
+export function fulfillLocalMemorialPack(...args: Parameters<typeof fulfillLocalMemorialPackUnlocked>): ReturnType<typeof fulfillLocalMemorialPackUnlocked> {
+  return withStoreLock(() => fulfillLocalMemorialPackUnlocked(...args));
+}
+
+export function createPendingCheckoutOrder(...args: Parameters<typeof createPendingCheckoutOrderUnlocked>): ReturnType<typeof createPendingCheckoutOrderUnlocked> {
+  return withStoreLock(() => createPendingCheckoutOrderUnlocked(...args));
+}
+
+export function attachCheckoutSessionId(...args: Parameters<typeof attachCheckoutSessionIdUnlocked>): ReturnType<typeof attachCheckoutSessionIdUnlocked> {
+  return withStoreLock(() => attachCheckoutSessionIdUnlocked(...args));
+}
+
+export function applyStripeCheckoutCommerce(...args: Parameters<typeof applyStripeCheckoutCommerceUnlocked>): ReturnType<typeof applyStripeCheckoutCommerceUnlocked> {
+  return withStoreLock(() => applyStripeCheckoutCommerceUnlocked(...args));
+}
+
+export function seedEleanorFixture(...args: Parameters<typeof seedEleanorFixtureUnlocked>): ReturnType<typeof seedEleanorFixtureUnlocked> {
+  return withStoreLock(() => seedEleanorFixtureUnlocked(...args));
+}
+
+export function persistContributorInvite(...args: Parameters<typeof persistContributorInviteUnlocked>): ReturnType<typeof persistContributorInviteUnlocked> {
+  return withStoreLock(() => persistContributorInviteUnlocked(...args));
+}
+
+export function setTributeCollectionStatus(...args: Parameters<typeof setTributeCollectionStatusUnlocked>): ReturnType<typeof setTributeCollectionStatusUnlocked> {
+  return withStoreLock(() => setTributeCollectionStatusUnlocked(...args));
+}
+
+export function revokeContributorInvite(...args: Parameters<typeof revokeContributorInviteUnlocked>): ReturnType<typeof revokeContributorInviteUnlocked> {
+  return withStoreLock(() => revokeContributorInviteUnlocked(...args));
+}
+
+export function incrementInviteUse(...args: Parameters<typeof incrementInviteUseUnlocked>): ReturnType<typeof incrementInviteUseUnlocked> {
+  return withStoreLock(() => incrementInviteUseUnlocked(...args));
+}
+
+export function createGuestSession(...args: Parameters<typeof createGuestSessionUnlocked>): ReturnType<typeof createGuestSessionUnlocked> {
+  return withStoreLock(() => createGuestSessionUnlocked(...args));
+}
+
+export function persistPrivateShare(...args: Parameters<typeof persistPrivateShareUnlocked>): ReturnType<typeof persistPrivateShareUnlocked> {
+  return withStoreLock(() => persistPrivateShareUnlocked(...args));
+}
+
+export function revokePrivateShare(...args: Parameters<typeof revokePrivateShareUnlocked>): ReturnType<typeof revokePrivateShareUnlocked> {
+  return withStoreLock(() => revokePrivateShareUnlocked(...args));
+}
+
+export function setMemoryReviewState(...args: Parameters<typeof setMemoryReviewStateUnlocked>): ReturnType<typeof setMemoryReviewStateUnlocked> {
+  return withStoreLock(() => setMemoryReviewStateUnlocked(...args));
+}
+
+export function replaceRenderJobs(...args: Parameters<typeof replaceRenderJobsUnlocked>): ReturnType<typeof replaceRenderJobsUnlocked> {
+  return withStoreLock(() => replaceRenderJobsUnlocked(...args));
+}
+
+export function updateCeremonyChecklist(...args: Parameters<typeof updateCeremonyChecklistUnlocked>): ReturnType<typeof updateCeremonyChecklistUnlocked> {
+  return withStoreLock(() => updateCeremonyChecklistUnlocked(...args));
+}
+
+export function addMember(...args: Parameters<typeof addMemberUnlocked>): ReturnType<typeof addMemberUnlocked> {
+  return withStoreLock(() => addMemberUnlocked(...args));
+}
+
+export function revokeMember(...args: Parameters<typeof revokeMemberUnlocked>): ReturnType<typeof revokeMemberUnlocked> {
+  return withStoreLock(() => revokeMemberUnlocked(...args));
+}
+
+export function requestLocalEnhancement(...args: Parameters<typeof requestLocalEnhancementUnlocked>): ReturnType<typeof requestLocalEnhancementUnlocked> {
+  return withStoreLock(() => requestLocalEnhancementUnlocked(...args));
+}
+
+export function advanceEnhancementOnce(...args: Parameters<typeof advanceEnhancementOnceUnlocked>): ReturnType<typeof advanceEnhancementOnceUnlocked> {
+  return withStoreLock(() => advanceEnhancementOnceUnlocked(...args));
+}
+
+export function applyEnhancementToFilm(...args: Parameters<typeof applyEnhancementToFilmUnlocked>): ReturnType<typeof applyEnhancementToFilmUnlocked> {
+  return withStoreLock(() => applyEnhancementToFilmUnlocked(...args));
+}
+
+export function revertEnhancementFromFilm(...args: Parameters<typeof revertEnhancementFromFilmUnlocked>): ReturnType<typeof revertEnhancementFromFilmUnlocked> {
+  return withStoreLock(() => revertEnhancementFromFilmUnlocked(...args));
+}
+
+export function rejectEnhancementRequest(...args: Parameters<typeof rejectEnhancementRequestUnlocked>): ReturnType<typeof rejectEnhancementRequestUnlocked> {
+  return withStoreLock(() => rejectEnhancementRequestUnlocked(...args));
+}
+
+export function deleteTribute(...args: Parameters<typeof deleteTributeUnlocked>): ReturnType<typeof deleteTributeUnlocked> {
+  return withStoreLock(() => deleteTributeUnlocked(...args));
+}
+
+export function persistCollaborationState(...args: Parameters<typeof persistCollaborationStateUnlocked>): ReturnType<typeof persistCollaborationStateUnlocked> {
+  return withStoreLock(() => persistCollaborationStateUnlocked(...args));
+}
+
