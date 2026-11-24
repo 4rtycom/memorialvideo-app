@@ -55,7 +55,7 @@ export const STRIPE_REQUIRED_ENV = [
 
 /**
  * Verify Stripe-Signature header (HMAC-SHA256 over `${t}.${payload}`).
- * Supports `whsec_` secrets (Stripe standard).
+ * Supports `whsec_` secrets (Stripe standard): the whole string is the HMAC key.
  */
 export function verifyStripeSignature(input: {
   payload: string;
@@ -92,14 +92,8 @@ export function verifyStripeSignature(input: {
 }
 
 function decodeStripeWebhookSecret(secret: string): Buffer {
-  if (secret.startsWith('whsec_')) {
-    try {
-      return Buffer.from(secret.slice('whsec_'.length), 'base64');
-    } catch {
-      return Buffer.from(secret);
-    }
-  }
-  return Buffer.from(secret);
+  // Same scheme as stripe-node: the signing secret is the HMAC key as-is, `whsec_` prefix included.
+  return Buffer.from(secret, 'utf8');
 }
 
 export type StripeCheckoutStartResult =

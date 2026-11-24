@@ -240,9 +240,15 @@ export function buildSceneKenBurnsFilter(
   const yExpr = `(ih-ih/zoom)/2-(ih/zoom)*${(maxShiftY / 100).toFixed(6)}*${eased}`;
 
   return [
+    // A looped still feeds zoompan one frame per input frame, and zoompan emits `d`
+    // frames for EACH of them, which stretched the first photograph over the whole
+    // film. Feed exactly one source frame, then cap the scene at `d` output frames.
+    'trim=end_frame=1',
     `scale=${preW}:${preH}:force_original_aspect_ratio=increase`,
     `crop=${preW}:${preH}:'(iw-ow)*${focalX.toFixed(4)}':'(ih-oh)*${focalY.toFixed(4)}'`,
     `zoompan=z='${zExpr}':x='${xExpr}':y='${yExpr}':d=${d}:s=${outW}x${outH}:fps=${fps}`,
+    `trim=end_frame=${d}`,
+    'setpts=PTS-STARTPTS',
     'setsar=1',
     'format=yuv420p',
   ].join(',');
@@ -450,8 +456,10 @@ export function buildDrawtextFilters(
       : theme.chapterTreatment === 'editorial'
         ? theme.titleSize
         : theme.titleSize;
-  const eyebrowOffset = Math.round(titleSize * 0.55);
-  const subtitleOffset = Math.max(56, Math.round(titleSize * 0.45));
+  // Each line is centred on its own offset from the middle of the frame. The title is about
+  // `titleSize` tall, so the small lines must clear half of that plus a gap.
+  const eyebrowOffset = Math.round(titleSize * 0.5) + 46;
+  const subtitleOffset = Math.round(titleSize * 0.5) + 52;
   const cardStroke =
     theme.key === 'cinematic_dark' || theme.captionTreatment === 'matte'
       ? 'borderw=1:bordercolor=black@0.35'
@@ -1186,6 +1194,10 @@ export async function encodeWithFfmpeg(input: {
   const musicClips = await resolveTimelineMusicClips(input.timeline, input.tributePublicId);
   const dialogueClips = await resolveTimelineDialogueClips(input.timeline, input.tributePublicId);
   const fontfile = await resolveDrawtextFontAbsolute();
+  if (!fontfile) {
+    // Without a font the name, dates and captions were silently left out of the film.
+    return { ok: false, reason: 'font_missing' };
+  }
   const args: string[] = ['-y'];
   let videoInputCount = 0;
   if (medias.length === 0) {
@@ -1395,7 +1407,8 @@ export async function encodeWithFfmpeg(input: {
     audioSource = 'timeline_dialogue';
     audioMap = '[aout]';
   } else {
-    args.push('-f', 'lavfi', '-i', `sine=frequency=196:duration=${durationSeconds.toFixed(3)}`);
+    // No music chosen: the film is silent (this used to be a continuous test tone).
+    args.push('-f', 'lavfi', '-t', durationSeconds.toFixed(3), '-i', 'anullsrc=r=44100:cl=stereo');
     audioMap = `${nextInputIndex}:a:0`;
   }
 
@@ -1543,7 +1556,7 @@ async function encodeWithRemotion(input: {
     if (!bedOk) {
       const bed = await run(
         'ffmpeg',
-        ['-y', '-f', 'lavfi', '-i', `sine=frequency=220:duration=${Math.max(durationSeconds, 1).toFixed(3)}`, bedWav],
+        ['-y', '-f', 'lavfi', '-t', Math.max(durationSeconds, 1).toFixed(3), '-i', 'anullsrc=r=44100:cl=stereo', bedWav],
         30_000,
       );
       if (bed.code !== 0) {

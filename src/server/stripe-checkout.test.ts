@@ -5,10 +5,8 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 function sign(payload: string, secret: string, timestamp = Math.floor(Date.now() / 1000).toString()): string {
-  const secretBytes = secret.startsWith('whsec_')
-    ? Buffer.from(secret.slice('whsec_'.length), 'base64')
-    : Buffer.from(secret);
-  const digest = createHmac('sha256', secretBytes).update(`${timestamp}.${payload}`).digest('hex');
+  // Same scheme as stripe-node: the signing secret is the HMAC key as-is, prefix included.
+  const digest = createHmac('sha256', secret).update(`${timestamp}.${payload}`, 'utf8').digest('hex');
   return `t=${timestamp},v1=${digest}`;
 }
 
