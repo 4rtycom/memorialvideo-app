@@ -91,7 +91,7 @@ export const contributorInviteSchema = z.object({
   scope: z.enum(['upload_only', 'upload_and_comment']),
   expiresAt: z.string().min(10).max(40),
   useCount: z.number().int().min(0).default(0),
-  maxUses: z.number().int().positive().nullable().default(20),
+  maxUses: z.number().int().positive().nullable().default(200),
   revokedAt: z.string().min(10).max(40).nullable().default(null),
   createdAt: z.string().min(10).max(40),
 });
@@ -3110,3 +3110,15 @@ export async function persistCollaborationState(input: {
 }
 
 export type { InviteScope, ShareScope };
+
+/** Unscoped (system use only, e.g. the cleanup cron): every tribute with the asset ids it references. */
+export async function listTributeAssetIndex(): Promise<Array<{ publicId: string; assetIds: Set<string> }>> {
+  const store = await readStoreUnscoped();
+  return Object.values(store.tributes).map((raw) => {
+    const t = raw as unknown as { publicId: string; memories?: Array<{ assetId?: string }> };
+    return {
+      publicId: t.publicId,
+      assetIds: new Set((t.memories ?? []).map((m) => m.assetId).filter((id): id is string => Boolean(id))),
+    };
+  });
+}

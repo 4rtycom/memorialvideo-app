@@ -5,6 +5,8 @@ import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { pageTitle } from '@/server/page-title';
 
+export const metadata = { title: 'Set up' };
+
 export async function generateMetadata() {
   return pageTitle('creator.home.storyBegin');
 }

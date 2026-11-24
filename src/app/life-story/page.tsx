@@ -9,6 +9,8 @@ import { loadActiveTribute } from '@/server/session';
 import { ensureStoryChapters } from '@/server/store';
 import { pageTitle } from '@/server/page-title';
 
+export const metadata = { title: 'Life story' };
+
 export async function generateMetadata() {
   return pageTitle('creator.nav.lifeStory');
 }

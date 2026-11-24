@@ -12,6 +12,8 @@ import { chapterLabels, timelineClock } from '@/server/timeline';
 import { parseTimelineContract } from '@memorialvideo/contracts';
 import { pageTitle } from '@/server/page-title';
 
+export const metadata = { title: 'Film' };
+
 export async function generateMetadata() {
   return pageTitle('creator.nav.film');
 }

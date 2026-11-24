@@ -9,6 +9,8 @@ import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { memoryCount, readyMemoryCount } from '@/server/store';
 
+export const metadata = { title: 'Workspace' };
+
 
 export default async function WorkspacePage() {
   const tribute = await loadActiveTribute();

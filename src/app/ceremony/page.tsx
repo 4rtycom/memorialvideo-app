@@ -9,6 +9,8 @@ import { loadActiveTribute } from '@/server/session';
 import { parseTimelineContract } from '@memorialvideo/contracts';
 import Link from 'next/link';
 
+export const metadata = { title: 'Ceremony' };
+
 /**
  * Dedicated ceremony operator surface — display + controls for live speech holds.
  * Venue ZIP also ships ceremony-player.html for offline use (MV-AUD-004).

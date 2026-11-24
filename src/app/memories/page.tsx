@@ -17,6 +17,8 @@ import { hasInFlightIngest } from '@/server/store';
 import Link from 'next/link';
 import { pageTitle } from '@/server/page-title';
 
+export const metadata = { title: 'Memories' };
+
 export async function generateMetadata() {
   return pageTitle('creator.nav.memories');
 }

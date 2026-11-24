@@ -7,6 +7,8 @@ import { resolveSessionSecret } from '@/server/account-session';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 
+export const metadata = { title: 'Sign in' };
+
 export default async function SignInPage() {
   const tribute = await loadActiveTribute();
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);

@@ -67,7 +67,7 @@ export async function createOwnerInvite(publicId: string): Promise<
     scope: 'upload_only',
     expiresAt,
     useCount: 0,
-    maxUses: 20,
+    maxUses: 200,
     revokedAt: null,
     createdAt: new Date().toISOString(),
   };

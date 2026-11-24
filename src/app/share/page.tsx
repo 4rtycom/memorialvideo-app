@@ -23,6 +23,8 @@ import { isStripeMemorialPackConfigured } from '@/server/stripe-checkout';
 import { parseTimelineContract } from '@memorialvideo/contracts';
 import { pageTitle } from '@/server/page-title';
 
+export const metadata = { title: 'Share' };
+
 export async function generateMetadata() {
   return pageTitle('creator.nav.share');
 }

@@ -166,6 +166,30 @@ export async function removeTributeObjects(tributePublicId: string): Promise<num
   );
 }
 
+/**
+ * Delete upload objects older than `olderThanMs` whose asset id is not in `knownAssetIds`
+ * (uploads that were started but never completed). Returns how many were removed.
+ */
+export async function sweepOrphanUploads(
+  tributePublicId: string,
+  knownAssetIds: ReadonlySet<string>,
+  olderThanMs: number,
+): Promise<number> {
+  const config = required();
+  const bucket = client(config).storage.from(config.bucket);
+  const { data, error } = await bucket.list(tributePublicId, { limit: 100 });
+  if (error || !data) return 0;
+  const cutoff = Date.now() - olderThanMs;
+  const stale = data.filter((item) => {
+    if (knownAssetIds.has(item.name)) return false;
+    const created = item.created_at ? Date.parse(item.created_at) : Number.NaN;
+    return Number.isFinite(created) && created < cutoff;
+  });
+  if (stale.length === 0) return 0;
+  const { error: removeError } = await bucket.remove(stale.map((item) => `${tributePublicId}/${item.name}`));
+  return removeError ? 0 : stale.length;
+}
+
 /* ---- finished films and posters (bucket `renders`, written by the render worker) ---- */
 
 export type RenderObjectKind = 'mp4' | 'poster' | 'pack';

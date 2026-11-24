@@ -395,14 +395,14 @@ const enCore = {
   'creator.auth.failed': 'We could not sign you in. Check the email and password, then try again.',
   'creator.auth.exists': 'An account with that email already exists. Sign in instead.',
   'creator.auth.short': 'Use at least 10 characters.',
-  'creator.auth.notConfigured': 'Password sign-in needs CREATOR_SESSION_SECRET on this host.',
+  'creator.auth.notConfigured': 'Password sign-in is not available right now. Please try again later or use the email link.',
   'creator.auth.submitting': 'Saving…',
   'creator.auth.magic': 'Or email a magic link',
   'creator.auth.magicSend': 'Send magic link',
   'creator.auth.magicSent': 'If that address can receive mail, a sign-in link is on its way.',
   'creator.auth.magicFailed': 'We could not send the link. Your work is still safe — please try again.',
   'creator.auth.magicUnconfigured':
-    'Magic links need Supabase to be configured. Password sign-in is available when this host has a session secret.',
+    'Email sign-in links are not available right now. Please try again later.',
 };
 
 const en: Catalog = {
