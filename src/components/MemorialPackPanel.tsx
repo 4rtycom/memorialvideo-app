@@ -196,15 +196,29 @@ export function MemorialPackPanel({
     return (
       <div className="border-t border-[color:var(--border)] pt-5 mt-5">
         <h3 className="serif text-[23px] m-0 mb-2">
-          {selectedPlan?.displayName ?? 'Memorial Pack'}
+          {selectedPlan?.displayName ?? creatorT(locale, 'creator.pack.fallbackName')}
         </h3>
         <p className="text-[14px] text-[color:var(--muted)] m-0">{creatorT(locale, 'creator.pack.active')}</p>
         {packRecommendation ? (
-          <p className="text-[13px] text-[color:var(--muted)] mt-2 mb-0">
+          <p className="text-[14px] text-[color:var(--muted)] mt-2 mb-0">
             {creatorT(locale, 'creator.pack.projectedLength')}: {packRecommendation.filmClock} ·{' '}
             {creatorT(locale, 'creator.pack.allowance')}: {selectedPlan?.filmMinutes ?? '—'} min
           </p>
         ) : null}
+      </div>
+    );
+  }
+
+  // No payment provider on this host: do not offer plans or prices the visitor cannot buy.
+  if (mode === 'unavailable') {
+    return (
+      <div className="border-t border-[color:var(--border)] pt-5 mt-5" data-testid="pack-unavailable">
+        <h3 className="serif text-[23px] m-0 mb-2">
+          {creatorT(locale, 'creator.pack.stripeUnavailable')}
+        </h3>
+        <p className="text-[14px] text-[color:var(--muted)] m-0">
+          {creatorT(locale, 'creator.pack.stripeUnavailableBody')}
+        </p>
       </div>
     );
   }
@@ -220,7 +234,7 @@ export function MemorialPackPanel({
             {creatorT(locale, 'creator.pack.projectedLength')}:{' '}
             <strong className="font-medium">{packRecommendation.filmClock}</strong>
           </p>
-          <p className="text-[13px] text-[color:var(--muted)] m-0 mb-3">
+          <p className="text-[14px] text-[color:var(--muted)] m-0 mb-3">
             {packRecommendation.drivingSource === 'music'
               ? creatorT(locale, 'creator.pack.projectedFromSongs').replace(
                   '{count}',
@@ -236,7 +250,7 @@ export function MemorialPackPanel({
               {explanation}
             </p>
           ) : null}
-          <p className="text-[13px] text-[color:var(--muted)] m-0 mb-3">
+          <p className="text-[14px] text-[color:var(--muted)] m-0 mb-3">
             {creatorT(locale, 'creator.pack.noSilentShorten')}
           </p>
           <div
@@ -291,7 +305,7 @@ export function MemorialPackPanel({
                     <span className="serif text-[18px]">{plan.displayName}</span>
                     <span className="text-[14px]">€{plan.amountEur}</span>
                   </div>
-                  <p className="text-[13px] text-[color:var(--muted)] m-0 mt-1">
+                  <p className="text-[14px] text-[color:var(--muted)] m-0 mt-1">
                     {creatorT(locale, 'creator.pack.upToMinutes').replace('{minutes}', String(plan.filmMinutes))}
                     {tooLow ? ` · ${creatorT(locale, 'creator.pack.tooShortForFilm')}` : ''}
                   </p>
@@ -310,7 +324,7 @@ export function MemorialPackPanel({
         >
           {pending
             ? '…'
-            : `${creatorT(locale, 'creator.pack.buyStripe')} · ${selectedPlan?.displayName ?? 'Memorial Pack'} · €${selectedPlan?.amountEur ?? '—'}  ↗`}
+            : `${creatorT(locale, 'creator.pack.buyStripe')} · ${selectedPlan?.displayName ?? creatorT(locale, 'creator.pack.fallbackName')} · €${selectedPlan?.amountEur ?? '—'}`}
         </Button>
       ) : null}
 
@@ -320,11 +334,11 @@ export function MemorialPackPanel({
           variant="secondary"
           className={pending ? 'opacity-70 btn-block' : 'btn-block'}
         >
-          {pending ? '…' : `${creatorT(locale, 'creator.pack.activateLocal')}  ↗`}
+          {pending ? '…' : `${creatorT(locale, 'creator.pack.activateLocal')}`}
         </Button>
       ) : null}
 
-      {mode === 'unavailable' || unavailable ? (
+      {unavailable ? (
         <ErrorState
           title={creatorT(locale, 'creator.pack.stripeUnavailable')}
           body={creatorT(locale, 'creator.pack.stripeUnavailableBody')}
@@ -348,13 +362,13 @@ export function MemorialPackPanel({
       ) : null}
 
       {mode === 'local_fake' ? (
-        <p className="text-[13px] text-[color:var(--muted)] mt-3 mb-0">
+        <p className="text-[14px] text-[color:var(--muted)] mt-3 mb-0">
           {creatorT(locale, 'creator.pack.localOnlyNote')}
         </p>
       ) : null}
 
       {message ? (
-        <p className="text-[13px] mt-3 mb-0" role="status">
+        <p className="text-[14px] mt-3 mb-0" role="status">
           {message}
         </p>
       ) : null}

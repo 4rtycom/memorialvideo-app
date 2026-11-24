@@ -1,6 +1,8 @@
 import { BrandWordmark } from '@/components/BrandWordmark';
 import { PrivateWatch } from '@/components/PrivateWatch';
 
+export const metadata = { title: 'Watch' };
+
 export default function WatchPage() {
   return (
     <div className="min-h-screen bg-[color:var(--bg)] text-[color:var(--ink)]">

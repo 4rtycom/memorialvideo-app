@@ -73,7 +73,7 @@ export function CeremonyReadinessPanel({ locale = 'en' }: { locale?: LaunchLangu
     <Card className="!p-6 mb-5 ceremony-readiness-panel">
       <h3 className="serif text-[28px] m-0 mb-2">{t(locale, 'readiness.title')}</h3>
       <p className="text-[color:var(--muted)] mb-4">{t(locale, 'readiness.body')}</p>
-      <p className="text-[13px] text-[color:var(--muted)] mb-4 m-0" data-testid="readiness-honesty">
+      <p className="text-[14px] text-[color:var(--muted)] mb-4 m-0" data-testid="readiness-honesty">
         {t(locale, 'readiness.honesty')}
       </p>
       {error ? (
@@ -87,7 +87,7 @@ export function CeremonyReadinessPanel({ locale = 'en' }: { locale?: LaunchLangu
           }
         />
       ) : blocking === null ? (
-        <p className="text-[13px] text-[color:var(--muted)] m-0">{t(locale, 'readiness.loading')}</p>
+        <p className="text-[14px] text-[color:var(--muted)] m-0">{t(locale, 'readiness.loading')}</p>
       ) : (
         <>
           <p className="text-[14px] m-0 mb-3" data-testid="readiness-summary">
@@ -102,11 +102,11 @@ export function CeremonyReadinessPanel({ locale = 'en' }: { locale?: LaunchLangu
                 : ''}
           </p>
           {allChecksComplete ? (
-            <p className="text-[13px] m-0 mb-3" role="status">
+            <p className="text-[14px] m-0 mb-3" role="status">
               {t(locale, 'readiness.complete')}
             </p>
           ) : (
-            <p className="text-[13px] text-[color:var(--muted)] m-0 mb-3" role="status">
+            <p className="text-[14px] text-[color:var(--muted)] m-0 mb-3" role="status">
               {t(locale, 'readiness.incomplete')}
             </p>
           )}
@@ -115,7 +115,7 @@ export function CeremonyReadinessPanel({ locale = 'en' }: { locale?: LaunchLangu
               <h4 className="text-[12px] font-bold tracking-wide uppercase m-0 mb-2">
                 {t(locale, 'readiness.checkedHeading')}
               </h4>
-              <ul className="list-none p-0 m-0 grid gap-2 text-[13px]" data-testid="readiness-checked">
+              <ul className="list-none p-0 m-0 grid gap-2 text-[14px]" data-testid="readiness-checked">
                 {checkedFindings.slice(0, 10).map((f) => (
                   <li key={f.id} className="text-[color:var(--ink)]">
                     <strong>
@@ -134,7 +134,7 @@ export function CeremonyReadinessPanel({ locale = 'en' }: { locale?: LaunchLangu
                 {t(locale, 'readiness.notCheckedHeading')}
               </h4>
               <ul
-                className="list-none p-0 m-0 grid gap-2 text-[13px] text-[color:var(--muted)]"
+                className="list-none p-0 m-0 grid gap-2 text-[14px] text-[color:var(--muted)]"
                 data-testid="readiness-not-checked"
               >
                 {notCheckedFindings.slice(0, 8).map((f) => (

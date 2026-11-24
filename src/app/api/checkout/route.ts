@@ -11,7 +11,7 @@ import {
 
 import { creatorEnv } from '@/server/env';
 import { syncConsumerPackForFilmDuration } from '@/server/pack-duration-local';
-import { allowRequest } from '@/server/rate-limit';
+import { allowRequest, clientKey } from '@/server/rate-limit';
 import { loadActiveTribute } from '@/server/session';
 import {
   isStripeMemorialPackConfigured,
@@ -46,7 +46,7 @@ function resolveConsumerPackId(
  * - Otherwise → stripe_not_configured (XB-005), never fake paid COMPLETE.
  */
 export async function POST(request: Request) {
-  if (!allowRequest('creator-checkout', 10)) {
+  if (!allowRequest(`creator-checkout:${clientKey(request)}`, 10)) {
     return noStore({ error: 'rate_limited', retryable: true }, 429);
   }
 

@@ -12,7 +12,9 @@ import {
   mediaPublicPath,
   TUS_CHUNK_HINT,
 } from '@/server/media-storage';
-import { allowRequest } from '@/server/rate-limit';
+import { publicSupabaseConfig } from '@/lib/supabase/env';
+import { createSignedUpload, mediaBackend } from '@/server/object-storage';
+import { allowRequest, clientKey } from '@/server/rate-limit';
 import { addMemory, guestSessionCookieName } from '@/server/store';
 
 export const runtime = 'nodejs';
@@ -30,7 +32,7 @@ const bodySchema = z.object({
 
 /** Guest authorize — requires redeemed invite session cookie (no account). HEIC accepted (MV-AUD-007). */
 export async function POST(request: Request) {
-  if (!allowRequest('creator-contributor-auth', 40)) {
+  if (!allowRequest(`creator-contributor-auth:${clientKey(request)}`, 40)) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
   }
   const jar = await cookies();
@@ -89,6 +91,24 @@ export async function POST(request: Request) {
     publicId: guest.tribute.publicId,
     assetId: memory.id,
   });
+
+  if (mediaBackend() === 'supabase') {
+    try {
+      const signed = await createSignedUpload(guest.tribute.publicId, memory.id);
+      return NextResponse.json(
+        {
+          assetId: memory.id,
+          mode: 'supabase_signed',
+          signedUrl: signed.signedUrl,
+          apiKey: publicSupabaseConfig()?.anonKey ?? null,
+          byteSize: parsed.data.byteSize,
+        },
+        { status: 201 },
+      );
+    } catch {
+      return NextResponse.json({ error: 'storage_unavailable' }, { status: 503 });
+    }
+  }
 
   const session = await createUploadSession({
     tributePublicId: guest.tribute.publicId,

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e9efe8"/>
+      <stop offset="0.6" stop-color="#f3ede2"/>
+      <stop offset="1" stop-color="#e8d9c2"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.46" r="0.5">
+      <stop offset="0" stop-color="#fff4d9" stop-opacity="0.95"/>
+      <stop offset="0.45" stop-color="#f1d9a8" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#f1d9a8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="640" fill="url(#sky)"/>
+  <circle cx="320" cy="290" r="270" fill="url(#glow)"/>
+  <path d="M0 520 C 140 470, 260 500, 400 470 S 580 450, 640 470 V640 H0Z" fill="#365159" fill-opacity="0.14"/>
+  <path d="M0 565 C 160 520, 300 560, 440 525 S 590 515, 640 530 V640 H0Z" fill="#365159" fill-opacity="0.22"/>
+  <path d="M320 232 C 296 266, 300 298, 320 316 C 340 298, 344 266, 320 232Z" fill="#ad8864" fill-opacity="0.9"/>
+  <path d="M320 262 C 311 278, 313 292, 320 300 C 327 292, 329 278, 320 262Z" fill="#fff4d9"/>
+  <rect x="311" y="318" width="18" height="86" rx="4" fill="#f7f1e6" stroke="#ad8864" stroke-opacity="0.5"/>
+</svg>

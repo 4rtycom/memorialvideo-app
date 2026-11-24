@@ -22,7 +22,7 @@ export default async function GuestUploadPage() {
         <div className="card mb-4 !p-6">
           <div className="text-[35px] text-[color:var(--accent)] mb-2">＋</div>
           <div className="font-medium text-[20px] mb-1">{creatorT(locale, 'creator.guest.uploadChoose')}</div>
-          <p className="text-[13px] text-[color:var(--muted)] m-0">
+          <p className="text-[14px] text-[color:var(--muted)] m-0">
             {creatorT(locale, 'creator.guest.uploadFormats')}
           </p>
         </div>

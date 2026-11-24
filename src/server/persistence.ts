@@ -388,3 +388,23 @@ export async function probePersistenceWrite(
     };
   }
 }
+
+/** Run one raw Redis command through the REST API (used for the store lock). */
+export async function kvCommand(command: unknown[]): Promise<unknown> {
+  const kv = readKvConfig();
+  if (!kv) {
+    throw new PersistenceUnavailableError('Vercel KV is not configured.', { kind: 'unavailable' });
+  }
+  const response = await fetch(kv.restUrl, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${kv.token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(command),
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    throw new PersistenceUnavailableError(`Vercel KV command failed (${response.status}).`, {
+      kind: 'vercel_kv',
+    });
+  }
+  return ((await response.json()) as { result?: unknown }).result;
+}

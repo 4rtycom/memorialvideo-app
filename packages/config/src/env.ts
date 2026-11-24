@@ -25,7 +25,12 @@ export const serverEnvSchema = publicEnvSchema.extend({
   /** Stripe Price id — Forever Legacy €79 / 40 min / 500 uploads */
   STRIPE_PRICE_FOREVER_LEGACY: z.string().min(8).optional(),
   EMAIL_PROVIDER_API_KEY: z.string().min(8).optional(),
-  EMAIL_FROM: z.email().optional(),
+  // Plain address or "Name <address>" (the form Resend and Postmark accept).
+  EMAIL_FROM: z
+    .string()
+    .trim()
+    .regex(/^([^<>@]+<[^<>@\s]+@[^<>@\s]+\.[^<>@\s]+>|[^<>@\s]+@[^<>@\s]+\.[^<>@\s]+)$/)
+    .optional(),
   MUSIC_CATALOG_ENABLED: z.enum(['true', 'false']).optional(),
   SUPPORT_OPS_TOKEN: z.string().min(32).optional(),
 });

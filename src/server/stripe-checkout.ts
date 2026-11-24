@@ -55,7 +55,7 @@ export const STRIPE_REQUIRED_ENV = [
 
 /**
  * Verify Stripe-Signature header (HMAC-SHA256 over `${t}.${payload}`).
- * Supports `whsec_` secrets (Stripe standard).
+ * Supports `whsec_` secrets (Stripe standard): the whole string is the HMAC key.
  */
 export function verifyStripeSignature(input: {
   payload: string;
@@ -63,15 +63,14 @@ export function verifyStripeSignature(input: {
   secret: string;
   toleranceSeconds?: number;
 }): boolean {
-  const parts = Object.fromEntries(
-    input.signatureHeader.split(',').map((part) => {
-      const [key, ...rest] = part.split('=');
-      return [key, rest.join('=')];
-    }),
-  );
-  const timestamp = parts.t;
-  const expected = parts.v1;
-  if (!timestamp || !expected) {
+  // The header may hold several v1 signatures (secret rotation): accept a match on any of them.
+  const entries = input.signatureHeader.split(',').map((part) => {
+    const [key, ...rest] = part.trim().split('=');
+    return [key, rest.join('=')] as const;
+  });
+  const timestamp = entries.find(([key]) => key === 't')?.[1];
+  const candidates = entries.filter(([key, value]) => key === 'v1' && value).map(([, value]) => value);
+  if (!timestamp || candidates.length === 0) {
     return false;
   }
   const ts = Number(timestamp);
@@ -83,21 +82,18 @@ export function verifyStripeSignature(input: {
     return false;
   }
   const secretBytes = decodeStripeWebhookSecret(input.secret);
-  const digest = createHmac('sha256', secretBytes).update(`${timestamp}.${input.payload}`).digest('hex');
-  const left = Buffer.from(digest);
-  const right = Buffer.from(expected);
-  return left.length === right.length && timingSafeEqual(left, right);
+  const left = Buffer.from(
+    createHmac('sha256', secretBytes).update(`${timestamp}.${input.payload}`).digest('hex'),
+  );
+  return candidates.some((candidate) => {
+    const right = Buffer.from(candidate);
+    return left.length === right.length && timingSafeEqual(left, right);
+  });
 }
 
 function decodeStripeWebhookSecret(secret: string): Buffer {
-  if (secret.startsWith('whsec_')) {
-    try {
-      return Buffer.from(secret.slice('whsec_'.length), 'base64');
-    } catch {
-      return Buffer.from(secret);
-    }
-  }
-  return Buffer.from(secret);
+  // Same scheme as stripe-node: the signing secret is the HMAC key as-is, `whsec_` prefix included.
+  return Buffer.from(secret, 'utf8');
 }
 
 export type StripeCheckoutStartResult =
@@ -228,6 +224,16 @@ export async function handleStripeWebhookPayload(payload: string): Promise<
   });
   if (!applied.ok) {
     return { error: applied.reason, status: applied.reason === 'not_found' ? 404 : 500 };
+  }
+  if (!applied.duplicate && parsed.projectPublicId) {
+    // Best effort: queue the final film right after purchase. The worker picks it up;
+    // failure here must never fail the webhook (Stripe would retry a paid event).
+    try {
+      const { enqueueRenderJob } = await import('./render');
+      await enqueueRenderJob(parsed.projectPublicId, 'final');
+    } catch {
+      /* the owner can still start the render from /share */
+    }
   }
   return { ok: true, orderStatus: applied.orderStatus, duplicate: applied.duplicate };
 }

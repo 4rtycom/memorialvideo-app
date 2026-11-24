@@ -74,7 +74,7 @@ export function PeopleReviewPanel() {
       </p>
 
       {loadState === 'loading' ? (
-        <p className="text-[13px] text-[color:var(--muted)]">Loading People…</p>
+        <p className="text-[14px] text-[color:var(--muted)]">Loading People…</p>
       ) : null}
       {loadState === 'failed' ? (
         <ErrorState
@@ -131,7 +131,7 @@ export function PeopleReviewPanel() {
           </div>
 
           <h3 className="serif text-[22px] m-0 mb-2">Family labels</h3>
-          <p className="text-[13px] text-[color:var(--muted)] mb-3">
+          <p className="text-[14px] text-[color:var(--muted)] mb-3">
             Manual labels only — not inferred faces. Groups/observations stay empty until a real
             detector is wired (legal XB-010).
           </p>
@@ -163,7 +163,7 @@ export function PeopleReviewPanel() {
             </Button>
           </div>
           {data.profiles.length === 0 ? (
-            <p className="text-[13px] text-[color:var(--muted)] m-0">No family labels yet.</p>
+            <p className="text-[14px] text-[color:var(--muted)] m-0">No family labels yet.</p>
           ) : (
             <ul className="list-none p-0 m-0 grid gap-2 text-[14px]">
               {data.profiles.map((p) => (
@@ -182,7 +182,7 @@ export function PeopleReviewPanel() {
         </>
       ) : null}
       {status ? (
-        <p className="text-[13px] text-[color:var(--primary)] mt-3 mb-0" role="status">
+        <p className="text-[14px] text-[color:var(--primary)] mt-3 mb-0" role="status">
           {status}
         </p>
       ) : null}

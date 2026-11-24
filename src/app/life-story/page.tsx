@@ -7,12 +7,18 @@ import { shellProject } from '@/lib/tribute-view';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { ensureStoryChapters } from '@/server/store';
+import { pageTitle } from '@/server/page-title';
+
+
+export async function generateMetadata() {
+  return pageTitle('creator.nav.lifeStory');
+}
 
 export default async function LifeStoryPage() {
   const active = await loadActiveTribute();
   const tribute = active ? (await ensureStoryChapters(active.publicId)) ?? active : null;
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
-  const shell = shellProject(tribute);
+  const shell = shellProject(tribute, locale);
 
   return (
     <AppShell
@@ -43,11 +49,11 @@ export default async function LifeStoryPage() {
         />
       ) : (
         <ErrorRecovery
-          label="EMPTY WORKSPACE"
+          label={creatorT(locale, 'creator.common.emptyLabel')}
           title="No tribute open yet"
           body="Begin setup, then add memories so chapters can be suggested without inventing facts."
           primaryHref="/setup"
-          primaryLabel="Begin setup  ↗"
+          primaryLabel="Begin setup"
           tone="success"
         />
       )}

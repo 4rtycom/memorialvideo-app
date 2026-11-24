@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type {
   LaunchLanguage,
@@ -172,6 +172,16 @@ export function MusicDirectorPanel({
       });
   }
 
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [previewingId, setPreviewingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      previewAudioRef.current?.pause();
+      previewAudioRef.current = null;
+    };
+  }, []);
+
   useEffect(() => {
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -207,8 +217,27 @@ export function MusicDirectorPanel({
   function previewTrack(track: CatalogTrack) {
     setPreviewNote(null);
     if (!track.previewUrl) return;
+    const current = previewAudioRef.current;
+    if (current) {
+      current.pause();
+      previewAudioRef.current = null;
+      if (previewingId === track.trackId) {
+        setPreviewingId(null);
+        return;
+      }
+    }
     const audio = new Audio(track.previewUrl);
+    previewAudioRef.current = audio;
+    setPreviewingId(track.trackId);
+    audio.addEventListener('ended', () => {
+      if (previewAudioRef.current === audio) {
+        previewAudioRef.current = null;
+        setPreviewingId(null);
+      }
+    });
     void audio.play().catch(() => {
+      previewAudioRef.current = null;
+      setPreviewingId(null);
       setPreviewNote(creatorT(locale, 'creator.music.previewUnavailable'));
     });
   }
@@ -326,7 +355,7 @@ export function MusicDirectorPanel({
   if (loadState === 'loading' && !plan) {
     return (
       <Card className="!p-7" data-testid="music-director-panel">
-        <p className="text-[13px] text-[color:var(--muted)] m-0" role="status">
+        <p className="text-[14px] text-[color:var(--muted)] m-0" role="status">
           {creatorT(locale, 'creator.music.directorLoading')}
         </p>
       </Card>
@@ -383,7 +412,7 @@ export function MusicDirectorPanel({
             <p className="text-[15px] m-0 mb-1">
               {creatorT(locale, 'creator.music.projectedLength').replace('{clock}', projectionClock)}
             </p>
-            <p className="text-[13px] text-[color:var(--muted)] m-0">
+            <p className="text-[14px] text-[color:var(--muted)] m-0">
               {requiredPackId === 'memorial-tribute'
                 ? creatorT(locale, 'creator.music.projectedOk')
                 : creatorT(locale, 'creator.music.projectedUpgrade')
@@ -399,7 +428,7 @@ export function MusicDirectorPanel({
         <div
           className="grid gap-3 mb-5 sm:grid-cols-3"
           role="tablist"
-          aria-label="Song moments"
+          aria-label={creatorT(locale, 'creator.music.songMomentsLabel')}
           onKeyDown={(event) => {
             if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft' && event.key !== 'Home' && event.key !== 'End') {
               return;
@@ -437,7 +466,7 @@ export function MusicDirectorPanel({
                 onClick={() => setActiveSlot(slot.id)}
               >
                 <div className="font-medium text-[18px]">{slot.label}</div>
-                <div className="text-[13px] text-[color:var(--muted)] mt-1">
+                <div className="text-[14px] text-[color:var(--muted)] mt-1">
                   {slot.song.title || SOURCE_LABELS[slot.sourceState]}
                 </div>
                 <div className="text-[12px] mt-2 text-[color:var(--primary)]">
@@ -457,7 +486,7 @@ export function MusicDirectorPanel({
             data-testid={`music-slot-${active.id}`}
           >
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="text-[13px] text-[color:var(--muted)]">
+              <label className="text-[14px] text-[color:var(--muted)]">
                 {creatorT(locale, 'creator.music.songTitle')}
                 <input
                   className="field mt-1"
@@ -475,7 +504,7 @@ export function MusicDirectorPanel({
                   maxLength={160}
                 />
               </label>
-              <label className="text-[13px] text-[color:var(--muted)]">
+              <label className="text-[14px] text-[color:var(--muted)]">
                 {creatorT(locale, 'creator.music.songArtist')}
                 <input
                   className="field mt-1"
@@ -495,7 +524,7 @@ export function MusicDirectorPanel({
               </label>
             </div>
 
-            <label className="text-[13px] text-[color:var(--muted)]">
+            <label className="text-[14px] text-[color:var(--muted)]">
               {creatorT(locale, 'creator.music.songLink')}
               <input
                 className="field mt-1"
@@ -552,7 +581,7 @@ export function MusicDirectorPanel({
           </div>
         ) : null}
 
-        <label className="text-[13px] text-[color:var(--muted)] block mb-3">
+        <label className="text-[14px] text-[color:var(--muted)] block mb-3">
           {creatorT(locale, 'creator.music.search')}
           <input
             className="field mt-1"
@@ -576,9 +605,10 @@ export function MusicDirectorPanel({
                   type="button"
                   className="catalog-track-preview text-[23px] bg-transparent border-0 p-0"
                   aria-label={creatorT(locale, 'creator.music.preview')}
+                  aria-pressed={previewingId === track.trackId}
                   onClick={() => previewTrack(track)}
                 >
-                  ▷
+                  {previewingId === track.trackId ? '■' : '▷'}
                 </button>
                 <button
                   type="button"
@@ -587,7 +617,7 @@ export function MusicDirectorPanel({
                   onClick={() => chooseCatalogTrack(track)}
                 >
                   <div className="font-medium text-[17px]">{track.title}</div>
-                  <div className="text-[13px] text-[color:var(--muted)]">
+                  <div className="text-[14px] text-[color:var(--muted)]">
                     {track.artistDisplay ?? track.mood}
                     {track.momentTags?.length ? ` · ${track.momentTags.join(', ')}` : ''}
                   </div>
@@ -599,7 +629,7 @@ export function MusicDirectorPanel({
             );
           })}
           {filteredTracks.length === 0 ? (
-            <p className="text-[13px] text-[color:var(--muted)] m-0">
+            <p className="text-[14px] text-[color:var(--muted)] m-0">
               {creatorT(locale, 'creator.music.noSearchHits')}
             </p>
           ) : null}
@@ -625,7 +655,7 @@ export function MusicDirectorPanel({
             ))}
           </div>
           {plan.speechPauses.length === 0 ? (
-            <p className="text-[13px] text-[color:var(--muted)] m-0">
+            <p className="text-[14px] text-[color:var(--muted)] m-0">
               {creatorT(locale, 'creator.music.noPauses')}
             </p>
           ) : (
@@ -637,7 +667,7 @@ export function MusicDirectorPanel({
                 >
                   <div>
                     <div className="font-medium text-[15px]">{pause.label}</div>
-                    <div className="text-[13px] text-[color:var(--muted)]">
+                    <div className="text-[14px] text-[color:var(--muted)]">
                       {pause.afterSlot
                         ? creatorT(locale, 'creator.music.pauseAfter').replace(
                             '{slot}',
@@ -680,7 +710,7 @@ export function MusicDirectorPanel({
           </Button>
         </div>
 
-        <p className="text-[13px] text-[color:var(--muted)] m-0 mb-2" data-testid="music-director-status">
+        <p className="text-[14px] text-[color:var(--muted)] m-0 mb-2" data-testid="music-director-status">
           {applied
             ? creatorT(locale, 'creator.music.filmHasMusic').replace('{count}', String(clipCount))
             : hasTimeline
@@ -697,12 +727,12 @@ export function MusicDirectorPanel({
           <p className="text-[12px] text-[color:var(--muted)] m-0 mb-2">{previewNote}</p>
         ) : null}
         {status ? (
-          <p className="text-[13px] text-[color:var(--primary)] m-0 mb-2" role="status">
+          <p className="text-[14px] text-[color:var(--primary)] m-0 mb-2" role="status">
             {status}
           </p>
         ) : null}
         {error ? (
-          <p className="text-[13px] text-[color:var(--accent)] m-0" role="alert">
+          <p className="text-[14px] text-[color:var(--accent)] m-0" role="alert">
             {error}
           </p>
         ) : null}

@@ -100,7 +100,7 @@ export function StudioEditor({
             {autosaveLabel(saveUi)}
           </p>
           <div className="mb-5">
-            <div className="text-[13px] text-[color:var(--muted)] mb-1">Film ratio</div>
+            <div className="text-[14px] text-[color:var(--muted)] mb-1">Film ratio</div>
             <div className="font-medium text-[16px] mb-2">{aspect}</div>
             <div className="flex flex-wrap gap-2">
               {(['16:9', '9:16', '1:1'] as const).map((value) => (
@@ -116,7 +116,7 @@ export function StudioEditor({
             </div>
           </div>
           <div className="mb-5">
-            <div className="text-[13px] text-[color:var(--muted)] mb-1">Transition</div>
+            <div className="text-[14px] text-[color:var(--muted)] mb-1">Transition</div>
             <div className="font-medium text-[16px] mb-2">{selected.transitionIn}</div>
             <div className="flex flex-wrap gap-2">
               {(['fade', 'dissolve', 'none'] as const).map((transitionIn) => (
@@ -137,7 +137,7 @@ export function StudioEditor({
             </div>
           </div>
           <div className="mb-5">
-            <div className="text-[13px] text-[color:var(--muted)] mb-1">This scene’s length</div>
+            <div className="text-[14px] text-[color:var(--muted)] mb-1">This scene’s length</div>
             <div className="font-medium text-[16px] mb-2">
               {(selected.durationFrames / timeline.fps).toFixed(1)} seconds
             </div>
@@ -177,7 +177,7 @@ export function StudioEditor({
             </div>
           </div>
           <div className="mb-4">
-            <div className="text-[13px] text-[color:var(--muted)] mb-1">Reorder</div>
+            <div className="text-[14px] text-[color:var(--muted)] mb-1">Reorder</div>
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="secondary"
@@ -220,16 +220,16 @@ export function StudioEditor({
           </Button>
           {saveUi === 'conflict' ? (
             <Button className="btn-block mt-3" onClick={() => router.refresh()}>
-              Reload timeline  ↗
+              Reload timeline
             </Button>
           ) : null}
           {status ? (
-            <p className="text-[13px] mt-4 mb-0" role="status">
+            <p className="text-[14px] mt-4 mb-0" role="status">
               {status}
             </p>
           ) : null}
           {error ? (
-            <p className="text-[13px] text-red-700 mt-4 mb-0" role="alert">
+            <p className="text-[14px] text-red-700 mt-4 mb-0" role="alert">
               {error}
             </p>
           ) : null}
@@ -239,7 +239,7 @@ export function StudioEditor({
       <div className="text-[12px] font-bold text-[color:var(--accent)] mb-3">TIMELINE   ·   PRECISE CONTROL</div>
       <Card className="!p-5">
         <div className="flex items-center gap-4 overflow-x-auto min-w-0 max-w-full">
-          <div className="text-[13px] font-medium w-[88px] shrink-0">Film</div>
+          <div className="text-[14px] font-medium w-[88px] shrink-0">Film</div>
           {imageScenes.map((scene) => (
             <button
               key={scene.id}
@@ -253,7 +253,7 @@ export function StudioEditor({
             </button>
           ))}
         </div>
-        <div className="text-[13px] text-[color:var(--muted)] mt-4">
+        <div className="text-[14px] text-[color:var(--muted)] mt-4">
           Shared TimelineContract · optimistic concurrency · edits persist
         </div>
       </Card>

@@ -1,18 +1,11 @@
 import { cookies } from 'next/headers';
-import { readFile } from 'node:fs/promises';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { convertHeicBufferToJpeg } from '@/server/heic-convert';
 import { resolveGuestContext } from '@/server/invites';
 import { probeWithFfprobe } from '@/server/local-encode';
-import {
-  deleteMediaFile,
-  finalizeUploadToMedia,
-  mediaFilePath,
-  replaceMediaBytes,
-  sniffedMatchesDeclared,
-  sniffMediaBytes,
-} from '@/server/media-storage';
+import { deleteStoredMedia, finalizeStoredUpload, replaceStoredMedia, withLocalCopy } from '@/server/media-backend';
+import { sniffedMatchesDeclared, sniffMediaBytes } from '@/server/media-storage';
 import { loadActiveTribute } from '@/server/session';
 import { attachMemoryBytes, getTribute, guestSessionCookieName, markMemoryRejected } from '@/server/store';
 
@@ -48,19 +41,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  const finalized = await finalizeUploadToMedia(parsed.data.uploadId);
-  if (!finalized.ok) {
-    return NextResponse.json({ error: finalized.reason }, { status: 409 });
+  const current = await getTribute(tributePublicId);
+  const declaredMemory = current?.memories.find((item) => item.id === parsed.data.assetId);
+  if (!declaredMemory) {
+    return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
-  if (
-    finalized.session.tributePublicId !== tributePublicId ||
-    finalized.session.assetId !== parsed.data.assetId
-  ) {
-    return NextResponse.json({ error: 'mismatch' }, { status: 403 });
+  const result = await finalizeStoredUpload({
+    uploadId: parsed.data.uploadId,
+    tributePublicId,
+    assetId: parsed.data.assetId,
+    declared:
+      declaredMemory.contentType && declaredMemory.declaredByteSize
+        ? { contentType: declaredMemory.contentType, byteSize: declaredMemory.declaredByteSize }
+        : null,
+  });
+  if (!result.ok) {
+    return NextResponse.json({ error: result.reason }, { status: result.reason === 'mismatch' ? 403 : 409 });
   }
+  const finalized = {
+    ...result.upload,
+    session: { tributePublicId: result.upload.tributePublicId, assetId: result.upload.assetId },
+  };
 
-  const absolute = mediaFilePath(finalized.session.tributePublicId, finalized.session.assetId);
-  let storedBytes = await readFile(absolute);
+  let storedBytes = finalized.bytes;
   let sniffed = sniffMediaBytes(storedBytes);
   let convertedFromHeic = false;
   let sha256 = finalized.sha256;
@@ -68,13 +71,13 @@ export async function POST(request: Request) {
 
   if (sniffed === 'image/heic') {
     if (!sniffedMatchesDeclared(finalized.contentType, sniffed)) {
-      await deleteMediaFile(finalized.session.tributePublicId, finalized.session.assetId);
+      await deleteStoredMedia(finalized.session.tributePublicId, finalized.session.assetId);
       await markMemoryRejected(tributePublicId, parsed.data.assetId, 'heic');
       return NextResponse.json({ error: 'content_mismatch' }, { status: 415 });
     }
     const converted = await convertHeicBufferToJpeg(storedBytes);
     if (!converted.ok) {
-      await deleteMediaFile(finalized.session.tributePublicId, finalized.session.assetId);
+      await deleteStoredMedia(finalized.session.tributePublicId, finalized.session.assetId);
       await markMemoryRejected(tributePublicId, parsed.data.assetId, 'heic');
       return NextResponse.json(
         {
@@ -84,7 +87,7 @@ export async function POST(request: Request) {
         { status: 422 },
       );
     }
-    const replaced = await replaceMediaBytes(
+    const replaced = await replaceStoredMedia(
       finalized.session.tributePublicId,
       finalized.session.assetId,
       converted.jpeg,
@@ -96,16 +99,14 @@ export async function POST(request: Request) {
     sha256 = replaced.sha256;
     byteSize = replaced.byteSize;
   } else if (!sniffed || !sniffedMatchesDeclared(finalized.contentType, sniffed)) {
-    await deleteMediaFile(finalized.session.tributePublicId, finalized.session.assetId);
+    await deleteStoredMedia(finalized.session.tributePublicId, finalized.session.assetId);
     await markMemoryRejected(tributePublicId, parsed.data.assetId);
     return NextResponse.json({ error: 'content_mismatch' }, { status: 415 });
   }
 
   if (sniffed.startsWith('audio/')) {
-    const current = await getTribute(tributePublicId);
-    const memory = current?.memories.find((item) => item.id === parsed.data.assetId);
-    if (memory?.rightsConfirmed !== true) {
-      await deleteMediaFile(finalized.session.tributePublicId, finalized.session.assetId);
+    if (declaredMemory.rightsConfirmed !== true) {
+      await deleteStoredMedia(finalized.session.tributePublicId, finalized.session.assetId);
       await markMemoryRejected(tributePublicId, parsed.data.assetId);
       return NextResponse.json({ error: 'rights_required' }, { status: 400 });
     }
@@ -113,7 +114,10 @@ export async function POST(request: Request) {
 
   let durationMs: number | undefined;
   if (sniffed === 'video/mp4') {
-    const probe = await probeWithFfprobe(absolute);
+    const probe = await withLocalCopy(
+      { tributePublicId, assetId: parsed.data.assetId, bytes: storedBytes },
+      (absolute) => probeWithFfprobe(absolute),
+    );
     if (probe.durationSeconds && Number.isFinite(probe.durationSeconds) && probe.durationSeconds > 0) {
       durationMs = Math.round(probe.durationSeconds * 1000);
     }

@@ -53,7 +53,9 @@ describe('Gate B family a11y inventory', () => {
     expect(css).not.toContain('overflow-x: auto');
     expect(css).toContain('grid-template-areas:');
     expect(css).toContain('.save-status');
-    expect(css).toContain('repeat(2, minmax(0, 1fr))');
+    // Mobile primary nav is a fixed bottom tab bar with all five routes in one row.
+    expect(css).toContain('repeat(5, minmax(0, 1fr))');
+    expect(css).toContain('position: fixed');
 
     const shell = readFileSync(path.join(ROOT, 'components/AppShell.tsx'), 'utf8');
     expect(shell).toContain('href="#main"');

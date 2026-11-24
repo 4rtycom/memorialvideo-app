@@ -1,6 +1,8 @@
+import { mediaBackend } from '@/server/object-storage';
 import { NextResponse } from 'next/server';
 import { checkoutProviderMode } from '@memorialvideo/domain';
 import { publicSupabaseConfig } from '@/lib/supabase/env';
+import { isEmailConfigured } from '@/server/email';
 import { creatorEnv } from '@/server/env';
 import { detectLocalEncoder } from '@/server/local-encode';
 import { isDatabasePersistenceConfigured, resolvePersistence } from '@/server/persistence';
@@ -42,8 +44,11 @@ export async function GET() {
     checkoutProviderMode: mode,
     stripeConfigured,
     signInConfigured: Boolean(supabase),
+    emailConfigured: isEmailConfigured(env),
     databaseConfigured,
     supabaseStorageTus: false,
+    /** 'supabase' = private bucket with signed uploads; 'local' = files on this machine's disk. */
+    mediaBackend: mediaBackend(env),
     localTus: persistence.kind === 'local_file',
     shareTokenPepper: Boolean(resolveShareTokenPepper(env)),
     dockerAvailable,
@@ -58,6 +63,10 @@ export async function GET() {
       xb005_stripe: !stripeConfigured,
       xb012_docker_supabase:
         !dockerAvailable || !supabase || persistence.xb012Persistence || !persistence.writable,
+      /** Hosted media storage is missing: uploads cannot survive on a read-only host. */
+      mediaStorage: env.APP_ENV !== 'local' && mediaBackend(env) !== 'supabase',
+      /** Hosted uploads need NEXT_PUBLIC_SUPABASE_ANON_KEY (+ URL) so the browser can send the apikey header. */
+      uploadsAnonKey: env.APP_ENV !== 'local' && mediaBackend(env) === 'supabase' && !supabase,
       xb011_deploy: true,
     },
   });

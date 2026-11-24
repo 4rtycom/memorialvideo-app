@@ -66,7 +66,7 @@ export function LifeStoryPanel({
       <Card soft className="!p-7">
         <h3 className="serif text-[28px] m-0 mb-2">{creatorT(locale, 'creator.story.emptyTitle')}</h3>
         <p className="text-[color:var(--muted)] mb-4">{creatorT(locale, 'creator.story.emptyBody')}</p>
-        <Button href="/memories">{creatorT(locale, 'creator.story.addMemories')}  ↗</Button>
+        <Button href="/memories">{creatorT(locale, 'creator.story.addMemories')}</Button>
       </Card>
     );
   }
@@ -100,7 +100,7 @@ export function LifeStoryPanel({
                     onChange={(e) => rename(c.id, e.target.value)}
                     maxLength={120}
                   />
-                  <div className="text-[13px] text-[color:var(--muted)]">
+                  <div className="text-[14px] text-[color:var(--muted)]">
                     {c.memoryIds.length} memories
                     {c.yearHint ? ` · from ${c.yearHint}` : ''}
                   </div>
@@ -113,19 +113,19 @@ export function LifeStoryPanel({
           {creatorT(locale, 'creator.story.save')}
         </Button>
         {error ? (
-          <p className="text-[13px] text-[color:var(--accent)] mt-3" role="alert">
+          <p className="text-[14px] text-[color:var(--accent)] mt-3" role="alert">
             {error}
           </p>
         ) : null}
         {saved ? (
-          <p className="text-[13px] text-[color:var(--muted)] mt-3">{creatorT(locale, 'creator.story.saved')}</p>
+          <p className="text-[14px] text-[color:var(--muted)] mt-3">{creatorT(locale, 'creator.story.saved')}</p>
         ) : null}
       </Card>
       <Card soft className="!p-6">
         <h3 className="serif text-[29px] m-0 mb-3">{creatorT(locale, 'creator.story.intelligenceTitle')}</h3>
         <p className="text-[color:var(--muted)] mb-5">{creatorT(locale, 'creator.story.intelligenceBody')}</p>
         <Button href="/film/creating" className="btn-block">
-          {creatorT(locale, 'creator.story.arrange')}  ↗
+          {creatorT(locale, 'creator.story.arrange')}
         </Button>
         <p className="text-[12px] text-[color:var(--muted)] mt-5 mb-0">Everything can be changed later.</p>
       </Card>

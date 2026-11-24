@@ -1,6 +1,10 @@
 'use client';
 
-import type { CeremonySpeechPause, TimelineContract } from '@memorialvideo/contracts';
+import type {
+  CeremonySpeechPause,
+  LaunchLanguage,
+  TimelineContract,
+} from '@memorialvideo/contracts';
 import { CeremonyPlayer } from '@/components/CeremonyPlayer';
 
 /**
@@ -10,12 +14,17 @@ export function CeremonyOperatorPlayer({
   timeline,
   origin,
   speechPauses = [],
+  locale = 'en',
 }: {
+  locale?: LaunchLanguage;
   timeline: TimelineContract | null;
   origin: string;
   speechPauses?: readonly CeremonySpeechPause[] | null;
 }) {
   return (
-    <CeremonyPlayer timeline={timeline} origin={origin} speechPauses={speechPauses} compact />
+    <CeremonyPlayer timeline={timeline} origin={origin} speechPauses={speechPauses}
+      compact
+      locale={locale}
+    />
   );
 }

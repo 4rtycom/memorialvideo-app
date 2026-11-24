@@ -16,7 +16,7 @@ import { parseTimelineContract } from '@memorialvideo/contracts';
 export default async function EditPage() {
   const tribute = await loadActiveTribute();
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
-  const shell = shellProject(tribute);
+  const shell = shellProject(tribute, locale);
   const timeline = tribute?.timeline ? parseTimelineContract(tribute.timeline) : null;
 
   return (

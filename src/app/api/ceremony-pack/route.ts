@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { allowRequest } from '@/server/rate-limit';
 import { buildCeremonyPackZip, planCeremonyPackWithReadiness } from '@/server/ceremony-pack-local';
+import { createRenderReadUrl, mediaBackend, renderObjectExists } from '@/server/object-storage';
 import { loadActiveTribute } from '@/server/session';
 import { getTribute } from '@/server/store';
 
@@ -22,6 +23,24 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   if (url.searchParams.get('probe') === '1') {
     return NextResponse.json(await planCeremonyPackWithReadiness(tribute));
+  }
+
+  if (mediaBackend() === 'supabase') {
+    const plan = await planCeremonyPackWithReadiness(tribute);
+    const job = tribute.renderJobs.find((j) => j.kind === 'final' && j.status === 'READY' && j.outputVerified);
+    if (!plan.canBuild || !job) {
+      return NextResponse.json({ error: plan.reason, ...plan }, { status: 409 });
+    }
+    if (!(await renderObjectExists(tribute.publicId, job.id, 'pack'))) {
+      return NextResponse.json({ error: 'pack_unavailable_hosted', ...plan, canBuild: false, reason: 'pack_unavailable_hosted' }, { status: 409 });
+    }
+    const signed = await createRenderReadUrl(tribute.publicId, job.id, 'pack', {
+      seconds: 300,
+      downloadName: 'memorial-ceremony-pack.zip',
+    });
+    return signed
+      ? NextResponse.redirect(signed, 307)
+      : NextResponse.json({ error: 'pack_unavailable_hosted' }, { status: 409 });
   }
 
   const built = await buildCeremonyPackZip(tribute);

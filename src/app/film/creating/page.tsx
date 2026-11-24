@@ -32,7 +32,7 @@ function progressLabelKey(stage: FirstFilmStage): CreatorUiKey {
 export default async function CreatingPage() {
   const tribute = await loadActiveTribute();
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
-  const shell = shellProject(tribute);
+  const shell = shellProject(tribute, locale);
   const stage = tribute?.firstFilmStage ?? 'idle';
   const progress = firstFilmProgress(stage);
   const readyCount = tribute?.memories.filter((m) => m.ingestStatus === 'READY').length ?? 0;
@@ -56,9 +56,20 @@ export default async function CreatingPage() {
 
       <Card className="!p-5 grid gap-6 lg:grid-cols-[minmax(0,471px)_minmax(0,1fr)] items-stretch">
         <div className="relative h-[420px] rounded-[10px] overflow-hidden">
-          <Image src="/fixtures/finish-film.png" alt="" fill className="object-cover" sizes="471px" />
+          <Image
+            src={
+              tribute?.isFixtureSeed
+                ? '/fixtures/finish-film.png'
+                : (tribute?.memories[0]?.imagePath ?? '/brand/soft-light.svg')
+            }
+            alt=""
+            fill
+            className="object-cover"
+            sizes="471px"
+            unoptimized={Boolean(tribute) && !tribute?.isFixtureSeed && !tribute?.memories[0]}
+          />
           <div className="absolute inset-x-0 bottom-0 bg-[color:var(--cinema)]/90 text-white p-6">
-            <div className="text-[11px] font-bold text-[color:var(--accent)] mb-2">
+            <div className="text-[12px] font-bold text-[color:var(--accent)] mb-2">
               {creatorT(locale, 'creator.creating.cardTag')}
             </div>
             <div className="serif text-[36px] leading-none">
@@ -94,7 +105,7 @@ export default async function CreatingPage() {
             <Button href="/setup">{creatorT(locale, 'creator.common.beginSetup')}</Button>
           )}
           {!canArrange && tribute && stage !== 'ready_to_review' ? (
-            <p className="text-[13px] text-[color:var(--muted)] mt-3 mb-0">
+            <p className="text-[14px] text-[color:var(--muted)] mt-3 mb-0">
               {creatorT(locale, 'creator.creating.readyCount')
                 .replace('{ready}', String(readyCount))
                 .replace('{needed}', String(FIRST_FILM_READY_PHOTO_THRESHOLD))}

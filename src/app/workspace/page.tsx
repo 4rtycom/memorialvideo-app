@@ -9,17 +9,13 @@ import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
 import { memoryCount, readyMemoryCount } from '@/server/store';
 
-const thumbs = [
-  '/fixtures/workspace-eleanor.png',
-  '/fixtures/workspace-couple.png',
-  '/fixtures/workspace-happy.png',
-  '/fixtures/workspace-family.png',
-];
+export const metadata = { title: 'Workspace' };
+
 
 export default async function WorkspacePage() {
   const tribute = await loadActiveTribute();
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
-  const shell = shellProject(tribute);
+  const shell = shellProject(tribute, locale);
   const count = tribute ? memoryCount(tribute) : 0;
   const readyCount = tribute ? readyMemoryCount(tribute) : 0;
 
@@ -42,10 +38,10 @@ export default async function WorkspacePage() {
           <div className="flex gap-3 mb-6 overflow-x-auto min-w-0 max-w-full">
             {(tribute?.memories.length
               ? tribute.memories.slice(0, 4).map((m) => m.imagePath)
-              : thumbs
+              : ['/brand/soft-light.svg']
             ).map((src) => (
               <div key={src} className="relative w-[125px] h-[120px] shrink-0 rounded-[9px] overflow-hidden">
-                <Image src={src} alt="" fill className="object-cover" sizes="125px" />
+                <Image src={src} alt="" fill className="object-cover" sizes="125px" unoptimized={src.endsWith('.svg')} />
               </div>
             ))}
           </div>
@@ -90,7 +86,7 @@ export default async function WorkspacePage() {
           <Card key={n} soft={i > 0} className="!p-5">
             <div className="text-[12px] font-bold text-[color:var(--accent)] mb-1">{n}</div>
             <div className="serif text-[18px] mb-2">{creatorT(locale, titleKey)}</div>
-            <p className="text-[13px] text-[color:var(--muted)] m-0">{creatorT(locale, bodyKey)}</p>
+            <p className="text-[14px] text-[color:var(--muted)] m-0">{creatorT(locale, bodyKey)}</p>
           </Card>
         ))}
       </div>
@@ -114,7 +110,7 @@ export default async function WorkspacePage() {
       ) : (
         <div className="mt-8">
           <ErrorRecovery
-            label="EMPTY WORKSPACE"
+            label={creatorT(locale, 'creator.common.emptyLabel')}
             title={creatorT(locale, 'creator.workspace.emptyTitle')}
             body={creatorT(locale, 'creator.workspace.emptyBody')}
             primaryHref="/setup"

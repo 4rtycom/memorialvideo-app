@@ -2,7 +2,7 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { cookies } from 'next/headers';
-import { authenticateAccount, registerAccount, type AccountResult } from './accounts';
+import { authenticateAccount, completePasswordReset, registerAccount, type AccountResult } from './accounts';
 import { runWithAccount } from './actor';
 import { creatorEnv } from './env';
 
@@ -144,6 +144,19 @@ export async function registerAndSignIn(email: string, password: string): Promis
     throw new AuthNotConfiguredError();
   }
   const result = await registerAccount(email, password);
+  if (!result.ok) {
+    return result;
+  }
+  await writeSessionCookie(result.accountId);
+  return result;
+}
+
+export async function resetPasswordAndSignIn(token: string, password: string): Promise<AccountResult> {
+  const secret = await resolveSessionSecret();
+  if (!secret) {
+    throw new AuthNotConfiguredError();
+  }
+  const result = await completePasswordReset(token, password);
   if (!result.ok) {
     return result;
   }

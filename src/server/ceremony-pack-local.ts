@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { creatorT } from '@/lib/creator-ui-messages';
 import {
   buildCeremonyPackManifest,
   buildCeremonyRunningOrder,
@@ -174,8 +175,15 @@ export async function buildCeremonyPackZip(
   if (!absolute) {
     return { ok: false, reason: 'output_missing' };
   }
+  return assembleCeremonyPackZip(tribute, new Uint8Array(await readFile(absolute)));
+}
+
+/** Assemble the venue pack around an already available film (used by the hosted render worker). */
+export function assembleCeremonyPackZip(
+  tribute: Tribute,
+  mp4: Uint8Array,
+): { ok: true; bytes: Uint8Array; fileName: string } {
   const manifest = buildCeremonyPackManifest(tribute.publicId);
-  const mp4 = await readFile(absolute);
   const checklistBundle = buildOwnerCeremonyChecklist(tribute);
   const cueSheet = buildOwnerCeremonyCueSheet(tribute);
   const { offlineCues } = cueSheetChaptersFromTribute(tribute);
@@ -183,6 +191,24 @@ export async function buildCeremonyPackZip(
     videoFileName: manifest.videoFileName,
     displayName: tribute.displayName,
     cues: offlineCues,
+    lang: tribute.locale,
+    labels: {
+      pageTitle: creatorT(tribute.locale, 'creator.film.ceremonyTitle'),
+      holdTitle: creatorT(tribute.locale, 'creator.ceremony.holdTitle'),
+      holdNote: creatorT(tribute.locale, 'creator.ceremony.holdNote'),
+      cuedNote: creatorT(tribute.locale, 'creator.ceremony.cuedNote'),
+      operator: creatorT(tribute.locale, 'creator.ceremony.operator'),
+      pause: creatorT(tribute.locale, 'creator.ceremony.pause'),
+      resume: creatorT(tribute.locale, 'creator.ceremony.resume'),
+      back10: creatorT(tribute.locale, 'creator.ceremony.back10'),
+      skip10: creatorT(tribute.locale, 'creator.ceremony.skip10'),
+      restart: creatorT(tribute.locale, 'creator.ceremony.restart'),
+      fullscreen: creatorT(tribute.locale, 'creator.ceremony.fullscreen'),
+      cueHere: creatorT(tribute.locale, 'creator.ceremony.cueHere'),
+      keyboardHint: creatorT(tribute.locale, 'creator.ceremony.keyboardHint'),
+      offlineHint: creatorT(tribute.locale, 'creator.ceremony.offlineHint'),
+      videoMissing: creatorT(tribute.locale, 'creator.ceremony.videoMissing'),
+    },
   });
   const checklist = new TextEncoder().encode(
     checklistBundle.ok ? checklistBundle.text : ceremonyChecklistText(tribute.publicId),
@@ -211,7 +237,7 @@ export async function buildCeremonyPackZip(
     )}\n`,
   );
   const bytes = buildStoreZip([
-    { name: manifest.videoFileName, data: new Uint8Array(mp4) },
+    { name: manifest.videoFileName, data: mp4 },
     { name: CEREMONY_OFFLINE_PLAYER_FILE, data: player },
     { name: manifest.checklistFileName, data: checklist },
     { name: manifest.cueSheetFileName, data: cue },

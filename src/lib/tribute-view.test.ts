@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mobileHomeCopy, possessive, shellProject } from './tribute-view';
+import { mobileHomeCopy, overviewCopy, possessive, shellProject } from './tribute-view';
 import type { Tribute } from '@/server/store';
 
 /** Minimal tribute for copy helpers — only fields `mobileHomeCopy` reads. */
@@ -58,5 +58,22 @@ describe('mobileHomeCopy (MV-AUD-006)', () => {
     expect(shellProject(null).person).toBe('');
     expect(shellProject(null).title).toBe('Your remembrance');
     expect(possessive('James')).toBe("James'");
+  });
+});
+
+describe('overviewCopy / shellProject localisation', () => {
+  it('uses the interface language for the empty overview and shell title', () => {
+    const nl = overviewCopy(null, 'nl', true);
+    expect(nl.hero).toBe('Uw verhalen, mooi bewaard.');
+    expect(nl.cardEyebrow).toBe('BEGIN HIER');
+    expect(nl.progressLabel).toBe('Nog geen herdenking geopend');
+    expect(shellProject(null, 'nl').title).toBe('Uw herdenking');
+    expect(shellProject(null).title).toBe('Your remembrance');
+  });
+
+  it('never promises saving while storage is not writable', () => {
+    expect(overviewCopy(null, 'en', true).lede).toContain('saved along the way');
+    expect(overviewCopy(null, 'en', false).lede).not.toContain('saved');
+    expect(overviewCopy(null, 'nl', false).lede).not.toContain('bewaard');
   });
 });

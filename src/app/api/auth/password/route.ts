@@ -5,7 +5,7 @@ import {
   registerAndSignIn,
   signInWithPassword,
 } from '@/server/account-session';
-import { allowRequest } from '@/server/rate-limit';
+import { allowRequest, clientKey } from '@/server/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -16,7 +16,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  if (!allowRequest('creator-password-auth', 10)) {
+  if (!allowRequest(`creator-password-auth:${clientKey(request)}`, 10)) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
   }
   let body: unknown;

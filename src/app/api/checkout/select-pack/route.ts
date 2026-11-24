@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { allowRequest } from '@/server/rate-limit';
+import { allowRequest, clientKey } from '@/server/rate-limit';
 import { selectConsumerPack } from '@/server/pack-duration-local';
 import { loadActiveTribute } from '@/server/session';
 
@@ -24,7 +24,7 @@ function noStore(body: unknown, status = 200) {
  * (over 10:00 / over 20:00 auto-move). Never starts a charge.
  */
 export async function POST(request: Request) {
-  if (!allowRequest('creator-select-pack', 20)) {
+  if (!allowRequest(`creator-select-pack:${clientKey(request)}`, 20)) {
     return noStore({ error: 'rate_limited', retryable: true }, 429);
   }
 

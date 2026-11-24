@@ -131,6 +131,13 @@ export function SignInForm({
                   ? creatorT(locale, 'creator.auth.create')
                   : creatorT(locale, 'creator.auth.signIn')}
             </Button>
+            {mode === 'sign-in' ? (
+              <p className="mt-4 mb-0">
+                <a className="btn btn-ghost" href="/reset">
+                  {locale === 'nl' ? 'Wachtwoord vergeten?' : 'Forgot your password?'}
+                </a>
+              </p>
+            ) : null}
             <p className="mt-4 mb-0">
               <button
                 type="button"

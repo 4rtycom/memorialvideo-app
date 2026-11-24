@@ -92,7 +92,7 @@ export function StylePicker({
         })}
       </div>
       {error ? (
-        <p className="text-[13px] text-[color:var(--accent)] mb-4" role="alert">
+        <p className="text-[14px] text-[color:var(--accent)] mb-4" role="alert">
           {error}
         </p>
       ) : null}

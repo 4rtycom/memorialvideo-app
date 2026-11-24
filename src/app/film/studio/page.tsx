@@ -13,7 +13,7 @@ import { parseTimelineContract } from '@memorialvideo/contracts';
 export default async function StudioPage() {
   const tribute = await loadActiveTribute();
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
-  const shell = shellProject(tribute);
+  const shell = shellProject(tribute, locale);
   const timeline = tribute?.timeline ? parseTimelineContract(tribute.timeline) : null;
 
   return (
@@ -28,7 +28,7 @@ export default async function StudioPage() {
       <Eyebrow>{creatorT(locale, 'creator.studio.eyebrow')}</Eyebrow>
       <Hero>{creatorT(locale, 'creator.studio.hero')}</Hero>
       <Lede>{creatorT(locale, 'creator.studio.lede')}</Lede>
-      <p className="text-[13px] text-[color:var(--muted)] mb-6">
+      <p className="text-[14px] text-[color:var(--muted)] mb-6">
         <Link href="/film/edit" className="underline-offset-2 hover:underline">
           {creatorT(locale, 'creator.film.edit')}
         </Link>

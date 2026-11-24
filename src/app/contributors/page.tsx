@@ -8,11 +8,17 @@ import { shellProject } from '@/lib/tribute-view';
 import { listOwnerInvites } from '@/server/invites';
 import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute } from '@/server/session';
+import { pageTitle } from '@/server/page-title';
+
+
+export async function generateMetadata() {
+  return pageTitle('creator.nav.inviteFamily');
+}
 
 export default async function ContributorsPage() {
   const tribute = await loadActiveTribute();
   const locale = await resolveCreatorLocaleWithTribute(tribute?.locale ?? null);
-  const shell = shellProject(tribute);
+  const shell = shellProject(tribute, locale);
   const listed = tribute ? await listOwnerInvites(tribute.publicId) : null;
 
   return (

@@ -1,6 +1,7 @@
 import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { loadCreatorStore, saveCreatorStore, type CreatorAccount } from './store';
+import { withStoreLock } from './store-lock';
 
 const scrypt = promisify(scryptCallback);
 
@@ -56,7 +57,7 @@ export type AccountResult =
   | { ok: true; accountId: string }
   | { ok: false; reason: 'invalid' | 'exists' | 'invalid_credentials' };
 
-export async function registerAccount(email: string, password: string): Promise<AccountResult> {
+async function registerAccountUnlocked(email: string, password: string): Promise<AccountResult> {
   if (!isAcceptableEmail(email) || !isAcceptablePassword(password)) {
     return { ok: false, reason: 'invalid' };
   }
@@ -92,4 +93,62 @@ export async function authenticateAccount(email: string, password: string): Prom
     return { ok: false, reason: 'invalid_credentials' };
   }
   return { ok: true, accountId: account.id };
+}
+
+const RESET_MINUTES = 30;
+
+function hashResetToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+/** Mint a one-time reset token for the account behind this address (null when there is none). */
+async function createPasswordResetUnlocked(email: string): Promise<{ token: string } | null> {
+  if (!isAcceptableEmail(email)) {
+    return null;
+  }
+  const emailHash = hashEmail(email);
+  const store = await loadCreatorStore();
+  const account = Object.values(store.accounts).find((candidate) => candidate.emailHash === emailHash);
+  if (!account) {
+    return null;
+  }
+  const token = randomBytes(32).toString('base64url');
+  store.accounts[account.id] = {
+    ...account,
+    resetTokenHash: hashResetToken(token),
+    resetExpiresAt: new Date(Date.now() + RESET_MINUTES * 60_000).toISOString(),
+  };
+  await saveCreatorStore(store);
+  return { token };
+}
+
+/** Finish a reset: the token works once, then the new password is active. */
+async function completePasswordResetUnlocked(token: string, password: string): Promise<AccountResult> {
+  if (token.length < 20 || token.length > 200 || !isAcceptablePassword(password)) {
+    return { ok: false, reason: 'invalid' };
+  }
+  const tokenHash = hashResetToken(token);
+  const passwordHash = await hashPassword(password);
+  const store = await loadCreatorStore();
+  const account = Object.values(store.accounts).find(
+    (candidate) => candidate.resetTokenHash && candidate.resetTokenHash === tokenHash,
+  );
+  if (!account || !account.resetExpiresAt || Date.parse(account.resetExpiresAt) < Date.now()) {
+    return { ok: false, reason: 'invalid_credentials' };
+  }
+  store.accounts[account.id] = { ...account, passwordHash, resetTokenHash: null, resetExpiresAt: null };
+  await saveCreatorStore(store);
+  return { ok: true, accountId: account.id };
+}
+
+export function registerAccount(...args: Parameters<typeof registerAccountUnlocked>): ReturnType<typeof registerAccountUnlocked> {
+  return withStoreLock(() => registerAccountUnlocked(...args));
+}
+
+export function createPasswordReset(...args: Parameters<typeof createPasswordResetUnlocked>): ReturnType<typeof createPasswordResetUnlocked> {
+  return withStoreLock(() => createPasswordResetUnlocked(...args));
+}
+
+export function completePasswordReset(...args: Parameters<typeof completePasswordResetUnlocked>): ReturnType<typeof completePasswordResetUnlocked> {
+  return withStoreLock(() => completePasswordResetUnlocked(...args));
 }

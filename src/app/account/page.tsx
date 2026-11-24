@@ -7,6 +7,8 @@ import { resolveCreatorLocaleWithTribute } from '@/server/locale';
 import { loadActiveTribute, readActiveTributeId } from '@/server/session';
 import { listTributeSummaries } from '@/server/store';
 
+export const metadata = { title: 'Account' };
+
 export default async function AccountPage() {
   const signedIn = Boolean(await readAccountSession());
   const tribute = await loadActiveTribute();
@@ -45,7 +47,14 @@ export default async function AccountPage() {
             </Button>
           </form>
         ) : (
-          <Button href="/sign-in">{creatorT(locale, 'creator.account.signIn')}</Button>
+          <div className="grid gap-3">
+            <p className="m-0 text-[15px] text-[color:var(--muted)]">
+              {creatorT(locale, 'creator.account.signInHint')}
+            </p>
+            <div>
+              <Button href="/sign-in">{creatorT(locale, 'creator.account.signIn')}</Button>
+            </div>
+          </div>
         )}
       </div>
       <AccountPanel initialTributes={rows} locale={locale} />

@@ -5,10 +5,8 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 function sign(payload: string, secret: string, timestamp = Math.floor(Date.now() / 1000).toString()): string {
-  const secretBytes = secret.startsWith('whsec_')
-    ? Buffer.from(secret.slice('whsec_'.length), 'base64')
-    : Buffer.from(secret);
-  const digest = createHmac('sha256', secretBytes).update(`${timestamp}.${payload}`).digest('hex');
+  // Same scheme as stripe-node: the signing secret is the HMAC key as-is, prefix included.
+  const digest = createHmac('sha256', secret).update(`${timestamp}.${payload}`, 'utf8').digest('hex');
   return `t=${timestamp},v1=${digest}`;
 }
 
@@ -317,5 +315,14 @@ describe('creator Stripe checkout surface', () => {
         secret: MOCK_WEBHOOK,
       }),
     ).toBe(false);
+    // Secret rotation: Stripe sends several v1 signatures; one valid match is enough.
+    const valid = sign(payload, MOCK_WEBHOOK, now);
+    expect(
+      stripe.verifyStripeSignature({
+        payload,
+        signatureHeader: `t=${now},v1=deadbeef,${valid.split(',').find((p) => p.startsWith('v1='))}`,
+        secret: MOCK_WEBHOOK,
+      }),
+    ).toBe(true);
   });
 });

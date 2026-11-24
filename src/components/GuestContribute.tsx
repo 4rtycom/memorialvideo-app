@@ -9,9 +9,7 @@ import { creatorT } from '@/lib/creator-ui-messages';
 import { classifyInviteRedeemFailure, inviteRedeemMessage } from '@/lib/async-ui';
 import { prepareUploadFile, isHeicFile } from '@/lib/prepare-upload-file';
 import {
-  completeLocalUpload,
-  uploadFileLocalTus,
-  uploadIdFromUrl,
+  uploadAuthorizedFile,
   type AuthorizeResponse,
 } from '@/lib/local-tus-upload';
 
@@ -139,20 +137,15 @@ export function GuestContribute() {
           throw new Error(`authorize_${response.status}`);
         }
         const auth = (await response.json()) as AuthorizeResponse;
-        if (!auth.uploadUrl || !auth.assetId) {
+        if (!auth.assetId) {
           throw new Error('missing_upload');
         }
-        await uploadFileLocalTus({
+        await uploadAuthorizedFile({
+          auth,
           file: uploadFile,
-          uploadUrl: auth.uploadUrl,
-          chunkHintBytes: auth.chunkHintBytes,
           onProgress: (sent, total) => {
             setProgress(`${Math.round((sent / total) * 100)}%`);
           },
-        });
-        await completeLocalUpload({
-          uploadId: uploadIdFromUrl(auth.uploadUrl),
-          assetId: auth.assetId,
         });
         setPhase('thanks');
       } catch {
@@ -230,7 +223,7 @@ export function GuestContribute() {
             {guest?.displayName ?? creatorT(locale, 'creator.guest.lovedOne')}
           </div>
           {guest?.years ? (
-            <div className="text-[13px] text-[color:var(--cinema-soft)] mt-1">{guest.years}</div>
+            <div className="text-[14px] text-[color:var(--cinema-soft)] mt-1">{guest.years}</div>
           ) : null}
         </div>
       </div>
@@ -269,7 +262,7 @@ export function GuestContribute() {
       <div className="card mb-4 !p-6">
         <div className="text-[35px] text-[color:var(--accent)] mb-2">＋</div>
         <div className="font-medium text-[20px] mb-1">{creatorT(locale, 'creator.guest.choose')}</div>
-        <p className="text-[13px] text-[color:var(--muted)] m-0">
+        <p className="text-[14px] text-[color:var(--muted)] m-0">
           JPG, PNG, HEIC, MP4, MP3, WAV · private upload
         </p>
         <label className="flex items-start gap-2 text-[12px] text-[color:var(--muted)] text-left mt-3">
@@ -291,7 +284,7 @@ export function GuestContribute() {
         >
           {phase === 'uploading'
             ? `${creatorT(locale, 'creator.memories.uploading')}${progress ? ` ${progress}` : ''}`
-            : `${creatorT(locale, 'creator.guest.addMedia')}  ↗`}
+            : `${creatorT(locale, 'creator.guest.addMedia')}`}
         </button>
       </div>
       {error ? (

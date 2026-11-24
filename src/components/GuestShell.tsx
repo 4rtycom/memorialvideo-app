@@ -23,7 +23,7 @@ export function GuestShell({
       </a>
       <header className="mobile-top">
         <BrandWordmark alt={brand} className="brand-wordmark brand-wordmark--mobile" />
-        <div className="text-[11px] text-[color:var(--muted)]">{meta}</div>
+        <div className="text-[12px] text-[color:var(--muted)]">{meta}</div>
       </header>
       {children}
     </div>
