@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { redeemInviteToken } from '@/server/invites';
-import { allowRequest } from '@/server/rate-limit';
+import { allowRequest, clientKey } from '@/server/rate-limit';
 import { guestSessionCookieName } from '@/server/store';
 
 export const runtime = 'nodejs';
@@ -11,7 +11,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  if (!allowRequest('invite-redeem', 20)) {
+  if (!allowRequest(`invite-redeem:${clientKey(request)}`, 20)) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
   }
   let body: unknown;

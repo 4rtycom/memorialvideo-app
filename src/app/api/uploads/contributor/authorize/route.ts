@@ -14,7 +14,7 @@ import {
 } from '@/server/media-storage';
 import { publicSupabaseConfig } from '@/lib/supabase/env';
 import { createSignedUpload, mediaBackend } from '@/server/object-storage';
-import { allowRequest } from '@/server/rate-limit';
+import { allowRequest, clientKey } from '@/server/rate-limit';
 import { addMemory, guestSessionCookieName } from '@/server/store';
 
 export const runtime = 'nodejs';
@@ -32,7 +32,7 @@ const bodySchema = z.object({
 
 /** Guest authorize — requires redeemed invite session cookie (no account). HEIC accepted (MV-AUD-007). */
 export async function POST(request: Request) {
-  if (!allowRequest('creator-contributor-auth', 40)) {
+  if (!allowRequest(`creator-contributor-auth:${clientKey(request)}`, 40)) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
   }
   const jar = await cookies();

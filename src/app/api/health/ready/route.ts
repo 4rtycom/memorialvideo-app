@@ -63,6 +63,8 @@ export async function GET() {
         !dockerAvailable || !supabase || persistence.xb012Persistence || !persistence.writable,
       /** Hosted media storage is missing: uploads cannot survive on a read-only host. */
       mediaStorage: env.APP_ENV !== 'local' && mediaBackend(env) !== 'supabase',
+      /** Hosted uploads need NEXT_PUBLIC_SUPABASE_ANON_KEY (+ URL) so the browser can send the apikey header. */
+      uploadsAnonKey: env.APP_ENV !== 'local' && mediaBackend(env) === 'supabase' && !supabase,
       xb011_deploy: true,
     },
   });

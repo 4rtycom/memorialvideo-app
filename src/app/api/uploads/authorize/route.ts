@@ -11,7 +11,7 @@ import {
 } from '@/server/media-storage';
 import { publicSupabaseConfig } from '@/lib/supabase/env';
 import { createSignedUpload, mediaBackend } from '@/server/object-storage';
-import { allowRequest } from '@/server/rate-limit';
+import { allowRequest, clientKey } from '@/server/rate-limit';
 import { loadActiveTribute } from '@/server/session';
 import { addMemory } from '@/server/store';
 
@@ -32,7 +32,7 @@ const bodySchema = z.object({
  * HEIC is accepted — complete converts to JPEG (MV-AUD-007).
  */
 export async function POST(request: Request) {
-  if (!allowRequest('creator-upload-auth', 40)) {
+  if (!allowRequest(`creator-upload-auth:${clientKey(request)}`, 40)) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
   }
   const active = await loadActiveTribute();

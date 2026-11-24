@@ -231,5 +231,15 @@ export async function handleStripeWebhookPayload(payload: string): Promise<
   if (!applied.ok) {
     return { error: applied.reason, status: applied.reason === 'not_found' ? 404 : 500 };
   }
+  if (!applied.duplicate && parsed.projectPublicId) {
+    // Best effort: queue the final film right after purchase. The worker picks it up;
+    // failure here must never fail the webhook (Stripe would retry a paid event).
+    try {
+      const { enqueueRenderJob } = await import('./render');
+      await enqueueRenderJob(parsed.projectPublicId, 'final');
+    } catch {
+      /* the owner can still start the render from /share */
+    }
+  }
   return { ok: true, orderStatus: applied.orderStatus, duplicate: applied.duplicate };
 }

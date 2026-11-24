@@ -5,7 +5,7 @@ import {
   PersistenceUnavailableError,
   persistenceErrorResponse,
 } from '@/server/persistence';
-import { allowRequest } from '@/server/rate-limit';
+import { allowRequest, clientKey } from '@/server/rate-limit';
 import { clearActiveTributeId, readActiveTributeId, setActiveTributeId } from '@/server/session';
 import { createTribute, deleteTribute, getTribute, listTributeSummaries } from '@/server/store';
 import { mediaBackend, removeTributeObjects } from '@/server/object-storage';
@@ -50,7 +50,7 @@ const createBodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  if (!allowRequest('tributes-create', 20)) {
+  if (!allowRequest(`tributes-create:${clientKey(request)}`, 20)) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
   }
   let body: unknown;
@@ -84,7 +84,7 @@ const deleteSchema = z.object({
 });
 
 export async function DELETE(request: Request) {
-  if (!allowRequest('tributes-delete', 20)) {
+  if (!allowRequest(`tributes-delete:${clientKey(request)}`, 20)) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
   }
   let body: unknown;

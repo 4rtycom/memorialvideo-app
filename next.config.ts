@@ -1,5 +1,19 @@
 import type { NextConfig } from 'next';
 
+/** Origin of the Supabase project (signed uploads and signed media links), when configured. */
+function supabaseOrigin(): string | null {
+  const raw = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!raw) return null;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return null;
+  }
+}
+
+const storageOrigin = supabaseOrigin();
+const withStorage = (base: string) => (storageOrigin ? `${base} ${storageOrigin}` : base);
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Next.js dev blocks requests that carry an Origin it does not recognize.
@@ -50,10 +64,10 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob:",
-              "media-src 'self' blob:",
+              withStorage("img-src 'self' data: blob:"),
+              withStorage("media-src 'self' blob:"),
               "font-src 'self' data:",
-              "connect-src 'self'",
+              withStorage("connect-src 'self'"),
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

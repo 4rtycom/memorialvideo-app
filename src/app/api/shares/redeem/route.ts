@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { allowRequest } from '@/server/rate-limit';
+import { allowRequest, clientKey } from '@/server/rate-limit';
 import { redeemShareToken } from '@/server/shares-local';
 
 export const runtime = 'nodejs';
@@ -10,7 +10,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  if (!allowRequest('share-redeem', 30)) {
+  if (!allowRequest(`share-redeem:${clientKey(request)}`, 30)) {
     return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
   }
   let body: unknown;
